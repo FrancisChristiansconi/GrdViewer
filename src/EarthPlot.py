@@ -26,8 +26,10 @@ from Zoom import Zoom
 class EarthPlot(FigureCanvas):
 
     # Canvas constructor
-    def __init__(self, parent = None, width=5, height=4, dpi = 300, proj='geos', res='c'):
-
+    def __init__(self, parent = None, width=5, height=5, dpi = 300, proj='geos', res='c'):
+        # set default font size
+        plt.rcParams.update({'font.size': 5})
+        
         # Store Canvas properties
         self.strTitle       = 'Default Title'
         self.iWidth         = width
@@ -37,7 +39,8 @@ class EarthPlot(FigureCanvas):
         self.strResolution  = res
 
         # define figure in canvas
-        self.fig = Figure(figsize=(self.iWidth,self.iHeight),dpi=self.iDpi)
+        self.fig = Figure(figsize=(self.iWidth,self.iHeight), \
+                          dpi=self.iDpi)
         self.axes = self.fig.add_subplot(111)
 
         FigureCanvas.__init__(self, self.fig)
@@ -214,8 +217,8 @@ class EarthPlot(FigureCanvas):
             return csGrd
         else:
             # define grid
-            iNx = 201
-            iNy = 201
+            iNx = 1001
+            iNy = 1001
             fAzlin = np.linspace(grd.MinAz(),grd.MaxAz(),iNx)
             fEllin = np.linspace(grd.MinEl(),grd.MaxEl(),iNy)
             fAzMesh, fElMesh = np.meshgrid(fAzlin, fEllin)
@@ -248,8 +251,7 @@ class EarthPlot(FigureCanvas):
                                     color='k', fill=False, linewidth=0.3, linestyle='dashed')
                 self.map.ax.add_artist(circle)
             self.map.scatter(xSta,ySta,2,marker='o',color='r')
-            plt.text(xSta + s.fTagX, ySta + s.fTagY, s.strTag)
-			
+            self.map.ax.annotate(s.strTag, xy=(xSta + s.fTagX, ySta + s.fTagY))
 
 
     # Zoom on the map

@@ -32,7 +32,7 @@ class ZoomDialog(QDialog):
 
         # Add Title to the widget
         self.setWindowTitle('Zoom')
-        self.setMinimumSize(100, 50)
+        self.setMinimumSize(70, 50)
         
         # Add labels
         self.viewLblLowLeftX = QLabel(parent=self)

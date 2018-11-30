@@ -19,12 +19,14 @@ import numpy as np
 
 # local modules
 import EarthPlot as plc
+import Station as stn
 
 # Customised Dialog
 from Viewer import ViewerPosDialog
 from Zoom import ZoomDialog
 from Pattern import GrdDialog
 from Elevation import ElevDialog
+from Station import StationDialog
 
 
 
@@ -115,6 +117,10 @@ class PayPat(QMainWindow):
         self.menuMisc.addAction(actElevation)
         actElevation.triggered.connect(self.viewElevation)
 
+        # Add menu item to add stations
+        actStation = QAction('Add stations file', self)
+        self.menuMisc.addAction(actStation)
+        actStation.triggered.connect(self.viewStation)
 
         return self.menuBar
         
@@ -143,6 +149,11 @@ class PayPat(QMainWindow):
         vElevDial.exec_()
 
     # open dialog to get stations to draw
+    def viewStation(self):
+        strStationFileName, _ = StationDialog.getOpenFileName()
+        if strStationFileName:
+            self.earthPlt.stationList = stn.getStationFromFile(strStationFileName)
+            self.earthPlt.draw()
 
     # Toggle between Geo and Mercator projection
     def toggleProj(self, q):

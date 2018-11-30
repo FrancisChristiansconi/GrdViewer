@@ -17,48 +17,46 @@ class Station(object):
     # end of constructor
 # end of class Station
 
-class ViewStation(QFileDialog):
+class StationDialog(QFileDialog):
 
-    def __init__(self, parent=None):
+    def __init__(self):
         # Parent constructor
         super().__init__()
 
         # Add Title to the widget
         self.setWindowTitle('Add stations from file')
-        self.setMinimumSize(100, 50)
-
-        if parent:
-            self.stationList = parent.earthPlt.stationList
 
 
         # Dialog is modal to avoid reentry and weird behaviour
         self.setModal(True)
         self.show()
     # end of constructor
+# End of Customized QDialog StationDialog
 
-    def getStationFromFile(self, strFileName):
-        # initialize return list
-        stationList = []
-        # open file and read text data
-        oFile = open(strFileName, "r")
-        # read all lines in a table
-        tLines = oFile.readlines()
-        # close file        
-        oFile.close()
 
-        # split data and add them to Station list
-        for iLine in range(len(tLines)):
-            tokens = tLines[iLine].split()
-            strName = tokens[0]
-            strTag  = tokens[1]
-            fLonDeg = tokens[2]
-            fLatDeg = tokens[3]
-            fTagX   = tokens[4]
-            fTagY   = tokens[5]
-            fBpe    = tokens[6]
-            stationList.append(Station(lon=fLonDeg, lat=fLatDeg, name=strName, \
-                                        tag=strTag, xtag=fTagX, ytag=fTagY, Bpe=fBpe))
+def getStationFromFile(strFileName):
+    # initialize return list
+    stationList = []
+    # open file and read text data
+    oFile = open(strFileName, "r")
+    # read all lines in a table
+    tLines = oFile.readlines()
+    # close file        
+    oFile.close()
 
-        return stationList
+    # split data and add them to Station list
+    for iLine in range(len(tLines)):
+        tokens = tLines[iLine].split(',')
+        strName = tokens[0]
+        strTag  = tokens[1]
+        fLonDeg = float(tokens[2])
+        fLatDeg = float(tokens[3])
+        fTagX   = float(tokens[4])
+        fTagY   = float(tokens[5])
+        fBpe    = float(tokens[6])
+        stationList.append(Station(lon=fLonDeg, lat=fLatDeg, name=strName, \
+                                    tag=strTag, xtag=fTagX, ytag=fTagY, Bpe=fBpe))
+
+    return stationList
 
 

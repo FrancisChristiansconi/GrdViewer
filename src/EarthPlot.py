@@ -55,7 +55,6 @@ class EarthPlot(FigureCanvas):
         self.cbar = []
         self.map = []
         self.stationList = []
-        self.fMaxBPE = None
 
         # initialize angle of view
         # Satellite Longitude, latitude and altitude
@@ -95,7 +94,7 @@ class EarthPlot(FigureCanvas):
 
         # draw stations
         if self.stationList != []:
-            self.drawStationList(self.stationList,self.fMaxBPE)
+            self.drawStationList(self.stationList)
 
         if self.strProjection == 'geos':
             self.axes.set_xlabel('Azimuth (deg)')
@@ -241,15 +240,15 @@ class EarthPlot(FigureCanvas):
 
             return pcmGrd
             
-    def drawStationList(self,stationList, fBpeCircle=None):
+    def drawStationList(self,stationList):
         for s in stationList:
             xSta, ySta = self.map(s.fLonDeg,s.fLatDeg)
-            if fBpeCircle:
-                circle = plt.Circle((xSta, ySta), self.viewer.fAltM * fBpeCircle * np.pi / 180, \
+            if s.fBpe:
+                circle = plt.Circle((xSta, ySta), self.viewer.fAltM * s.fBpe * np.pi / 180, \
                                     color='k', fill=False, linewidth=0.3, linestyle='dashed')
-            self.map.ax.add_artist(circle)
-            self.map.scatter(xSta,ySta,3,marker='o',color='k')
-            plt.text(xSta+s.fTagX, ySta+s.fTagY, s.strTag)
+                self.map.ax.add_artist(circle)
+            self.map.scatter(xSta,ySta,2,marker='o',color='r')
+            plt.text(xSta + s.fTagX, ySta + s.fTagY, s.strTag)
 			
 
 

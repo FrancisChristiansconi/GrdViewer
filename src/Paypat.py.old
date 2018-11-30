@@ -1,0 +1,196 @@
+# import Matplotlib and Basemap
+from mpl_toolkits.basemap import Basemap
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+from matplotlib.ticker import FuncFormatter
+
+# import tkinter and link with matplotlib
+import tkinter as tk
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from matplotlib.figure import Figure
+
+# import numpy
+import numpy as np
+
+# local module
+import readgrd as Grd
+
+
+# Class to generate a window with Earth display
+class PayPat(object):
+	
+
+	def __init__(self, master):
+		
+		# give an name to the windows
+		master.title('Test window')
+
+		# Create a container
+		frame = tk.Frame(master)
+
+		# Create 2 buttons
+		self.button_left = tk.Button(frame,text='<=',
+										command=self.decLon)
+		self.button_left.pack(side="left")
+		self.button_right = tk.Button(frame,text='=>',
+										command=self.incLon)
+		self.button_right.pack(side="left")
+
+		# Create a figure to display Projection
+		fig = Figure()
+		self.ax = fig.add_subplot(111)
+		
+		# initialize angle of view
+		# Earth radius (meters)
+		self.fEarthRad =  6378137.00 # m
+		# Satellite Longitude, latitude and altitude
+		self.fViewLon  = 0.0 		 # deg
+		self.fViewLat  = 0.0		 # deg
+		self.fViewAlt  = 35786000.00 # m
+		
+		# create map in Geo projection
+		self.zoomAzEl(-9,-9,9,9)
+
+		# display canvas
+		self.canvas = FigureCanvasTkAgg(fig,master=master)
+		self.canvas.draw()
+		self.canvas.get_tk_widget().pack(side='top', fill='both', expand=1)
+		
+		# Compact everything
+		frame.pack()
+		
+
+	# change observer Longitude 
+	def setViewLon(self, fViewLon):
+		self.fViewLon = fViewLon
+		self.drawEarth()
+		self.canvas.draw()
+	
+	def decLon(self):
+		self.setViewLon((self.fViewLon - 10) % 360)
+
+	def incLon(self):
+		self.setViewLon((self.fViewLon + 10) % 360)
+
+	# draw Earth with Geos projection and return Basemap handler
+	def drawEarth(self):
+		self.ax.clear()
+		
+		
+		# add Earth map
+		self.map = Basemap(projection='geos', \
+						   rsphere=(6378137.00,6356752.3142), \
+						   llcrnrx=self.llcrnrx, \
+						   llcrnry=self.llcrnry, \
+						   urcrnrx=self.urcrnrx, \
+						   urcrnry=self.urcrnry, \
+						   lon_0=self.fViewLon, \
+						   lat_0=self.fViewLat, \
+						   resolution='l', \
+						   ax=self.ax)
+		self.map.drawcoastlines(linewidth=0.5)
+		self.map.drawcountries(linewidth=0.5)
+		self.map.drawparallels(np.arange(-90.,120.,30.),linewidth=0.5)
+		self.map.drawmeridians(np.arange(0.,390.,30.),linewidth=0.5)
+		self.map.drawmapboundary(linewidth=0.5)
+		
+		# add formatted ticks
+		def xformat(x,pos=None): return '{:0.1f}'.format((x - (self.map.xmax-self.map.xmin)/2) / (self.fViewAlt * np.pi / 180))
+		def yformat(y,pos=None): return '{:0.1f}'.format((y - (self.map.ymax-self.map.ymin)/2) / (self.fViewAlt * np.pi / 180))
+		xformatter = FuncFormatter(xformat)
+		yformatter = FuncFormatter(yformat)
+		self.ax.xaxis.set_major_formatter(xformatter)
+		self.ax.yaxis.set_major_formatter(yformatter)
+		
+		fXTicks = self.Az2X(np.arange(-20,20)) - self.Az2X(-20)
+		fYTicks = self.El2Y(np.arange(-20,20)) - self.El2Y(-20)
+		self.ax.xaxis.set_major_locator(plt.FixedLocator(fXTicks))
+		self.ax.yaxis.set_major_locator(plt.FixedLocator(fYTicks))
+		# print(str(self.Az2X(np.arange(np.ceil(self.X2Az(self.map.xmin + (self.map.xmax-self.map.xmin)/2)),np.floor(self.X2Az(self.map.xmax))))))
+		# print(str(np.arange(np.ceil(self.X2Az(self.map.xmin)),np.floor(self.X2Az(self.map.xmax)))))
+		
+		
+		return self.map
+		
+		
+	# Draw isoElevation contours
+	def drawElevation(self,level=(10,20,30)):
+		# define grid
+		iNx = 200
+		iNy = 200
+		fXlin = np.linspace(self.map.xmin,self.map.xmax,iNx)
+		fYlin = np.linspace(self.map.ymin,self.map.ymax,iNy)
+		fXMesh, fYMesh = np.meshgrid(fXlin, fYlin)
+		fLonMesh, fLatMesh = self.map(fXMesh, fYMesh, inverse=True)
+		# define Elevation matrix
+		fElev = self.elevation(fLonMesh, fLatMesh)
+		csElev = self.map.contour(fXMesh,fYMesh,fElev, level, colors='black', linestyles='dotted', linewidths=0.5)
+		return csElev
+		
+		
+	# Compute elevation of spacecraft seen from a station on the ground
+	def elevation(self, fStaLon, fStaLat):
+		
+		# compute phi
+		fPhi = np.arccos(np.cos(np.pi / 180 * fStaLat) * np.cos(np.pi / 180 * (self.fViewLon - fStaLon)))
+
+		# compute elevation
+		fElev = np.reshape([90 if phi == 0 else 180 / np.pi * np.arctan((np.cos(phi) - (self.fEarthRad/(self.fEarthRad+self.fViewAlt)))/ np.sin(phi)) for phi in fPhi.flatten()], fPhi.shape)
+		
+		# remove station out of view
+		fElev = np.where(np.absolute(fStaLon - self.fViewLon) < 90,fElev,-1)
+		
+		# Return vector
+		return fElev
+	
+	# Load and display a grd file
+	def loadGrd(self, strFileName):
+		self.grd = Grd.grd(strFileName)
+		return self.grd
+		
+	def drawGrd(self, grd):
+		x = self.fViewAlt * self.grd.Azimuth() * np.pi / 180 + (self.map.xmax-self.map.xmin)/2
+		y = self.fViewAlt * self.grd.Elevation() * np.pi / 180 + (self.map.ymax-self.map.ymin)/2	
+		csGrd = self.map.contour(x, y, grd.Copol(), (25,30,35,38,40), linestyles='solid', linewidths=1.0)
+		return csGrd
+	
+	# Zoom on the map
+	def zoom(self, fLowLeftCrnrX, fLowLeftCrnrY, fUpRightCrnrX, fUpRightCrnrY):
+		self.llcrnrx = fLowLeftCrnrX
+		self.llcrnry = fLowLeftCrnrY
+		self.urcrnrx = fUpRightCrnrX
+		self.urcrnry = fUpRightCrnrY
+		self.drawEarth()
+		
+	# Zoom on the map with Az/El
+	def zoomAzEl(self, fAzMin, fElMin, fAzMax, fElMax):
+		self.zoom(self.Az2X(fAzMin), self.El2Y(fElMin), self.Az2X(fAzMax), self.El2Y(fElMax))
+	
+	# convert Azimuth to map.x
+	def Az2X(self,fAz):
+		return fAz * np.pi / 180 * self.fViewAlt
+	
+	# convert Elevation to map.y
+	def El2Y(self,fEl):
+		return fEl * np.pi / 180 * self.fViewAlt
+	
+	def X2Az(self,fX):
+		return fX / ( np.pi / 180 * self.fViewAlt)
+	
+	def Y2El(self,fY):
+		return fY / ( np.pi / 180 * self.fViewAlt)
+
+# End of Class PayPat	
+		
+# Main execution
+root = tk.Tk()
+app = PayPat(root)
+
+app.setViewLon(28.2)
+app.drawElevation()
+app.zoomAzEl(-9,4,0,9)
+GrdA2fPeTx = app.loadGrd('../data/A2F_PE_Tx_pointing_0E_0N_G01_12515.00.grd')
+app.drawGrd(GrdA2fPeTx)
+
+root.mainloop()
+

@@ -50,13 +50,12 @@ class EarthPlot(FigureCanvas):
                 QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
         
-        # initialize a grd dictionary
+        # initialize EarthPlot fields
         self.dicGrd = {}
-
-        # initialize an elevation contour dictionary
         self.dicElev = {}
-        self.cbar = []
-        self.map = []
+        self.cbar = None
+        self.cax = None
+        self.map = None
         self.stationList = []
 
         # initialize angle of view
@@ -65,10 +64,6 @@ class EarthPlot(FigureCanvas):
         
         # Initialize zoom
         self.zoom = Zoom(self.strProjection)
-
-        # create map in Geo projection
-        # self.draw() ==> not needed : main loop draw it anyway
-
     # End of EarthPlot constructor
 
     # Redefine draw function
@@ -113,6 +108,7 @@ class EarthPlot(FigureCanvas):
 
         # call to super draw method
         super().draw()
+    # end of draw function
 
     def setTitle(self,strTitle: str):
         self.strTitle = strTitle

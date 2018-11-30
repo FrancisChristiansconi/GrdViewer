@@ -152,7 +152,9 @@ class PayPat(QMainWindow):
     def viewStation(self):
         strStationFileName, _ = StationDialog.getOpenFileName()
         if strStationFileName:
-            self.earthPlt.stationList = stn.getStationFromFile(strStationFileName)
+            # add the stations to the station list
+            self.earthPlt.stationList.extend(stn.getStationFromFile(strStationFileName))
+            # refresh display
             self.earthPlt.draw()
 
     # Toggle between Geo and Mercator projection

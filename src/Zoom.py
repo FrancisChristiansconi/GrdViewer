@@ -5,16 +5,16 @@ import PyQt5.QtCore as QtCore
 class Zoom(object):
 
     # Zoom class constructor
-    def __init__(self, proj='geos'):
+    def __init__(self, proj='geos', geo=(-9.0,-9.0,9.0,9.0), merc=(-180.0, -85.0, 180.0, -85.0)):
         self.strProjection = proj
-        self.fLowLeftAz    = -9.0 # deg Azimuth
-        self.fLowLeftEl    = -9.0 # deg Elevation
-        self.fUpRightAz =  9.0 # deg Azimuth
-        self.fUpRightEl =  9.0 # deg Elevation
-        self.fLowLeftLon    = -180.0 # deg Longitude
-        self.fLowLeftLat    =  -85.0 # deg Latitude
-        self.fUpRightLon =  180.0 # deg Longitude
-        self.fUpRightLat =   85.0 # deg Latitude
+        self.fLowLeftAz    = geo[0]  # deg Azimuth
+        self.fLowLeftEl    = geo[1]  # deg Elevation
+        self.fUpRightAz    = geo[2]  # deg Azimuth
+        self.fUpRightEl    = geo[3]  # deg Elevation
+        self.fLowLeftLon   = merc[0] # deg Longitude
+        self.fLowLeftLat   = merc[1] # deg Latitude
+        self.fUpRightLon   = merc[2] # deg Longitude
+        self.fUpRightLat   = merc[3] # deg Latitude
 # End of 
 
 

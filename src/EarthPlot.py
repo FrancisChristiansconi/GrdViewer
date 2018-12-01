@@ -26,10 +26,8 @@ from Zoom import Zoom
 class EarthPlot(FigureCanvas):
 
     # Canvas constructor
-    def __init__(self, parent = None, width=5, height=5, dpi = 300, proj='geos', res='c'):
-        # set default font size
-        plt.rcParams.update({'font.size': 5})
-        
+    def __init__(self, parent = None, width=5, height=5, dpi = 300, proj='geos', res='c', config=None):
+            
         # Store Canvas properties
         self.strTitle       = 'Default Title'
         self.iWidth         = width
@@ -58,12 +56,43 @@ class EarthPlot(FigureCanvas):
         self.map = None
         self.stationList = []
 
+        # if a config has been provided by caller
+        if config:
+            # get font size with fallback = 5
+            fontsize = config.getint('DEFAULT', 'font size', fallback=5)
+            # set default font size
+            plt.rcParams.update({'font.size': fontsize})
+
+            # get point of view coordinates if defined
+            longitude = config.getfloat('VIEWER','longitude', fallback=0.0)
+            latitude  = config.getfloat('VIEWER','latitude',  fallback=0.0)
+            altitude  = config.getfloat('VIEWER','altitude',  fallback=35786000.0)
+            
+            # Initialize zoom
+            self.zoom = Zoom(self.strProjection)
+            if 'GEO' in config:
+                if 'min azimuth' in config['GEO']:
+                    self.zoom.fLowLeftAz = config.getfloat('GEO','min azimuth')
+                if 'min elevation' in config['GEO']:
+                    self.zoom.fLowLeftEl = config.getfloat('GEO','min elevation')
+                if 'max azimuth' in config['GEO']:
+                    self.zoom.fUpRightAz = config.getfloat('GEO','max azimuth')
+                if 'max elevation' in config['GEO']:
+                    self.zoom.fUpRightEl = config.getfloat('GEO','max elevation')
+            if 'MERCATOR' in config:
+                if 'min longitude' in config['MERCATOR']:
+                    self.zoom.fLowLeftLon = config.getfloat('MERCATOR', 'min longitude')
+                if 'min latitude' in config['MERCATOR']:
+                    self.zoom.fLowLeftLat = config.getfloat('MERCATOR', 'min latitude')
+                if 'max longitude' in config['MERCATOR']:
+                    self.zoom.fUpRightLon = config.getfloat('MERCATOR', 'max longitude')
+                if 'max latitude' in config['MERCATOR']:
+                    self.zoom.fUpRightLat = config.getfloat('MERCATOR', 'max latitude')
+
         # initialize angle of view
         # Satellite Longitude, latitude and altitude
-        self.viewer = ViewerPos()
+        self.viewer = ViewerPos(fLonDeg=longitude, fLatDeg=latitude, fAltM=altitude)
         
-        # Initialize zoom
-        self.zoom = Zoom(self.strProjection)
     # End of EarthPlot constructor
 
     # Redefine draw function

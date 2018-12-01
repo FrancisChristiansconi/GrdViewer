@@ -17,6 +17,9 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 # import numpy
 import numpy as np
 
+# import configparser module to manage ini files
+import configparser
+
 # local modules
 import EarthPlot as plc
 import Station as stn
@@ -40,7 +43,7 @@ class PayPat(QMainWindow):
         super().__init__()
                 
         # give an name to the windows
-        self.title = 'Payload Patterns'
+        self.title = 'Grd viewer'
         self.setWindowTitle(self.title)
 
         # # window dimension
@@ -52,14 +55,17 @@ class PayPat(QMainWindow):
         self.bRevertY      = False
         self.bUseSecondPol = False
 
-        
+        self.config = configparser.ConfigParser()
+        self.config.read('.\\GrdViewer\\grdviewer.ini')
+
+        # Create Main window central widget
         self.cWidget = QWidget()
 
         # Add menu bar and menus
         self.menuBar = self.createMenu()
 
         # Add map
-        self.earthPlt = plc.EarthPlot(parent=self.cWidget)
+        self.earthPlt = plc.EarthPlot(parent=self.cWidget, config=self.config)
 
         # place test field in a vertical box layout
         vbox = QVBoxLayout(self.cWidget)
@@ -69,6 +75,8 @@ class PayPat(QMainWindow):
         # self.cWidget.addLayout(vbox)
         self.setCentralWidget(self.cWidget)
         self.show()
+
+    # end of constructor
     
     # Create menu bar and menus
     def createMenu(self):

@@ -21,7 +21,7 @@ class Zoom(object):
 class ZoomDialog(QDialog):
 
     # ZoomDialog class constructor
-    def __init__(self, zoom: Zoom, proj='geos', parent=None):
+    def __init__(self, zoom: Zoom, parent=None):
         # Parent constructor
         super().__init__()
 
@@ -97,6 +97,7 @@ class ZoomDialog(QDialog):
         # Dialog is modal to avoid reentry and weird behaviour
         self.setModal(True)
         self.show()
+    # end of constructor
 
     def updateZoom(self):
         if self.earthPlt.strProjection == 'geos':
@@ -112,3 +113,5 @@ class ZoomDialog(QDialog):
         self.earthPlt.updateZoom()
         self.earthPlt.draw(self.earthPlt.strProjection)
         self.close()
+    # end of method updateZoom
+# end of class ZoomDialog

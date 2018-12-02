@@ -1,11 +1,16 @@
+"""This module defines the viewer position.
+"""
+
+
 from PyQt5.QtWidgets import QDialog, QLineEdit, QVBoxLayout, QHBoxLayout, \
                             QPushButton, QLabel
 import PyQt5.QtCore as QtCore
 
 
-# Represent position of observer of the projection
 class ViewerPos(object):
-    
+    """ViewerPos represent position of observer of the projection.
+    """
+
     # Default constructor for ViewerPos
     def __init__(self, fLonDeg=0.0, fLatDeg=0.0, fAltM=35786000.0):
         self.fLonDeg = fLonDeg

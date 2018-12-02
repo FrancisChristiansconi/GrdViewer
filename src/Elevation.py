@@ -1,17 +1,28 @@
+"""This module helps dealing with elevation contour display.
+"""
+# Imports
 # PyQt5 widgets import
-from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, QLineEdit, \
-                            QHBoxLayout, QVBoxLayout, QPushButton, QWidget, QFileDialog, QLabel, \
-                            QGridLayout, QCheckBox
+from PyQt5.QtWidgets import QDialog, QLineEdit, \
+                            QHBoxLayout, QVBoxLayout, QPushButton, QLabel
 
-cstFElevation = 10
 
+# Constants
+# Default elevation contour
+DEFAULT_ELEVATION = 10
+
+
+# Classes
 class Elevation(object):
-
-    def __init__(self, fElevation=cstFElevation):
-        self.fAngle = fElevation
-
+    """This class defines an elevation angle.
+    """
+    def __init__(self, elev=DEFAULT_ELEVATION):
+        self._angle = elev
+# end of class Elevation
 
 class ElevDialog(QDialog):
+    """This class defines a customised dialog box to set an elevation
+    angle to display on the parent's Earth plot.
+    """
 
     def __init__(self, parent=None):
         # Parent constructor

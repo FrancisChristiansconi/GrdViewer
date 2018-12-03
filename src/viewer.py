@@ -8,34 +8,63 @@ import PyQt5.QtCore as QtCore
 
 
 class ViewerPos(object):
-    """ViewerPos represent position of observer of the projection.
+    """ViewerPos represents position of observer of the projection.
     """
 
     # Default constructor for ViewerPos
-    def __init__(self, fLonDeg=0.0, fLatDeg=0.0, fAltM=35786000.0):
-        self.fLonDeg = fLonDeg
-        self.fLatDeg = fLatDeg
-        self.fAltM   = fAltM
+    def __init__(self, lon=0.0, lat=0.0, alt=35786000.0):
+        self._longitude_deg = lon
+        self._latitude_deg = lat
+        self._altitude_m = alt
     # End of Constructor
 
-    def setLon(self, lon):
-        self.fLonDeg=lon
-    def setLat(self, lat):
-        self.fLatDeg=lat
-    def setAlt(self, alt):
-        self.fAltM=alt
-    def set(self, lon, lat, alt):
-        self.fLonDeg=lon
-        self.fLatDeg=lat
-        self.fAltM  =alt
+    def longitude(self, lon: float = None) -> float:
+        """Get/set for attribute _longitude_deg.
+        """
+        if lon != None:
+            self._longitude_deg=lon
+        return self._longitude_deg
+    # end of longitude function
+
+    def latitude(self, lat: float = None) -> float:
+        """Get/set for attribute _latitude_deg.
+        """
+        if lat != None:
+            self._latitude_deg=lat
+        return self._latitude_deg
+    # end of latitude function
+
+    def altitude(self, alt: float = None) -> float:
+        """Get/set for attribute _altitude_m.
+        """
+        if alt != None:
+            self._altitude_m=alt
+        return self._altitude_m
+    # end of altitude function
+
+    def set(self, lon: float = None, lat: float = None, alt: float = None):
+        """Set all three LLA coordinates at once.
+        """
+        if lon != None:
+            self._longitude_deg=lon
+        if lat != None:
+            self._latitude_deg=lat
+        if alt != None:
+            self._altitude_m  =alt
+    # end of set function
+
 # end of class ViewerPos
 
 
-# Dialog to set a ViewerPos object
 class ViewerPosDialog(QDialog):
+    """This class implement a customised dialog box to set the viewer
+    passed to the constructor.
+    """
 
-    # Default constructor for SetViewerPos
-    def __init__(self, vPos: ViewerPos, parent=None):
+    def __init__(self, viewerpos: ViewerPos, parent=None):
+        """Default constructor of the class.
+        """
+        
         # Parent constructor
         super().__init__()
 
@@ -43,75 +72,78 @@ class ViewerPosDialog(QDialog):
         self.parent=parent
 
         # store reference to ViewerPos object
-        self.vPos = vPos
+        self._viewerpos = viewerpos
 
          # Add Title to the widget
         self.setWindowTitle('Viewer position')
         self.setMinimumSize(100, 50)
 
         # Add field, label and alignment
-        self.fieldLon = QLineEdit(str(vPos.fLonDeg), parent=self)
-        self.fieldLat = QLineEdit(str(vPos.fLatDeg), parent=self)
-        self.fieldAlt = QLineEdit(str(vPos.fAltM),   parent=self)
-        self.labelLon = QLabel('Longitude (deg)', parent=self)
-        self.labelLat = QLabel('Latitude (deg)',  parent=self)
-        self.labelAlt = QLabel('Altitude (m)',    parent=self)
-        self.labelLon.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.labelLat.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.labelAlt.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self._lon_field = QLineEdit(str(viewerpos.longitude()), parent=self)
+        self._lat_field = QLineEdit(str(viewerpos.latitude()), parent=self)
+        self._alt_field = QLineEdit(str(viewerpos.altitude()),   parent=self)
+        self._lon_label = QLabel('Longitude (deg)', parent=self)
+        self._lat_label = QLabel('Latitude (deg)',  parent=self)
+        self._alt_label = QLabel('Altitude (m)',    parent=self)
+        self._lon_label.setAlignment(QtCore.Qt.AlignRight
+                                     | QtCore.Qt.AlignVCenter)
+        self._lat_label.setAlignment(QtCore.Qt.AlignRight
+                                     | QtCore.Qt.AlignVCenter)
+        self._alt_label.setAlignment(QtCore.Qt.AlignRight
+                                     | QtCore.Qt.AlignVCenter)
 
         # Add Ok/Cancel buttons
-        okButton = QPushButton('OK',self)
-        cancelButton = QPushButton('Cancel',self)
+        ok_button = QPushButton('OK',self)
+        cancel_button = QPushButton('Cancel',self)
 
         # Create Vertical layout 
-        vBox = QVBoxLayout(self)
+        verticalbox = QVBoxLayout(self)
 
         # Create longitude line layout
-        longitudeBox = QHBoxLayout(None)
-        longitudeBox.addWidget(self.labelLon)
-        longitudeBox.addStretch(1)
-        longitudeBox.addWidget(self.fieldLon)
+        longitudebox = QHBoxLayout(None)
+        longitudebox.addWidget(self._lon_label)
+        longitudebox.addStretch(1)
+        longitudebox.addWidget(self._lon_field)
         # Create latitude line layout
-        latitudeBox = QHBoxLayout(None)
-        latitudeBox.addWidget(self.labelLat)
-        latitudeBox.addStretch(1)
-        latitudeBox.addWidget(self.fieldLat)
+        latitudebox = QHBoxLayout(None)
+        latitudebox.addWidget(self._lat_label)
+        latitudebox.addStretch(1)
+        latitudebox.addWidget(self._lat_field)
         # Create altitude line layout
-        altitudeBox = QHBoxLayout(None)
-        altitudeBox.addWidget(self.labelAlt)
-        altitudeBox.addStretch(1)
-        altitudeBox.addWidget(self.fieldAlt)
+        altitudebox = QHBoxLayout(None)
+        altitudebox.addWidget(self._alt_label)
+        altitudebox.addStretch(1)
+        altitudebox.addWidget(self._alt_field)
         
         # Place Ok/Cancel button in an horizontal box layout
-        buttonBox = QHBoxLayout(None)
-        buttonBox.addStretch(1)
-        buttonBox.addWidget(okButton)
-        buttonBox.addWidget(cancelButton)
+        buttonbox = QHBoxLayout(None)
+        buttonbox.addStretch(1)
+        buttonbox.addWidget(ok_button)
+        buttonbox.addWidget(cancel_button)
 
         # put the button layout in the Vertical Layout
-        vBox.addLayout(longitudeBox)
-        vBox.addLayout(latitudeBox)
-        vBox.addLayout(altitudeBox)
-        vBox.addLayout(buttonBox)
+        verticalbox.addLayout(longitudebox)
+        verticalbox.addLayout(latitudebox)
+        verticalbox.addLayout(altitudebox)
+        verticalbox.addLayout(buttonbox)
 
         # set dialog box layout
-        self.setLayout(vBox) 
+        self.setLayout(verticalbox) 
 
         # connect buttons to actions
-        okButton.clicked.connect(self.updateViewerPos)
-        cancelButton.clicked.connect(self.close)
+        ok_button.clicked.connect(self.update_viewerpos)
+        cancel_button.clicked.connect(self.close)
         # Dialog is modal to avoid reentry and weird behaviour
         self.setModal(True)
         self.show()
 
 
 
-    # Update vPos fields with dialog box fields values 
-    def updateViewerPos(self):
-        self.vPos.set(float(self.fieldLon.text()), \
-                      float(self.fieldLat.text()), \
-                      float(self.fieldAlt.text()))
+    # Update viewerpos fields with dialog box fields values 
+    def update_viewerpos(self):
+        self._viewerpos.set(float(self._lon_field.text()), \
+                            float(self._lat_field.text()), \
+                            float(self._alt_field.text()))
         self.parent.draw()
         self.close()
 

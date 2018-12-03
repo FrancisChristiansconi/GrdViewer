@@ -1,10 +1,16 @@
+"""This module deals with station representation.
+"""
+
 # PyQt5 widgets import
-from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, QLineEdit, \
-                            QHBoxLayout, QVBoxLayout, QPushButton, QWidget, QFileDialog, QLabel, \
-                            QGridLayout, QCheckBox
+from PyQt5.QtWidgets import QFileDialog
+
 
 class Station(object):
-    
+    """Represents a station, i.e. a position on the ground.
+    Position is specified with longitude and latitude in decimal number.
+    A station has several others attributes helping for display.
+    """
+
     # Constructor of station
     def __init__(self, lon=0.0, lat=0.0, name='nowhere', tag='NWH', xtag=0.0, ytag=0.0,Bpe=None):        
         self.fLonDeg = lon   # Longitude in degrees

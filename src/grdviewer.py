@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, qApp, \
                             QVBoxLayout, QWidget, QFileDialog
 
 # local modules
-import EarthPlot as plc
+import earthplot as plc
 
 # customised Dialog
 from viewer import ViewerPosDialog
@@ -25,7 +25,6 @@ from elevation import ElevDialog
 # imports from module Station
 import station as stn
 from station import StationDialog
-
 
 
 class GrdViewer(QMainWindow):
@@ -58,19 +57,19 @@ class GrdViewer(QMainWindow):
         self.centralwidget = QWidget()
 
         # Add menu bar and menus
-        self.menubar_ = self.createmenu()
+        self._menubar = self.createmenu()
 
         # Add map
         self.earth_plot = plc.EarthPlot(parent=self.centralwidget, config=self.config)
 
         # place test field in a vertical box layout
         vbox = QVBoxLayout(self.centralwidget)
-        vbox.addWidget(self.menubar_)
+        vbox.addWidget(self._menubar)
         vbox.addWidget(self.earth_plot)
 
         # self.centralwidget.addLayout(vbox)
         self.setCentralWidget(self.centralwidget)
-        self.show()
+        self.show() 
 
     # end of constructor
     
@@ -79,10 +78,10 @@ class GrdViewer(QMainWindow):
         """Create application menu bar, sub menus and items
         """
         # Add menu bar
-        self.menubar_ = self.menubar_()
+        menubar = self.menuBar()
 
         # Add File menu
-        self._menufile = self.menubar_.addMenu('File')
+        self._menufile = menubar.addMenu('File')
 
         # Items
         quit_action = QAction('Quit', self)
@@ -90,7 +89,7 @@ class GrdViewer(QMainWindow):
         quit_action.triggered.connect(qApp.quit)
 
         # Add Viewer Menu
-        self._menuview = self.menubar_.addMenu('View')
+        self._menuview = menubar.addMenu('View')
 
         # Add Items
         change_viewer_pos_action = QAction('Viewer position', self)
@@ -109,7 +108,7 @@ class GrdViewer(QMainWindow):
         menuprojection.triggered[QAction].connect(self.toggleprojection)
 
         # Add display grd Menu
-        self._menupattern = self.menubar_.addMenu('Pattern')
+        self._menupattern = menubar.addMenu('Pattern')
         
         # Add Items
         load_grd_action = QAction('Load Grd', self)
@@ -117,7 +116,7 @@ class GrdViewer(QMainWindow):
         load_grd_action.triggered.connect(self.load_grd_dialog)
 
         # Add Misc menu
-        self._menumisc = self.menubar_.addMenu('Misc.')
+        self._menumisc = menubar.addMenu('Misc.')
         # Add Items
         disp_elev_action = QAction('Elevation Contour', self)
         self._menumisc.addAction(disp_elev_action)
@@ -128,14 +127,14 @@ class GrdViewer(QMainWindow):
         self._menumisc.addAction(add_station_action)
         add_station_action.triggered.connect(self.station_dialog)
 
-        return self.menubar_
+        return menubar
     # end of method createmenu
 
     def viewer_dialog(self):
         """This method pops up the viewer setting dialog widget.
         Viewer coordinates are given in LLA.
         """
-        dialbox = ViewerPosDialog(self.earth_plot.viewer, self.earth_plot)
+        dialbox = ViewerPosDialog(self.earth_plot._viewer, self.earth_plot)
         dialbox.exec_()
     # end of method viewer_dialog
     
@@ -154,8 +153,7 @@ class GrdViewer(QMainWindow):
     def zoom_dialog(self):
         """Open dialog to set zoom of Earth plot.
         """
-        dialbox = ZoomDialog(self.earth_plot.zoom, \
-                             self.earth_plot.strProjection, \
+        dialbox = ZoomDialog(self.earth_plot._zoom, \
                              self.earth_plot)
         dialbox.exec_()
     # end of method zoom_dialog
@@ -173,7 +171,7 @@ class GrdViewer(QMainWindow):
         filename, _ = StationDialog.getOpenFileName()
         if filename:
             # add the stations to the station list
-            self.earth_plot.stationList.extend(stn.getStationFromFile(filename))
+            self.earth_plot._stations.extend(stn.getStationFromFile(filename))
             # refresh display
             self.earth_plot.draw()
     # end of method station_dialog

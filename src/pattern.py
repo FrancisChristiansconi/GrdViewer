@@ -269,7 +269,7 @@ class GrdDialog(QDialog):
 
         self.strFileName = strFileName
         self.parent = parent
-        self.earthPlt = parent.earthPlt
+        self.earth_plot = parent.earth_plot
 
         # Add Title to the widget
         self.setWindowTitle('Load pattern')
@@ -280,7 +280,7 @@ class GrdDialog(QDialog):
 
         # Add longitude field
         self.viewLonLbl = QLabel('Longitude', parent=self)
-        self.viewLonField = QLineEdit(str(parent.earthPlt.viewer.fLonDeg), parent=self)
+        self.viewLonField = QLineEdit(str(parent.earth_plot._viewer.longitude()), parent=self)
         hbox1 = QHBoxLayout(None)
         hbox1.addWidget(self.viewLonLbl)
         hbox1.addStretch(1)
@@ -344,16 +344,16 @@ class GrdDialog(QDialog):
 
     def setLoadGrd(self):
         self.close()
-        self.earthPlt.setViewLon(float(self.viewLonField.text()))
-        grd = self.earthPlt.loadGrd(self.strFileName, bRevertX=self.chkRevertX.checkState(), \
+        self.earth_plot.setViewLon(float(self.viewLonField.text()))
+        grd = self.earth_plot.loadGrd(self.strFileName, bRevertX=self.chkRevertX.checkState(), \
                                                 bRevertY=self.chkRevertY.checkState(), \
                                                 bUseSecondPol=self.chkXPol.checkState(), \
                                                 bDisplaySlope=self.chkSlope.checkState())
-        self.earthPlt.setTitle(self.viewTitleField.text())
+        self.earth_plot.setTitle(self.viewTitleField.text())
         grd.fIsolvl = [float(s) for s in self.viewIsoLvlField.text().split(',')]
-        self.earthPlt.draw(self.earthPlt.strProjection)
+        self.earth_plot.draw()
         # add item in Grd menu
-        self.parent.menuPat.addMenu('Pattern 1')
+        self.parent._menupattern.addMenu('Pattern 1')
 
 
     def getIsoLvl(self, grd: Grd=None):

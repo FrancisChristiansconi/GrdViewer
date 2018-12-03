@@ -6,7 +6,7 @@ class Zoom(object):
 
     # Zoom class constructor
     def __init__(self, proj='geos', geo=(-9.0,-9.0,9.0,9.0), merc=(-180.0, -85.0, 180.0, -85.0)):
-        self.strProjection = proj
+        self._projection = proj
         self.fLowLeftAz    = geo[0]  # deg Azimuth
         self.fLowLeftEl    = geo[1]  # deg Elevation
         self.fUpRightAz    = geo[2]  # deg Azimuth
@@ -26,7 +26,7 @@ class ZoomDialog(QDialog):
         super().__init__()
 
         # Link to parent's Earth Plot
-        self.earthPlt = parent
+        self.earth_plot = parent
 
         self.zoom = zoom
 
@@ -48,7 +48,7 @@ class ZoomDialog(QDialog):
         self.viewSetLowLeftY = QLineEdit(parent=self)
         self.viewSetUpRightX = QLineEdit(parent=self)
         self.viewSetUpRightY = QLineEdit(parent=self)
-        if self.earthPlt.strProjection == 'geos':
+        if self.earth_plot._projection == 'geos':
             self.viewLblLowLeftX.setText('min. Az')
             self.viewLblLowLeftY.setText('min. El')
             self.viewLblUpRightX.setText('max. Az')
@@ -57,7 +57,7 @@ class ZoomDialog(QDialog):
             self.viewSetLowLeftY.setText(str(self.zoom.fLowLeftEl))
             self.viewSetUpRightX.setText(str(self.zoom.fUpRightAz))
             self.viewSetUpRightY.setText(str(self.zoom.fUpRightEl))
-        elif self.earthPlt.strProjection == 'merc':
+        elif self.earth_plot._projection == 'merc':
             self.viewLblLowLeftX.setText('min. Lon')
             self.viewLblLowLeftY.setText('min. Lat')
             self.viewLblUpRightX.setText('max. Lon')
@@ -91,7 +91,7 @@ class ZoomDialog(QDialog):
         gbox.addWidget(cancelButton, 3, 4)
 
         # connect buttons to actions
-        okButton.clicked.connect(self.updateZoom)
+        okButton.clicked.connect(self.updatezoom)
         cancelButton.clicked.connect(self.close)
         
         # Dialog is modal to avoid reentry and weird behaviour
@@ -99,19 +99,19 @@ class ZoomDialog(QDialog):
         self.show()
     # end of constructor
 
-    def updateZoom(self):
-        if self.earthPlt.strProjection == 'geos':
+    def updatezoom(self):
+        if self.earth_plot._projection == 'geos':
             self.zoom.fLowLeftAz = float(self.viewSetLowLeftX.text())
             self.zoom.fLowLeftEl = float(self.viewSetLowLeftY.text())
             self.zoom.fUpRightAz = float(self.viewSetUpRightX.text())
             self.zoom.fUpRightEl = float(self.viewSetUpRightY.text())
-        elif self.earthPlt.strProjection == 'merc':
+        elif self.earth_plot._projection == 'merc':
             self.zoom.fLowLeftLon = float(self.viewSetLowLeftX.text())
             self.zoom.fLowLeftLat = float(self.viewSetLowLeftY.text())
             self.zoom.fUpRightLon = float(self.viewSetUpRightX.text())
             self.zoom.fUpRightLat = float(self.viewSetUpRightY.text())
-        self.earthPlt.updateZoom()
-        self.earthPlt.draw(self.earthPlt.strProjection)
+        self.earth_plot.updatezoom()
+        self.earth_plot.draw()
         self.close()
-    # end of method updateZoom
+    # end of method updatezoom
 # end of class ZoomDialog

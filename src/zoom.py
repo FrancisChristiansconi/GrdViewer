@@ -1,98 +1,114 @@
+"""This module deals with zoom capability of the application.
+"""
+# imports
 from PyQt5.QtWidgets import QDialog, QLineEdit, QGridLayout, \
                             QPushButton, QLabel
 import PyQt5.QtCore as QtCore
 
-class Zoom(object):
 
-    # Zoom class constructor
-    def __init__(self, proj='geos', geo=(-9.0,-9.0,9.0,9.0), merc=(-180.0, -85.0, 180.0, -85.0)):
-        self._projection = proj
-        self.fLowLeftAz    = geo[0]  # deg Azimuth
-        self.fLowLeftEl    = geo[1]  # deg Elevation
-        self.fUpRightAz    = geo[2]  # deg Azimuth
-        self.fUpRightEl    = geo[3]  # deg Elevation
-        self.fLowLeftLon   = merc[0] # deg Longitude
-        self.fLowLeftLat   = merc[1] # deg Latitude
-        self.fUpRightLon   = merc[2] # deg Longitude
-        self.fUpRightLat   = merc[3] # deg Latitude
-# End of 
+class Zoom(object):
+    """This class represents the current zoom of the earth plot.
+    """
+   
+    def __init__(self, proj='geos', geo=(-9.0, -9.0, 9.0, 9.0), \
+                 merc=(-180.0, -85.0, 180.0, -85.0)):
+        """Default constructor for Zoom objects.
+        Works if zoom defined in AzEl of LL coordinates.
+        """
+        self._projection = proj      # projection
+        self.min_azimuth = geo[0]    # deg Azimuth
+        self.min_elevation = geo[1]  # deg Elevation
+        self.max_azimuth = geo[2]    # deg Azimuth
+        self.max_elevation = geo[3]  # deg Elevation
+        self.min_longitude = merc[0] # deg Longitude
+        self.min_latitude = merc[1]  # deg Latitude
+        self.max_longitude = merc[2] # deg Longitude
+        self.max_latitude = merc[3]  # deg Latitude
+    # emd of constructor
+# End of class Zoom
 
 
 class ZoomDialog(QDialog):
-
-    # ZoomDialog class constructor
+    """Customized dialog box to set zoom for the earth plot.
+    """
     def __init__(self, zoom: Zoom, parent=None):
+        """ZoomDialog class constructor.
+        """
         # Parent constructor
         super().__init__()
 
         # Link to parent's Earth Plot
         self.earth_plot = parent
 
-        self.zoom = zoom
+        self._zoom = zoom
 
         # Add Title to the widget
         self.setWindowTitle('Zoom')
         self.setMinimumSize(70, 50)
         
         # Add labels
-        self.viewLblLowLeftX = QLabel(parent=self)
-        self.viewLblLowLeftY = QLabel(parent=self)
-        self.viewLblUpRightX = QLabel(parent=self)
-        self.viewLblUpRightY = QLabel(parent=self)
-        self.viewLblLowLeftX.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.viewLblLowLeftY.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.viewLblUpRightX.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.viewLblUpRightY.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        min_x_label = QLabel(parent=self)
+        min_y_label = QLabel(parent=self)
+        max_x_label = QLabel(parent=self)
+        max_y_label = QLabel(parent=self)
+        min_x_label.setAlignment(QtCore.Qt.AlignRight
+                                 | QtCore.Qt.AlignVCenter)
+        min_y_label.setAlignment(QtCore.Qt.AlignRight
+                                 | QtCore.Qt.AlignVCenter)
+        max_x_label.setAlignment(QtCore.Qt.AlignRight
+                                 | QtCore.Qt.AlignVCenter)
+        max_y_label.setAlignment(QtCore.Qt.AlignRight
+                                 | QtCore.Qt.AlignVCenter)
         # Add field
-        self.viewSetLowLeftX = QLineEdit(parent=self)
-        self.viewSetLowLeftY = QLineEdit(parent=self)
-        self.viewSetUpRightX = QLineEdit(parent=self)
-        self.viewSetUpRightY = QLineEdit(parent=self)
-        if self.earth_plot._projection == 'geos':
-            self.viewLblLowLeftX.setText('min. Az')
-            self.viewLblLowLeftY.setText('min. El')
-            self.viewLblUpRightX.setText('max. Az')
-            self.viewLblUpRightY.setText('max. El')
-            self.viewSetLowLeftX.setText(str(self.zoom.fLowLeftAz))
-            self.viewSetLowLeftY.setText(str(self.zoom.fLowLeftEl))
-            self.viewSetUpRightX.setText(str(self.zoom.fUpRightAz))
-            self.viewSetUpRightY.setText(str(self.zoom.fUpRightEl))
-        elif self.earth_plot._projection == 'merc':
-            self.viewLblLowLeftX.setText('min. Lon')
-            self.viewLblLowLeftY.setText('min. Lat')
-            self.viewLblUpRightX.setText('max. Lon')
-            self.viewLblUpRightY.setText('max. Lat')
-            self.viewSetLowLeftX.setText(str(self.zoom.fLowLeftLon))
-            self.viewSetLowLeftY.setText(str(self.zoom.fLowLeftLat))
-            self.viewSetUpRightX.setText(str(self.zoom.fUpRightLon))
-            self.viewSetUpRightY.setText(str(self.zoom.fUpRightLat))
+        self.min_x_field = QLineEdit(parent=self)
+        self.min_y_field = QLineEdit(parent=self)
+        self.max_x_field = QLineEdit(parent=self)
+        self.max_y_field = QLineEdit(parent=self)
+        if self.earth_plot.projection() == 'geos':
+            min_x_label.setText('min. Az')
+            min_y_label.setText('min. El')
+            max_x_label.setText('max. Az')
+            max_y_label.setText('max. El')
+            self.min_x_field.setText(str(self._zoom.min_azimuth))
+            self.min_y_field.setText(str(self._zoom.min_elevation))
+            self.max_x_field.setText(str(self._zoom.max_azimuth))
+            self.max_y_field.setText(str(self._zoom.max_elevation))
+        elif self.earth_plot.projection() == 'merc':
+            min_x_label.setText('min. Lon')
+            min_y_label.setText('min. Lat')
+            max_x_label.setText('max. Lon')
+            max_y_label.setText('max. Lat')
+            self.min_x_field.setText(str(self._zoom.min_longitude))
+            self.min_y_field.setText(str(self._zoom.min_latitude))
+            self.max_x_field.setText(str(self._zoom.max_longitude))
+            self.max_y_field.setText(str(self._zoom.max_latitude))
 
 
         # Add a vertical box layout
-        gbox = QGridLayout(self)
+        gridbox = QGridLayout(self)
 
         # Line 1
-        gbox.addWidget(self.viewLblLowLeftX, 1, 1)
-        gbox.addWidget(self.viewSetLowLeftX, 1, 2)
-        gbox.addWidget(self.viewLblLowLeftY, 1, 3)
-        gbox.addWidget(self.viewSetLowLeftY, 1, 4)
+        gridbox.addWidget(min_x_label, 1, 1)
+        gridbox.addWidget(self.min_x_field, 1, 2)
+        gridbox.addWidget(min_y_label, 1, 3)
+        gridbox.addWidget(self.min_y_field, 1, 4)
         # Line 2
-        gbox.addWidget(self.viewLblUpRightX, 2, 1)
-        gbox.addWidget(self.viewSetUpRightX, 2, 2)
-        gbox.addWidget(self.viewLblUpRightY, 2, 3)
-        gbox.addWidget(self.viewSetUpRightY, 2, 4)
+        gridbox.addWidget(max_x_label, 2, 1)
+        gridbox.addWidget(self.max_x_field, 2, 2)
+        gridbox.addWidget(max_y_label, 2, 3)
+        gridbox.addWidget(self.max_y_field, 2, 4)
         
         # Add Ok/Cancel buttons
-        okButton = QPushButton('OK',self)
-        cancelButton = QPushButton('Cancel',self)
+        okbutton = QPushButton('OK',self)
+        cancelbutton = QPushButton('Cancel',self)
 
         # line 3
-        gbox.addWidget(okButton, 3, 3)
-        gbox.addWidget(cancelButton, 3, 4)
+        gridbox.addWidget(okbutton, 3, 3)
+        gridbox.addWidget(cancelbutton, 3, 4)
 
         # connect buttons to actions
-        okButton.clicked.connect(self.updatezoom)
-        cancelButton.clicked.connect(self.close)
+        okbutton.clicked.connect(self.updatezoom)
+        cancelbutton.clicked.connect(self.close)
         
         # Dialog is modal to avoid reentry and weird behaviour
         self.setModal(True)
@@ -100,16 +116,19 @@ class ZoomDialog(QDialog):
     # end of constructor
 
     def updatezoom(self):
-        if self.earth_plot._projection == 'geos':
-            self.zoom.fLowLeftAz = float(self.viewSetLowLeftX.text())
-            self.zoom.fLowLeftEl = float(self.viewSetLowLeftY.text())
-            self.zoom.fUpRightAz = float(self.viewSetUpRightX.text())
-            self.zoom.fUpRightEl = float(self.viewSetUpRightY.text())
-        elif self.earth_plot._projection == 'merc':
-            self.zoom.fLowLeftLon = float(self.viewSetLowLeftX.text())
-            self.zoom.fLowLeftLat = float(self.viewSetLowLeftY.text())
-            self.zoom.fUpRightLon = float(self.viewSetUpRightX.text())
-            self.zoom.fUpRightLat = float(self.viewSetUpRightY.text())
+        """This method update the earth plot zoom depending on
+        the projection.
+        """
+        if self.earth_plot.projection() == 'geos':
+            self._zoom.min_azimuth = float(self.min_x_field.text())
+            self._zoom.min_elevation = float(self.min_y_field.text())
+            self._zoom.max_azimuth = float(self.max_x_field.text())
+            self._zoom.max_elevation = float(self.max_y_field.text())
+        elif self.earth_plot.projection() == 'merc':
+            self._zoom.min_longitude = float(self.min_x_field.text())
+            self._zoom.min_latitude = float(self.min_y_field.text())
+            self._zoom.max_longitude = float(self.max_x_field.text())
+            self._zoom.max_latitude = float(self.max_y_field.text())
         self.earth_plot.updatezoom()
         self.earth_plot.draw()
         self.close()

@@ -19,7 +19,9 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qAp
                             QHBoxLayout, QVBoxLayout, QPushButton, QWidget, QFileDialog, QLabel, \
                             QGridLayout, QCheckBox
 
-cstFIsolvl = [25,30,35,38,40]
+# Constants
+# Default isolevel to be displayed at patten loading
+DEFAULT_ISOLEVEL_DBI = [25, 30, 35, 38, 40]
 
 
 class Grd(object):
@@ -358,6 +360,6 @@ class GrdDialog(QDialog):
 
     def getIsoLvl(self, grd: Grd=None):
         if grd == None:
-            return ",".join(str(x) for x in cstFIsolvl)
+            return ",".join(str(x) for x in DEFAULT_ISOLEVEL_DBI)
         else:
             return ",".join(str(x) for x in grd.fIsolvl)

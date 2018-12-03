@@ -171,7 +171,7 @@ class GrdViewer(QMainWindow):
         filename, _ = StationDialog.getOpenFileName()
         if filename:
             # add the stations to the station list
-            self.earth_plot._stations.extend(stn.getStationFromFile(filename))
+            self.earth_plot._stations.extend(stn.get_station_from_file(filename))
             # refresh display
             self.earth_plot.draw()
     # end of method station_dialog

@@ -288,15 +288,15 @@ class EarthPlot(FigureCanvas):
 
             return pcmGrd
             
-    def draw_stations(self,_stations):
-        for s in _stations:
-            xSta, ySta = self._earth_map(s.fLonDeg,s.fLatDeg)
-            if s.fBpe:
-                circle = plt.Circle((xSta, ySta), self._viewer.altitude() * s.fBpe * np.pi / 180, \
+    def draw_stations(self, stations):
+        for s in stations:
+            xSta, ySta = self._earth_map(s.longitude(),s.latitude())
+            if s.beampointingerr():
+                circle = plt.Circle((xSta, ySta), self._viewer.altitude() * s.beampointingerr() * np.pi / 180, \
                                     color='k', fill=False, linewidth=0.3, linestyle='dashed')
                 self._earth_map.ax.add_artist(circle)
             self._earth_map.scatter(xSta,ySta,2,marker='o',color='r')
-            self._earth_map.ax.annotate(s.strTag, xy=(xSta + s.fTagX, ySta + s.fTagY))
+            self._earth_map.ax.annotate(s.tag(), xy=(xSta + s.xtag(), ySta + s.ytag()))
 
 
     # Zoom on the _earth_map

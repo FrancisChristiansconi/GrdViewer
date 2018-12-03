@@ -109,7 +109,7 @@ class EarthPlot(FigureCanvas):
     # End of EarthPlot constructor
 
     # Redefine draw function
-    def draw(self, proj=None):
+    def draw(self):
         # clear display and reset it
         self._axes.clear()
         if self._clrbar:
@@ -178,7 +178,7 @@ class EarthPlot(FigureCanvas):
         # i: intermediate
         # h: high
         # f: full
-        if proj=='geos':
+        if proj == 'geos':
             # NB: latitude has to stay 0.0 for geos projection
             self._earth_map = Base_earth_map(projection=proj, \
                             rsphere=(EARTH_RAD_EQUATOR_M,EARTH_RAD_POLE_M), \

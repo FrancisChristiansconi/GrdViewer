@@ -1,0 +1,6 @@
+# folders
+./data
+./out
+
+# files
+./src/*.pyc

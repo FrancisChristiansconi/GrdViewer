@@ -34,7 +34,7 @@ EARTH_RAD_POLE_M = 6356752.3142 # m
 
 class EarthPlot(FigureCanvas):
     """This class is the core of the appliccation. It display the Earth
-    _earth_map, the patterns, stations, elevation contour, etc.
+    map, the patterns, stations, elevation contour, etc.
     """ 
     # EarthPlot constructor
     def __init__(self, parent=None, width=5, height=5, dpi=300, \
@@ -75,6 +75,8 @@ class EarthPlot(FigureCanvas):
             fontsize = config.getint('DEFAULT', 'font size', fallback=5)
             # set default font size
             plt.rcParams.update({'font.size': fontsize})
+            self._axes.xaxis.label.set_fontsize(fontsize)
+            self._axes.yaxis.label.set_fontsize(fontsize)
 
             # set map resolution (take only first letter in lower case)
             self._resolution = config.get('DEFAULT', \
@@ -90,13 +92,13 @@ class EarthPlot(FigureCanvas):
             self._zoom = Zoom(self._projection)
             if 'GEO' in config:
                 if 'min azimuth' in config['GEO']:
-                    self._zoom.fLowLeftAz = config.getfloat('GEO', 'min azimuth')
+                    self._zoom.min_azimuth = config.getfloat('GEO', 'min azimuth')
                 if 'min elevation' in config['GEO']:
-                    self._zoom.fLowLeftEl = config.getfloat('GEO', 'min elevation')
+                    self._zoom.min_elevation = config.getfloat('GEO', 'min elevation')
                 if 'max azimuth' in config['GEO']:
-                    self._zoom.fUpRightAz = config.getfloat('GEO', 'max azimuth')
+                    self._zoom.max_azimuth = config.getfloat('GEO', 'max azimuth')
                 if 'max elevation' in config['GEO']:
-                    self._zoom.fUpRightEl = config.getfloat('GEO', 'max elevation')
+                    self._zoom.max_elevation = config.getfloat('GEO', 'max elevation')
             if 'MERCATOR' in config:
                 if 'min longitude' in config['MERCATOR']:
                     self._zoom.fLowLeftLon = config.getfloat('MERCATOR', 'min longitude')
@@ -141,12 +143,12 @@ class EarthPlot(FigureCanvas):
             self._axes.set_xlabel('Azimuth (deg)')
             self._axes.set_ylabel('Elevation (deg)')
             # compute and add x-axis ticks
-            azticks = np.arange(self._zoom.fLowLeftAz, self._zoom.fUpRightAz+0.1, 2)
+            azticks = np.arange(self._zoom.min_azimuth, self._zoom.max_azimuth + 0.1, 2)
             self._axes.set_xticks(self.Az2X(azticks)
                                   + self._earth_map(self._viewer.longitude(), 0.0)[0])
             self._axes.set_xticklabels(str(f) for f in azticks)
             # compute and add y-axis ticks
-            elticks = np.arange(self._zoom.fLowLeftEl, self._zoom.fUpRightEl+0.1, 2)
+            elticks = np.arange(self._zoom.min_elevation, self._zoom.max_elevation + 0.1, 2)
             self._axes.set_yticks(self.El2Y(elticks)
                                   + self._earth_map(self._viewer.longitude(), 0.0)[1])
             self._axes.set_yticklabels(str(f) for f in elticks)
@@ -166,7 +168,7 @@ class EarthPlot(FigureCanvas):
     def setViewLon(self, lon):
         self._viewer.longitude(lon)
         
-    # Draw Earth and return Base_earth_map handler
+    # Draw Earth and return Basemap handler
     def drawEarth(self, proj='geos', resolution='c'):
         # if self._earth_map:
             # ax = self._earth_map.ax
@@ -268,22 +270,22 @@ class EarthPlot(FigureCanvas):
             fEllin = np.linspace(grd.MinEl(),grd.MaxEl(),iNy)
             fAzMesh, fElMesh = np.meshgrid(fAzlin, fEllin)
             # display color mesh
-            c_earth_map = plt.get_c_earth_map('jet')
-            c_earth_map.set_over('white',grd.fSlope[1])
-            c_earth_map.set_under('white',grd.fSlope[0])
+            cmap = plt.get_cmap('jet')
+            cmap.set_over('white',grd.fSlope[1])
+            cmap.set_under('white',grd.fSlope[0])
             xOrigin, yOrigin = self._earth_map(self._viewer.longitude(),self._viewer.latitude())
             pcmGrd = self._earth_map.pcolormesh(self.Az2X(fAzMesh) + xOrigin, \
                                          self.El2Y(fElMesh) + yOrigin, \
                                          grd.InterpSlope(fAzMesh,fElMesh), \
                                          vmin=grd.fSlope[0],vmax=grd.fSlope[1], \
-                                         c_earth_map=c_earth_map,alpha=0.5)
+                                         cmap=cmap,alpha=0.5)
             # add color bar
             if self._clrbar:
-                self._clrbar = self._figure.colorbar(pcmGrd, _clrbar_axes=self._clrbar_axes)     
+                self._clrbar = self._figure.colorbar(pcmGrd, cax=self._clrbar_axes)     
             else:
                 divider = make_axes_locatable(self._axes)
                 self._clrbar_axes = divider.append_axes("right", size="5%", pad=0.05)
-                self._clrbar = self._figure.colorbar(pcmGrd,_clrbar_axes=self._clrbar_axes)     
+                self._clrbar = self._figure.colorbar(pcmGrd, cax=self._clrbar_axes)     
             self._clrbar.ax.set_ylabel('Pattern slope (dB/deg)')
 
             return pcmGrd
@@ -301,14 +303,14 @@ class EarthPlot(FigureCanvas):
 
     # Zoom on the _earth_map
     def updatezoom(self):
-        self.llcrnrx   = self.Az2X(self._zoom.fLowLeftAz)
-        self.llcrnry   = self.El2Y(self._zoom.fLowLeftEl)
-        self.urcrnrx   = self.Az2X(self._zoom.fUpRightAz)
-        self.urcrnry   = self.El2Y(self._zoom.fUpRightEl)
-        self.llcrnrlon = self._zoom.fLowLeftLon
-        self.llcrnrlat = self._zoom.fLowLeftLat
-        self.urcrnrlon = self._zoom.fUpRightLon
-        self.urcrnrlat = self._zoom.fUpRightLat
+        self.llcrnrx   = self.Az2X(self._zoom.min_azimuth)
+        self.llcrnry   = self.El2Y(self._zoom.min_elevation)
+        self.urcrnrx   = self.Az2X(self._zoom.max_azimuth)
+        self.urcrnry   = self.El2Y(self._zoom.max_elevation)
+        self.llcrnrlon = self._zoom.min_longitude
+        self.llcrnrlat = self._zoom.min_latitude
+        self.urcrnrlon = self._zoom.max_longitude
+        self.urcrnrlat = self._zoom.max_latitude
         self.centerx   = (self.llcrnrx + self.urcrnrx) / 2
         self.centery   = (self.llcrnry + self.urcrnry) / 2
         self.cntrlon   = (self.llcrnrlon + self.urcrnrlon) / 2

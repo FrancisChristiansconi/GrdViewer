@@ -62,11 +62,12 @@ class GrdViewer(QMainWindow):
         # Create Main window central widget
         self.centralwidget = QWidget(self)
 
+        # Add menu bar and menus
+        self._menubar = self.createmenu()
+
         # Add map
         self.earth_plot = plc.EarthPlot(parent=self.centralwidget, config=self.config)
 
-        # Add menu bar and menus
-        self._menubar = self.createmenu()
 
         # place test field in a vertical box layout
         vbox = QVBoxLayout(self.centralwidget)
@@ -136,11 +137,11 @@ class GrdViewer(QMainWindow):
         menuresolution.triggered[QAction].connect(self.set_earth_resolution)
 
         # Add display grd Menu
-        self._menupattern = menubar.addMenu('Pattern')
+        self.menupattern = menubar.addMenu('Pattern')
         
         # Add Items
         load_grd_action = QAction('Load Grd', self)
-        self._menupattern.addAction(load_grd_action)
+        self.menupattern.addAction(load_grd_action)
         load_grd_action.triggered.connect(self.load_grd_dialog)
 
         # Add Misc menu
@@ -162,7 +163,7 @@ class GrdViewer(QMainWindow):
         """This method pops up the viewer setting dialog widget.
         Viewer coordinates are given in LLA.
         """
-        dialbox = ViewerPosDialog(self.earth_plot._viewer, self.earth_plot)
+        dialbox = ViewerPosDialog(self.earth_plot.viewer(), self.earth_plot)
         dialbox.exec_()
     # end of method viewer_dialog
     
@@ -181,7 +182,7 @@ class GrdViewer(QMainWindow):
     def zoom_dialog(self):
         """Open dialog to set zoom of Earth plot.
         """
-        dialbox = ZoomDialog(self.earth_plot._zoom, \
+        dialbox = ZoomDialog(self.earth_plot.zoom(), \
                              self.earth_plot)
         dialbox.exec_()
     # end of method zoom_dialog
@@ -220,12 +221,12 @@ class GrdViewer(QMainWindow):
         """
         for key in self.earth_plot._grds:
             menu_action = self.earth_plot._grds[key]['menu'].menuAction()
-            self._menupattern.removeAction(menu_action)
+            self.menupattern.removeAction(menu_action)
         self.earth_plot._grds.clear()
         self.earth_plot._stations.clear()
         self.earth_plot._elev.clear()
-        self.earth_plot._zoom = Zoom()
-        self.earth_plot._viewer = ViewerPos()
+        self.earth_plot.zoom(Zoom())
+        self.earth_plot.viewer(ViewerPos())
         self.earth_plot.draw()
     
     def set_earth_resolution(self, action):

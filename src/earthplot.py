@@ -21,6 +21,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import numpy as np
 
 # local module
+import pattern
 from pattern import Grd
 from pattern import GrdDialog
 from viewer import ViewerPos
@@ -31,6 +32,10 @@ from zoom import Zoom
 # Earth radius at equator and pole
 EARTH_RAD_EQUATOR_M = 6378137.0000 # m
 EARTH_RAD_POLE_M = 6356752.3142 # m
+
+# angle conversion
+DEG2RAD = np.pi / 180
+RAD2DEG = 180 / np.pi
 
 
 class EarthPlot(FigureCanvas):
@@ -109,11 +114,26 @@ class EarthPlot(FigureCanvas):
                     self._zoom.fUpRightLon = config.getfloat('MERCATOR', 'max longitude')
                 if 'max latitude' in config['MERCATOR']:
                     self._zoom.fUpRightLat = config.getfloat('MERCATOR', 'max latitude')
-
+            if 'PATTERN' in config:
+                if 'file' in config['PATTERN']:
+                    file = config.get('PATTERN', 'file')
+                    satlon = config.getfloat('PATTERN', 'longitude', fallback=0.0)
+                    title = config.get('PATTERN', 'title', fallback='Default title')
+                    level = config.get('PATTERN', 'level', fallback='25, 30, 35, 38, 40')
+                    revertx = config.getboolean('PATTERN', 'revert x-axis', fallback=False)
+                    reverty = config.getboolean('PATTERN', 'revert y-axis', fallback=False)
+                    secondpol = config.getboolean('PATTERN', 'second polarisation', fallback=False)
+                    slope = config.getboolean('PATTERN', 'slope', fallback=False)
+                    grd = self.loadgrd(filename=file, lon=satlon, alt=pattern.ALTGEO, \
+                                       revertx=revertx, reverty=reverty, \
+                                       secondpol=secondpol, dispslope=slope)['grd']       
+                    self.settitle(title)
+                    grd.fIsolvl = [float(s) for s in level.split(',')]
+        
         # initialize angle of view
         # Satellite Longitude, latitude and altitude
         self._viewer = ViewerPos(lon=longitude, lat=latitude, alt=altitude)
-        
+
     # End of EarthPlot constructor
 
     # Redefine draw function
@@ -127,30 +147,30 @@ class EarthPlot(FigureCanvas):
         self.updatezoom()
 
         # Draw Earth in the background
-        self.drawEarth(proj=self._projection, resolution=self._resolution)
+        self.drawearth(proj=self._projection, resolution=self._resolution)
 
         # draw all patterns
         for key in self._grds:
-            self.drawGrd(self._grds[key]['grd'])
+            self.drawgrd(self._grds[key]['grd'])
         # draw all Elevation contour
         if self._elev:
-            self.drawElevation([self._elev[key].angle() for key in self._elev])
+            self.drawelevation([self._elev[key].angle() for key in self._elev])
 
         # draw stations
         if self._stations:
-            self.draw_stations(self._stations)
+            self.drawstations(self._stations)
 
         if self._projection == 'geos':
             self._axes.set_xlabel('Azimuth (deg)')
             self._axes.set_ylabel('Elevation (deg)')
             # compute and add x-axis ticks
             azticks = np.arange(self._zoom.min_azimuth, self._zoom.max_azimuth + 0.1, 2)
-            self._axes.set_xticks(self.Az2X(azticks)
+            self._axes.set_xticks(self.az2x(azticks)
                                   + self._earth_map(self._viewer.longitude(), 0.0)[0])
             self._axes.set_xticklabels(str(f) for f in azticks)
             # compute and add y-axis ticks
             elticks = np.arange(self._zoom.min_elevation, self._zoom.max_elevation + 0.1, 2)
-            self._axes.set_yticks(self.El2Y(elticks)
+            self._axes.set_yticks(self.el2y(elticks)
                                   + self._earth_map(self._viewer.longitude(), 0.0)[1])
             self._axes.set_yticklabels(str(f) for f in elticks)
         elif self._projection == 'merc':
@@ -162,15 +182,17 @@ class EarthPlot(FigureCanvas):
         super().draw()
     # end of draw function
 
-    def setTitle(self, title: str):
+    def settitle(self, title: str):
+        """Set Earth plot title.
+        """
         self._plot_title = title
 
     # Change observer Longitude 
-    def setViewLon(self, lon):
+    def setviewerlongitude(self, lon):
         self._viewer.longitude(lon)
         
     # Draw Earth and return Basemap handler
-    def drawEarth(self, proj='geos', resolution='c'):
+    def drawearth(self, proj='geos', resolution='c'):
         # if self._earth_map:
             # ax = self._earth_map.ax
         # else:
@@ -198,8 +220,8 @@ class EarthPlot(FigureCanvas):
             
             self._earth_map.drawcoastlines(linewidth=0.5)
             self._earth_map.drawcountries(linewidth=0.5)
-            self._earth_map.drawparallels(np.arange(-90.,120.,30.),linewidth=0.5)
-            self._earth_map.drawmeridians(np.arange(0.,390.,30.),linewidth=0.5)
+            self._earth_map.drawparallels(np.arange(-90., 120., 30.), linewidth=0.5)
+            self._earth_map.drawmeridians(np.arange(0., 390., 30.), linewidth=0.5)
             self._earth_map.drawmapboundary(linewidth=0.5)
         elif proj=='merc':
             self._earth_map = Basemap(projection=proj, \
@@ -214,15 +236,15 @@ class EarthPlot(FigureCanvas):
 
             self._earth_map.drawcoastlines(linewidth=0.5)
             self._earth_map.drawcountries(linewidth=0.5)
-            self._earth_map.drawparallels(np.arange(-90.,91.,30.),linewidth=0.5)
-            self._earth_map.drawmeridians(np.arange(-180.,181.,30.),linewidth=0.5)
+            self._earth_map.drawparallels(np.arange(-90., 91., 30.), linewidth=0.5)
+            self._earth_map.drawmeridians(np.arange(-180., 181., 30.), linewidth=0.5)
             self._earth_map.drawmapboundary(linewidth=0.5)
     
         return self._earth_map
     # end of drawEarth function    
         
     # Draw isoElevation contours
-    def drawElevation(self,level=(10,20,30)):
+    def drawelevation(self, level=(10, 20, 30)):
         # define grid
         iNx = 200
         iNy = 200
@@ -234,44 +256,53 @@ class EarthPlot(FigureCanvas):
         fElev = self.elevation(fLonMesh, fLatMesh)
         csElev = self._earth_map.contour(fXMesh,fYMesh,fElev, level, colors='black', linestyles='dotted', linewidths=0.5)
         return csElev
-        
-        
-    # Compute elevation of spacecraft seen from a station on the ground
-    def elevation(self, fStaLon, fStaLat):
-        
+    # end of drawelevation    
+
+    def elevation(self, stalon, stalat):
+        """Compute elevation of spacecraft seen from a station on the ground.
+        """  
         # compute phi
-        fPhi = np.arccos(np.cos(np.pi / 180 * fStaLat) * np.cos(np.pi / 180 * (self._viewer.longitude() - fStaLon)))
+        phi = np.arccos(np.cos(DEG2RAD * stalat)
+              * np.cos(DEG2RAD * (self._viewer.longitude() - stalon)))
 
         # compute elevation
-        fElev = np.reshape([90 if phi == 0 else 180 / np.pi * np.arctan((np.cos(phi) - (EARTH_RAD_EQUATOR_M/(EARTH_RAD_EQUATOR_M+self._viewer.altitude())))/ np.sin(phi)) for phi in fPhi.flatten()], fPhi.shape)
+        elev = np.reshape([90 if phi == 0 else RAD2DEG * np.arctan((np.cos(phi) - (EARTH_RAD_EQUATOR_M/(EARTH_RAD_EQUATOR_M+self._viewer.altitude())))/ np.sin(phi)) for phi in phi.flatten()], phi.shape)
         
         # remove station out of view
-        fElev = np.where(np.absolute(fStaLon - self._viewer.longitude()) < 90,fElev,-1)
+        elev = np.where(np.absolute(stalon - self._viewer.longitude()) < 90, elev, -1)
         
         # Return vector
-        return fElev
+        return elev
     
-    # Load and display a grd file
-    def loadGrd(self, strFileName, bRevertX=False, bRevertY=False, bUseSecondPol=False, bDisplaySlope=False):
-        
+    def loadgrd(self, filename, lon, alt, revertx=False, reverty=False, secondpol=False, dispslope=False):
+        """Load and display a grd file.
+        """    
         # add item in Grd menu
         patternindex = len(self._grds) + 1
-        patternmenu = self.parent().parent()._menupattern.addMenu('Pattern ' + str(patternindex))
+        patternmenu = self.parent().parent().menupattern.addMenu('Pattern ' \
+                                                                  + str(patternindex))
         remove_pat_action = QAction('Remove', self.parent().parent())
         edit_pat_action = QAction('Edit', self.parent().parent())
         patternmenu.addAction(remove_pat_action)
         patternmenu.addAction(edit_pat_action)
-        remove_pat_action.triggered.connect(self.make_remgrd(strFileName))
-        edit_pat_action.triggered.connect(self.make_editgrd(strFileName))
+        remove_pat_action.triggered.connect(self.make_remgrd(filename))
+        edit_pat_action.triggered.connect(self.make_editgrd(filename))
 
         # Add grd in grd dictionary
-        self._grds[strFileName] = {'grd': Grd(strFileName, bRevertX=bRevertX, bRevertY=bRevertY, bUseSecondPol=bUseSecondPol, \
-                                             alt=self._viewer.altitude(), lon=self._viewer.longitude(), bDisplaySlope=bDisplaySlope), \
-                                   'menu': patternmenu}
+        self._grds[filename] = {'grd': Grd(filename, bRevertX=revertx, \
+                                           bRevertY=reverty, \
+                                           bUseSecondPol=secondpol, \
+                                           alt=alt, \
+                                           lon=lon, \
+                                           bDisplaySlope=dispslope), \
+                                'menu': patternmenu}
                                        
-        return self._grds[strFileName]
+        return self._grds[filename]
+    # end of loadgrd
 
     def make_remgrd(self,filename):
+        """Callback maker for remove pattern menu items.
+        """
         def remgrd():
             menu = self._grds[filename]['menu']
             menu_action = menu.menuAction()
@@ -279,8 +310,11 @@ class EarthPlot(FigureCanvas):
             del self._grds[filename]
             self.draw()
         return remgrd
-        
+    # end of function make_remgrd
+
     def make_editgrd(self,filename):
+        """Callback maker for edit pattern menu items.
+        """
         def editgrd():
             menu = self._grds[filename]['menu']
             menu_action = menu.menuAction()
@@ -289,14 +323,17 @@ class EarthPlot(FigureCanvas):
             dialbox = GrdDialog(filename, self.parent().parent())
             dialbox.exec_()
         return editgrd  
+    # end of function make_editgrd
 
-    def drawGrd(self, grd):
+    def drawgrd(self, grd):
+        """Draw pattern on the earth plot from the provided grd.
+        """
         x, y = self._earth_map(grd.fLonDeg, grd.fLatDeg)
-        if grd.bDisplaySlope == False:
+        if not grd.bDisplaySlope:
             try:
-                csGrd = self._earth_map.contour(x, y, grd.Copol(), grd.fIsolvl, linestyles='solid', linewidths=0.5)
-                self._axes.clabel(csGrd, grd.fIsolvl, inline=True, fmt='%1.1f',fontsize=5)
-                return csGrd
+                cs_grd = self._earth_map.contour(x, y, grd.Copol(), grd.fIsolvl, linestyles='solid', linewidths=0.5)
+                self._axes.clabel(cs_grd, grd.fIsolvl, inline=True, fmt='%1.1f',fontsize=5)
+                return cs_grd
             except ValueError as value_err:
                 print(value_err)
                 print('Pattern ' + grd.filename + ' will not be displayed.')
@@ -313,8 +350,8 @@ class EarthPlot(FigureCanvas):
             cmap.set_over('white',grd.fSlope[1])
             cmap.set_under('white',grd.fSlope[0])
             xOrigin, yOrigin = self._earth_map(self._viewer.longitude(),self._viewer.latitude())
-            pcmGrd = self._earth_map.pcolormesh(self.Az2X(fAzMesh) + xOrigin, \
-                                         self.El2Y(fElMesh) + yOrigin, \
+            pcmGrd = self._earth_map.pcolormesh(self.az2x(fAzMesh) + xOrigin, \
+                                         self.el2y(fElMesh) + yOrigin, \
                                          grd.InterpSlope(fAzMesh,fElMesh), \
                                          vmin=grd.fSlope[0],vmax=grd.fSlope[1], \
                                          cmap=cmap,alpha=0.5)
@@ -328,24 +365,31 @@ class EarthPlot(FigureCanvas):
             self._clrbar.ax.set_ylabel('Pattern slope (dB/deg)')
 
             return pcmGrd
-            
-    def draw_stations(self, stations):
+    # end of drawgrd method       
+
+    def drawstations(self, stations):
+        """This method display stations listed in the given stations list.
+        """
         for s in stations:
-            xSta, ySta = self._earth_map(s.longitude(),s.latitude())
+            # get coordinates of station in earth plot frame
+            xsta, ysta = self._earth_map(s.longitude(),s.latitude())
+            # if BPE defined, display circle around station
             if s.beampointingerr():
-                circle = plt.Circle((xSta, ySta), self._viewer.altitude() * s.beampointingerr() * np.pi / 180, \
+                circle = plt.Circle((xsta, ysta), self._viewer.altitude() * s.beampointingerr() * np.pi / 180, \
                                     color='k', fill=False, linewidth=0.3, linestyle='dashed')
                 self._earth_map.ax.add_artist(circle)
-            self._earth_map.scatter(xSta,ySta,2,marker='o',color='r')
-            self._earth_map.ax.annotate(s.tag(), xy=(xSta + s.xtag(), ySta + s.ytag()))
-
+            # display a dot at station coordinates
+            self._earth_map.scatter(xsta,ysta,2,marker='o',color='r')
+            # add station tag
+            self._earth_map.ax.annotate(s.tag(), xy=(xsta + s.xtag(), ysta + s.ytag()))
+    # end of method drawstations
 
     # Zoom on the _earth_map
     def updatezoom(self):
-        self.llcrnrx   = self.Az2X(self._zoom.min_azimuth)
-        self.llcrnry   = self.El2Y(self._zoom.min_elevation)
-        self.urcrnrx   = self.Az2X(self._zoom.max_azimuth)
-        self.urcrnry   = self.El2Y(self._zoom.max_elevation)
+        self.llcrnrx   = self.az2x(self._zoom.min_azimuth)
+        self.llcrnry   = self.el2y(self._zoom.min_elevation)
+        self.urcrnrx   = self.az2x(self._zoom.max_azimuth)
+        self.urcrnry   = self.el2y(self._zoom.max_elevation)
         self.llcrnrlon = self._zoom.min_longitude
         self.llcrnrlat = self._zoom.min_latitude
         self.urcrnrlon = self._zoom.max_longitude
@@ -356,18 +400,18 @@ class EarthPlot(FigureCanvas):
         self.cntrlat   = (self.llcrnrlat + self.urcrnrlat) / 2
 
     # convert Azimuth to _earth_map.x
-    def Az2X(self,fAz):
-        return fAz * np.pi / 180 * self._viewer.altitude()
+    def az2x(self, az):
+        return az * np.pi / 180 * self._viewer.altitude()
     
     # convert Elevation to _earth_map.y
-    def El2Y(self,fEl):
-        return fEl * np.pi / 180 * self._viewer.altitude()
+    def el2y(self, el):
+        return el * np.pi / 180 * self._viewer.altitude()
     
-    def X2Az(self,fX):
-        return fX / ( np.pi / 180 * self._viewer.altitude())
+    def x2az(self, x):
+        return x / (np.pi / 180 * self._viewer.altitude())
     
-    def Y2El(self,fY):
-        return fY / ( np.pi / 180 * self._viewer.altitude())
+    def y2el(self, y):
+        return y / (np.pi / 180 * self._viewer.altitude())
 
     def projection(self,proj: str = None):
         """This function allows access to attribute _projection.
@@ -379,6 +423,20 @@ class EarthPlot(FigureCanvas):
                 raise ValueError("Projection is either 'geos' or 'merc'.")
         return self._projection
     # end of function projection
+
+    def viewer(self, v=None):
+        """Get _viewer attribute.
+        """
+        if v:
+            self._viewer = v
+        return self._viewer
+
+    def zoom(self, z=None):
+        """Get _zoom attribute.
+        """
+        if z:
+            self._zoom = z
+        return self._zoom
 
     def set_resolution(self, resolution: str = 'c'):
         """Set Earth map resolution.

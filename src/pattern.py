@@ -23,6 +23,9 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qAp
 # Default isolevel to be displayed at patten loading
 DEFAULT_ISOLEVEL_DBI = [25, 30, 35, 38, 40]
 
+# geostationary altitude
+ALTGEO = 35786000.0 # m
+
 
 class Grd(object):
     
@@ -50,13 +53,13 @@ class Grd(object):
                 break
         
         # header content
-        self.iKTYPE  = tLines[iStart].split()[0]
-        self.iNSET   = tLines[iStart+1].split()[0]
-        self.iICOMP  = tLines[iStart+1].split()[1]
-        self.iNCOMP  = tLines[iStart+1].split()[2]
-        self.iIGRID  = tLines[iStart+1].split()[3]
-        self.iXI     = tLines[iStart+2].split()[0]
-        self.iYI     = tLines[iStart+2].split()[1]
+        self.iKTYPE = tLines[iStart].split()[0]
+        self.iNSET = tLines[iStart+1].split()[0]
+        self.iICOMP = tLines[iStart+1].split()[1]
+        self.iNCOMP = tLines[iStart+1].split()[2]
+        self.iIGRID = tLines[iStart+1].split()[3]
+        self.iXI = tLines[iStart+2].split()[0]
+        self.iYI = tLines[iStart+2].split()[1]
         if bRevertX == False:
             self.iXS     = float(tLines[iStart+3].split()[0])
             self.iXE     = float(tLines[iStart+3].split()[2])
@@ -272,7 +275,7 @@ class GrdDialog(QDialog):
         # Parent constructor
         super().__init__()
 
-        self.strFileName = strFileName
+        self.filename = strFileName
         self.parent = parent
         self.earth_plot = parent.earth_plot
 
@@ -349,12 +352,13 @@ class GrdDialog(QDialog):
 
     def setLoadGrd(self):
         self.close()
-        self.earth_plot.setViewLon(float(self.viewLonField.text()))
-        grd = self.earth_plot.loadGrd(self.strFileName, bRevertX=self.chkRevertX.checkState(), \
-                                                bRevertY=self.chkRevertY.checkState(), \
-                                                bUseSecondPol=self.chkXPol.checkState(), \
-                                                bDisplaySlope=self.chkSlope.checkState())['grd']
-        self.earth_plot.setTitle(self.viewTitleField.text())
+        grd = self.earth_plot.loadgrd(self.filename, lon=float(self.viewLonField.text()), \
+                                      alt=ALTGEO, \
+                                      revertx=self.chkRevertX.checkState(), \
+                                      reverty=self.chkRevertY.checkState(), \
+                                      secondpol=self.chkXPol.checkState(), \
+                                      dispslope=self.chkSlope.checkState())['grd']
+        self.earth_plot.settitle(self.viewTitleField.text())
         grd.fIsolvl = [float(s) for s in self.viewIsoLvlField.text().split(',')]
         self.earth_plot.draw()
 

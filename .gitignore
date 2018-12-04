@@ -1,0 +1,7 @@
+# folder
+data/
+src/__pycache__/
+
+# files
+*.pyc
+*.old

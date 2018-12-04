@@ -14,7 +14,7 @@ from matplotlib import cm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # import PyQt5 and link with matplotlib
-from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy
+from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 # import numpy
@@ -22,6 +22,7 @@ import numpy as np
 
 # local module
 from pattern import Grd
+from pattern import GrdDialog
 from viewer import ViewerPos
 from zoom import Zoom
 
@@ -130,7 +131,7 @@ class EarthPlot(FigureCanvas):
 
         # draw all patterns
         for key in self._grds:
-            self.drawGrd(self._grds[key])
+            self.drawGrd(self._grds[key]['grd'])
         # draw all Elevation contour
         if self._elev:
             self.drawElevation([self._elev[key].angle() for key in self._elev])
@@ -252,16 +253,54 @@ class EarthPlot(FigureCanvas):
     
     # Load and display a grd file
     def loadGrd(self, strFileName, bRevertX=False, bRevertY=False, bUseSecondPol=False, bDisplaySlope=False):
-        self._grds[strFileName] = Grd(strFileName, bRevertX=bRevertX, bRevertY=bRevertY, bUseSecondPol=bUseSecondPol, \
-                                       alt=self._viewer.altitude(), lon=self._viewer.longitude(), bDisplaySlope=bDisplaySlope)
-        return self._grds[strFileName]
         
+        # add item in Grd menu
+        patternindex = len(self._grds) + 1
+        patternmenu = self.parent().parent()._menupattern.addMenu('Pattern ' + str(patternindex))
+        remove_pat_action = QAction('Remove', self.parent().parent())
+        edit_pat_action = QAction('Edit', self.parent().parent())
+        patternmenu.addAction(remove_pat_action)
+        patternmenu.addAction(edit_pat_action)
+        remove_pat_action.triggered.connect(self.make_remgrd(strFileName))
+        edit_pat_action.triggered.connect(self.make_editgrd(strFileName))
+
+        # Add grd in grd dictionary
+        self._grds[strFileName] = {'grd': Grd(strFileName, bRevertX=bRevertX, bRevertY=bRevertY, bUseSecondPol=bUseSecondPol, \
+                                             alt=self._viewer.altitude(), lon=self._viewer.longitude(), bDisplaySlope=bDisplaySlope), \
+                                   'menu': patternmenu}
+                                       
+        return self._grds[strFileName]
+
+    def make_remgrd(self,filename):
+        def remgrd():
+            menu = self._grds[filename]['menu']
+            menu_action = menu.menuAction()
+            menu.parent().removeAction(menu_action)
+            del self._grds[filename]
+            self.draw()
+        return remgrd
+        
+    def make_editgrd(self,filename):
+        def editgrd():
+            menu = self._grds[filename]['menu']
+            menu_action = menu.menuAction()
+            menu.parent().removeAction(menu_action)
+            del self._grds[filename]
+            dialbox = GrdDialog(filename, self.parent().parent())
+            dialbox.exec_()
+        return editgrd  
+
     def drawGrd(self, grd):
         x, y = self._earth_map(grd.fLonDeg, grd.fLatDeg)
         if grd.bDisplaySlope == False:
-            csGrd = self._earth_map.contour(x, y, grd.Copol(), grd.fIsolvl, linestyles='solid', linewidths=0.5)
-            self._axes.clabel(csGrd, grd.fIsolvl, inline=True, fmt='%1.1f',fontsize=5)
-            return csGrd
+            try:
+                csGrd = self._earth_map.contour(x, y, grd.Copol(), grd.fIsolvl, linestyles='solid', linewidths=0.5)
+                self._axes.clabel(csGrd, grd.fIsolvl, inline=True, fmt='%1.1f',fontsize=5)
+                return csGrd
+            except ValueError as value_err:
+                print(value_err)
+                print('Pattern ' + grd.filename + ' will not be displayed.')
+                return None
         else:
             # define grid
             iNx = 1001
@@ -340,3 +379,13 @@ class EarthPlot(FigureCanvas):
                 raise ValueError("Projection is either 'geos' or 'merc'.")
         return self._projection
     # end of function projection
+
+    def set_resolution(self, resolution: str = 'c'):
+        """Set Earth map resolution.
+        """
+        self._resolution = resolution
+    # end of function set_resolution
+
+# end of class EarthPlot
+
+# end of module earthplot

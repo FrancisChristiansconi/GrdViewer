@@ -17,12 +17,18 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, qApp, \
 import earthplot as plc
 
 # customised Dialog
-from viewer import ViewerPosDialog
-from zoom import ZoomDialog
 from pattern import GrdDialog
 from elevation import ElevDialog
 
-# imports from module Station
+# import from viewer module
+from viewer import ViewerPos
+from viewer import ViewerPosDialog
+
+# import from zoom module
+from zoom import Zoom
+from zoom import ZoomDialog
+
+# imports from station module 
 import station as stn
 from station import StationDialog
 
@@ -54,13 +60,13 @@ class GrdViewer(QMainWindow):
         self.config.read('.\\GrdViewer\\grdviewer.ini')
 
         # Create Main window central widget
-        self.centralwidget = QWidget()
-
-        # Add menu bar and menus
-        self._menubar = self.createmenu()
+        self.centralwidget = QWidget(self)
 
         # Add map
         self.earth_plot = plc.EarthPlot(parent=self.centralwidget, config=self.config)
+
+        # Add menu bar and menus
+        self._menubar = self.createmenu()
 
         # place test field in a vertical box layout
         vbox = QVBoxLayout(self.centralwidget)
@@ -87,6 +93,9 @@ class GrdViewer(QMainWindow):
         quit_action = QAction('Quit', self)
         self._menufile.addAction(quit_action)
         quit_action.triggered.connect(qApp.quit)
+        clear_action = QAction('Clear plot', self)
+        self._menufile.addAction(clear_action)
+        clear_action.triggered.connect(self.clearplot)
 
         # Add Viewer Menu
         self._menuview = menubar.addMenu('View')
@@ -106,6 +115,25 @@ class GrdViewer(QMainWindow):
         menuprojection.addAction('Geo')
         menuprojection.addAction('Mercator')
         menuprojection.triggered[QAction].connect(self.toggleprojection)
+
+        # Add map resolution
+        menuresolution = self._menuview.addMenu('Map resolution')
+        # c: crude
+        # l: low
+        # i: intermediate
+        # h: high
+        # f: full
+        res_crude_action = QAction('crude', self)
+        res_low_action = QAction('low', self)
+        res_int_action = QAction('intermediate', self)
+        res_high_action = QAction('high', self)
+        res_full_action = QAction('full', self)
+        menuresolution.addAction(res_crude_action)
+        menuresolution.addAction(res_low_action)
+        menuresolution.addAction(res_int_action)
+        menuresolution.addAction(res_high_action)
+        menuresolution.addAction(res_full_action)
+        menuresolution.triggered[QAction].connect(self.set_earth_resolution)
 
         # Add display grd Menu
         self._menupattern = menubar.addMenu('Pattern')
@@ -186,10 +214,28 @@ class GrdViewer(QMainWindow):
             self.earth_plot.projection('merc')
             self.earth_plot.draw()
     # end of method toggleprojection
-   
+
+    def clearplot(self):
+        """Clear the Earth map plot 
+        """
+        for key in self.earth_plot._grds:
+            menu_action = self.earth_plot._grds[key]['menu'].menuAction()
+            self._menupattern.removeAction(menu_action)
+        self.earth_plot._grds.clear()
+        self.earth_plot._stations.clear()
+        self.earth_plot._elev.clear()
+        self.earth_plot._zoom = Zoom()
+        self.earth_plot._viewer = ViewerPos()
+        self.earth_plot.draw()
+    
+    def set_earth_resolution(self, action):
+        """Call back to call for EarthPlot set_resolution function.
+        """
+        self.earth_plot.set_resolution(action.text()[0].lower())
+        self.earth_plot.draw()
+    # end of set_earth_resolution
+
 # End of Class GrdViewer   
-
-
 
 
 # Main execution

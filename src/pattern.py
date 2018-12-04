@@ -28,6 +28,9 @@ class Grd(object):
     
     # constructor
     def __init__(self, strFileName=None, bRevertX=False, bRevertY=False, bUseSecondPol=False, alt=None, lon=None, bDisplaySlope=False):
+
+        self.filename = strFileName
+
         # open file and read text data
         oFile = open(strFileName, "r")
         # read all lines in a table
@@ -350,13 +353,10 @@ class GrdDialog(QDialog):
         grd = self.earth_plot.loadGrd(self.strFileName, bRevertX=self.chkRevertX.checkState(), \
                                                 bRevertY=self.chkRevertY.checkState(), \
                                                 bUseSecondPol=self.chkXPol.checkState(), \
-                                                bDisplaySlope=self.chkSlope.checkState())
+                                                bDisplaySlope=self.chkSlope.checkState())['grd']
         self.earth_plot.setTitle(self.viewTitleField.text())
         grd.fIsolvl = [float(s) for s in self.viewIsoLvlField.text().split(',')]
         self.earth_plot.draw()
-        # add item in Grd menu
-        self.parent._menupattern.addMenu('Pattern 1')
-
 
     def getIsoLvl(self, grd: Grd=None):
         if grd == None:

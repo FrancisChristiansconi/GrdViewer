@@ -1,23 +1,41 @@
+"""This module helps dealing with elevation contour display.
+"""
+# Imports
 # PyQt5 widgets import
-from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, QLineEdit, \
-                            QHBoxLayout, QVBoxLayout, QPushButton, QWidget, QFileDialog, QLabel, \
-                            QGridLayout, QCheckBox
+from PyQt5.QtWidgets import QDialog, QLineEdit, \
+                            QHBoxLayout, QVBoxLayout, QPushButton, QLabel
 
-cstFElevation = 10
 
+# Constants
+# Default elevation contour
+DEFAULT_ELEVATION = 10
+
+
+# Classes
 class Elevation(object):
+    """This class defines an elevation angle.
+    """
+    def __init__(self, elev=DEFAULT_ELEVATION):
+        self._angle = elev
 
-    def __init__(self, fElevation=cstFElevation):
-        self.fAngle = fElevation
-
+    def angle(self,a: float = None) -> float:
+        if a != None:
+            self._angle = a
+        return self._angle
+    # end of function angle
+    
+# end of class Elevation
 
 class ElevDialog(QDialog):
+    """This class defines a customised dialog box to set an elevation
+    angle to display on the parent's Earth plot.
+    """
 
     def __init__(self, parent=None):
         # Parent constructor
         super().__init__()
 
-        self.earthPlt = parent.earthPlt
+        self.earth_plot = parent.earth_plot
 
         # Add Title to the widget
         self.setWindowTitle('Add/Remove Elevation contour')
@@ -65,10 +83,10 @@ class ElevDialog(QDialog):
 
     def addElevContour(self):
         self.close()
-        self.earthPlt.dicElev['Elev' + self.fldElev.text()] = Elevation(float(self.fldElev.text()))
-        self.earthPlt.draw()
+        self.earth_plot._elev['Elev' + self.fldElev.text()] = Elevation(float(self.fldElev.text()))
+        self.earth_plot.draw()
 
     def remElevContour(self):
         self.close()
-        del self.earthPlt.dicElev['Elev' + self.fldElev.text()]
-        self.earthPlt.draw()
+        del self.earth_plot._elev['Elev' + self.fldElev.text()]
+        self.earth_plot.draw()

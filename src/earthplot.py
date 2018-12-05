@@ -333,6 +333,7 @@ class EarthPlot(FigureCanvas):
             try:
                 cs_grd = self._earth_map.contour(x, y, grd.Copol(), grd.fIsolvl, linestyles='solid', linewidths=0.5)
                 self._axes.clabel(cs_grd, grd.fIsolvl, inline=True, fmt='%1.1f',fontsize=5)
+                grd.displaymax(self._earth_map)
                 return cs_grd
             except ValueError as value_err:
                 print(value_err)

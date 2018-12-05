@@ -267,7 +267,26 @@ class Grd(object):
         else:
             return {'Az':np.reshape(self.interpAzCoGrad.ev(u.flatten(),v.flatten()),np.array(az).shape), \
                     'El':np.reshape(self.interpElCoGrad.ev(u.flatten(),v.flatten()),np.array(az).shape)}
-        
+
+    def getmax(self):
+        """Get max directivity value and coordinates.
+        """
+        max_value = np.max(self.fCoMag)
+        max_index = np.argmax(self.fCoMag)
+        max_longitude = self.fLonDeg.flatten()[max_index]
+        max_latitude = self.fLatDeg.flatten()[max_index]
+        return max_value, max_longitude, max_latitude
+    # end of function getmax
+
+    def displaymax(self, earthmap):
+        max_val, max_lon, max_lat = self.getmax()
+        max_x, max_y = earthmap(max_lon, max_lat)
+        earthmap.scatter(x=max_x, y=max_y, s=20, marker='+', color='k', \
+                         linewidths=0.1, edgecolors='none')
+        earthmap.ax.annotate('{0:0.2f}'.format(max_val), xy=(max_x + 1e4, max_y + 1e4))
+# end of class Grd
+
+
 class GrdDialog(QDialog):
 
     # Constructor for GrdDialog class
@@ -367,3 +386,4 @@ class GrdDialog(QDialog):
             return ",".join(str(x) for x in DEFAULT_ISOLEVEL_DBI)
         else:
             return ",".join(str(x) for x in grd.fIsolvl)
+    

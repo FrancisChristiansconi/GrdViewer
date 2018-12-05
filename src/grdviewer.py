@@ -57,7 +57,7 @@ class GrdViewer(QMainWindow):
         self.second_polarisation = False
 
         self.config = configparser.ConfigParser()
-        self.config.read('.\\GrdViewer\\grdviewer.ini')
+        self.config.read('C:\\Users\\cfrance\\Dev\\Python\\PayPat\\grdviewer.ini')
 
         # Create Main window central widget
         self.centralwidget = QWidget(self)

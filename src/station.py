@@ -108,17 +108,18 @@ def get_station_from_file(filename: str):
 
     # split data and add them to Station list
     for line in lines:
-        tokens = line.split(',')
-        name = tokens[0]
-        tag  = tokens[1]
-        lon = float(tokens[2]) 
-        lat = float(tokens[3])
-        tag_x = float(tokens[4])
-        tag_y = float(tokens[5])
-        beam_point_err = float(tokens[6])
-        stations.append(Station(ll=(lon, lat), name=name, \
-                                tag=tag, xytag=(tag_x, tag_y), \
-                                bpe=beam_point_err))
+        if len(line):
+            tokens = line.split(',')
+            name = tokens[0]
+            tag  = tokens[1]
+            lon = float(tokens[2]) 
+            lat = float(tokens[3])
+            tag_x = float(tokens[4])
+            tag_y = float(tokens[5])
+            beam_point_err = float(tokens[6])
+            stations.append(Station(ll=(lon, lat), name=name, \
+                                    tag=tag, xytag=(tag_x, tag_y), \
+                                    bpe=beam_point_err))
 
     return stations
 # end of function get_station_from_file

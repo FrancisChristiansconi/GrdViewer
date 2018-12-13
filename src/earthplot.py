@@ -93,6 +93,9 @@ class EarthPlot(FigureCanvas):
             longitude = config.getfloat('VIEWER', 'longitude', fallback=0.0)
             latitude = config.getfloat('VIEWER', 'latitude', fallback=0.0)
             altitude = config.getfloat('VIEWER', 'altitude', fallback=35786000.0)
+
+            # get default directory
+            self.rootdir = config.get('DEFAULT', 'root')
             
             # Initialize zoom
             self._zoom = Zoom(self._projection)
@@ -133,6 +136,9 @@ class EarthPlot(FigureCanvas):
         # initialize angle of view
         # Satellite Longitude, latitude and altitude
         self._viewer = ViewerPos(lon=longitude, lat=latitude, alt=altitude)
+
+        # default file name to save figure
+        self.filename = 'plot.PNG'
 
     # End of EarthPlot constructor
 
@@ -328,11 +334,11 @@ class EarthPlot(FigureCanvas):
     def drawgrd(self, grd):
         """Draw pattern on the earth plot from the provided grd.
         """
-        x, y = self._earth_map(grd.fLonDeg, grd.fLatDeg)
+        x, y = self._earth_map(grd.longitude, grd.latitude)
         if not grd.bDisplaySlope:
             try:
-                cs_grd = self._earth_map.contour(x, y, grd.Copol(), grd.fIsolvl, linestyles='solid', linewidths=0.5)
-                self._axes.clabel(cs_grd, grd.fIsolvl, inline=True, fmt='%1.1f',fontsize=5)
+                cs_grd = self._earth_map.contour(x, y, grd.copol(), grd.isolevel, linestyles='solid', linewidths=0.5)
+                self._axes.clabel(cs_grd, grd.isolevel, inline=True, fmt='%1.1f',fontsize=5)
                 grd.displaymax(self._earth_map)
                 return cs_grd
             except ValueError as value_err:
@@ -348,13 +354,13 @@ class EarthPlot(FigureCanvas):
             fAzMesh, fElMesh = np.meshgrid(fAzlin, fEllin)
             # display color mesh
             cmap = plt.get_cmap('jet')
-            cmap.set_over('white',grd.fSlope[1])
-            cmap.set_under('white',grd.fSlope[0])
+            cmap.set_over('white',grd.slope_range[1])
+            cmap.set_under('white',grd.slope_range[0])
             xOrigin, yOrigin = self._earth_map(self._viewer.longitude(),self._viewer.latitude())
             pcmGrd = self._earth_map.pcolormesh(self.az2x(fAzMesh) + xOrigin, \
                                          self.el2y(fElMesh) + yOrigin, \
-                                         grd.InterpSlope(fAzMesh,fElMesh), \
-                                         vmin=grd.fSlope[0],vmax=grd.fSlope[1], \
+                                         grd.interpolate_slope(fAzMesh,fElMesh), \
+                                         vmin=grd.slope_range[0],vmax=grd.slope_range[1], \
                                          cmap=cmap,alpha=0.5)
             # add color bar
             if self._clrbar:
@@ -374,15 +380,21 @@ class EarthPlot(FigureCanvas):
         for s in stations:
             # get coordinates of station in earth plot frame
             xsta, ysta = self._earth_map(s.longitude(),s.latitude())
-            # if BPE defined, display circle around station
-            if s.beampointingerr():
-                circle = plt.Circle((xsta, ysta), self._viewer.altitude() * s.beampointingerr() * np.pi / 180, \
-                                    color='k', fill=False, linewidth=0.3, linestyle='dashed')
-                self._earth_map.ax.add_artist(circle)
-            # display a dot at station coordinates
-            self._earth_map.scatter(xsta,ysta,2,marker='o',color='r')
-            # add station tag
-            self._earth_map.ax.annotate(s.tag(), xy=(xsta + s.xtag(), ysta + s.ytag()))
+            # if station is out of plot do not display
+            if self._earth_map.llcrnrx < xsta and \
+               xsta < self._earth_map.urcrnrx and \
+               self._earth_map.llcrnry < ysta and \
+               ysta < self._earth_map.urcrnrx:
+                    
+                # if BPE defined, display circle around station
+                if s.beampointingerr():
+                    circle = plt.Circle((xsta, ysta), self._viewer.altitude() * s.beampointingerr() * np.pi / 180, \
+                                        color='k', fill=False, linewidth=0.3, linestyle='dashed')
+                    self._earth_map.ax.add_artist(circle)
+                # display a dot at station coordinates
+                self._earth_map.scatter(xsta,ysta,2,marker='o',color='r')
+                # add station tag
+                self._earth_map.ax.annotate(s.tag(), xy=(xsta + s.xtag(), ysta + s.ytag()))
     # end of method drawstations
 
     # Zoom on the _earth_map
@@ -444,6 +456,23 @@ class EarthPlot(FigureCanvas):
         """
         self._resolution = resolution
     # end of function set_resolution
+
+    def save(self,filename=None):
+        """Save the plot with given filename. If file name not provided,
+        use last used name.
+        """
+        # store file name for future call to this function
+        if filename:
+            self.filename = filename
+        # save plot into file
+        # plt.savefig(self.filename, dpi='figure')
+        self.print_figure(self.filename)
+    # end of function save
+
+    # def drawpolygon(self, vertex):
+        
+
+        
 
 # end of class EarthPlot
 

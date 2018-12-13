@@ -13,6 +13,8 @@ import math
 from scipy import interpolate as interp
 # import pyproj for coordinates conversion
 import pyproj as prj
+# import path for customised marker
+from matplotlib.path import Path
 
 # PyQt5 widgets import
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, QLineEdit, \
@@ -26,264 +28,358 @@ DEFAULT_ISOLEVEL_DBI = [25, 30, 35, 38, 40]
 # geostationary altitude
 ALTGEO = 35786000.0 # m
 
+DEG2RAD = np.pi / 180.0
+RAD2DEG = 180.0 / np.pi
+
 
 class Grd(object):
     
     # constructor
-    def __init__(self, strFileName=None, bRevertX=False, bRevertY=False, bUseSecondPol=False, alt=None, lon=None, bDisplaySlope=False):
+    def __init__(self, filename=None, bRevertX=False, bRevertY=False, bUseSecondPol=False, alt=None, lon=None, bDisplaySlope=False):
 
-        self.filename = strFileName
+        self.filename = filename
 
         # open file and read text data
-        oFile = open(strFileName, "r")
+        file = open(filename, "r")
         # read all lines in a table
-        tLines = oFile.readlines()
+        lines = file.readlines()
         # close file        
-        oFile.close()
+        file.close()
         
          # line number
-        iLineNb = len(tLines)
+        linesnumber = len(lines)
         iStart = -1
         
         # map header data into dicData        
-        for i in range(iLineNb):
+        for i in range(linesnumber):
             # detect end of comments
-            if tLines[i] == '++++\n':
+            if lines[i][:4] == '++++':
                 iStart = i+1
                 break
         
         # header content
-        self.iKTYPE = tLines[iStart].split()[0]
-        self.iNSET = tLines[iStart+1].split()[0]
-        self.iICOMP = tLines[iStart+1].split()[1]
-        self.iNCOMP = tLines[iStart+1].split()[2]
-        self.iIGRID = tLines[iStart+1].split()[3]
-        self.iXI = tLines[iStart+2].split()[0]
-        self.iYI = tLines[iStart+2].split()[1]
-        if bRevertX == False:
-            self.iXS     = float(tLines[iStart+3].split()[0])
-            self.iXE     = float(tLines[iStart+3].split()[2])
-        else:   
-            self.iXS     = float(tLines[iStart+3].split()[2])
-            self.iXE     = float(tLines[iStart+3].split()[0])
-        if bRevertY == False:
-            self.iYS     = float(tLines[iStart+3].split()[1])
-            self.iYE     = float(tLines[iStart+3].split()[3])
-        else:
-            self.iYS     = float(tLines[iStart+3].split()[3])
-            self.iYE     = float(tLines[iStart+3].split()[1])
-        self.iNX     = int(tLines[iStart+4].split()[0])
-        self.iNY     = int(tLines[iStart+4].split()[1])
-        self.iKLIMIT = tLines[iStart+4].split()[2]
+        # should always be 1
+        self.KTYPE = int(lines[iStart].split()[0])
+        iStart += 1
+        # number of patterns
+        self.NSET = int(lines[iStart].split()[0])
+        # field components
+        # 1: linear E_theta and E_phi
+        # 2: RHCP and LHCP
+        # 3: linear co and cx
+        # 4: Major and minor axes of polarization ellipse
+        # 5: XPD fields: E_theta/E_phi and E_phi/E_theta
+        # 6: XPD fields: RHCP/LHCP and LHCP/RHCP
+        # 7: XPD fields: co/cx and cx/co
+        # 8: XPD fields: major/minor and minor/major
+        # 9: total power norm(E) and sqrt(RHCP/LHCP)
+        self.ICOMP = int(lines[iStart].split()[1])
+        # number of field component (2 for far field, 3 for near field)
+        self.NCOMP = int(lines[iStart].split()[2])
+        # Type of field grid
+        # 1: uv-grid
+        # 4: Elevation over Azimuth
+        # 5: Elevation and Azimuth
+        # 6: Azimuth over Elevation
+        # 7: thetaphi grid 
+        self.IGRID = int(lines[iStart].split()[3])
+        iStart += 1
+        # center of beams
+        self.XI = [int(lines[iStart+i_set].split()[0]) for i_set in range(self.NSET)]
+        self.YI = [int(lines[iStart+i_set].split()[1]) for i_set in range(self.NSET)]
+        iStart += self.NSET
         
         # data table reading 
+        iSet = 0
         iRow = 0
-        iCol = 0
-        self.cGridCo    = np.zeros((self.iNX, self.iNY),dtype=np.complex_)
-        self.cGridCross = np.zeros((self.iNX, self.iNY),dtype=np.complex_)
-        self.fXCoord    = np.zeros((self.iNX, self.iNY),dtype=np.float_)
-        self.fYCoord    = np.zeros((self.iNX, self.iNY),dtype=np.float_)
-        
-        
-        for iLine in range(iStart+5, iLineNb):
-            fRealCo    = float(tLines[iLine].split()[0])
-            fImagCo    = float(tLines[iLine].split()[1])
-            fRealCross = float(tLines[iLine].split()[2])
-            fImagCross = float(tLines[iLine].split()[3])
-            
-            self.cGridCo[iRow,iCol]    = fRealCo + 1j*fImagCo
-            self.cGridCross[iRow,iCol] = fRealCross + 1j*fImagCross
-            self.fXCoord[iRow,iCol]    = iRow * (self.iXE-self.iXS)/(self.iNX-1)+self.iXS 
-            self.fYCoord[iRow,iCol]    = iCol * (self.iYE-self.iYS)/(self.iNY-1)+self.iYS
-            
-            iRow += 1
-            if iRow == self.iNX:
-                iRow = 0
-                iCol += 1
+        iCol = 0      
+        self.NX = []
+        self.NY = [] 
+        self.KLIMIT = [] 
+        self._E_field_copol = []
+        self._E_field_cross = []
+        self._x = []
+        self._y = []
+        self.XS = []
+        self.XE = []
+        self.YS = []
+        self.YE = []
+        iLine = iStart
+        for iSet in range(self.NSET):
+            # get limits of the pattern grid
+            if bRevertX == False:
+                self.XS.append(float(lines[iLine].split()[0]))
+                self.XE.append(float(lines[iLine].split()[2]))
+            else:   
+                self.XS.append(float(lines[iLine].split()[2]))
+                self.XE.append(float(lines[iLine].split()[0]))
+            if bRevertY == False:
+                self.YS.append(float(lines[iLine].split()[1]))
+                self.YE.append(float(lines[iLine].split()[3]))
+            else:
+                self.YS.append(float(lines[iLine].split()[3]))
+                self.YE.append(float(lines[iLine].split()[1]))
+            iLine += 1
+            # begin of new set, configure set
+            self.NX.append(int(lines[iLine].split()[0]))
+            self.NY.append(int(lines[iLine].split()[1]))
+            self.KLIMIT.append(int(lines[iLine].split()[2]))
+            self._E_field_copol.append(np.zeros((self.NX[iSet], self.NY[iSet]),dtype=np.complex_))
+            self._E_field_cross.append(np.zeros((self.NX[iSet], self.NY[iSet]),dtype=np.complex_))
+            self._x.append(np.zeros((self.NX[iSet], self.NY[iSet]),dtype=np.float_))
+            self._y.append(np.zeros((self.NX[iSet], self.NY[iSet]),dtype=np.float_))
+            iLine += 1
+            # put data in the table
+            for iTabLine in range(iLine, iLine + self.NX[iSet] * self.NY[iSet]):
+                E_real_copol    = float(lines[iTabLine].split()[0])
+                E_imag_copol    = float(lines[iTabLine].split()[1])
+                E_real_cross = float(lines[iTabLine].split()[2])
+                E_imag_cross = float(lines[iTabLine].split()[3])
                 
+                self._E_field_copol[iSet][iRow,iCol] = E_real_copol + 1j * E_imag_copol
+                self._E_field_cross[iSet][iRow,iCol] = E_real_cross + 1j * E_imag_cross
+                dx = (self.XE[iSet] - self.XS[iSet]) / (self.NX[iSet] - 1)
+                dy = (self.YE[iSet] - self.YS[iSet]) / (self.NY[iSet] - 1)
+                self._x[iSet][iRow,iCol] = iRow * dx + self.XS[iSet] + self.XI[iSet] * dx
+                self._y[iSet][iRow,iCol] = iCol * dy + self.YS[iSet] + self.YI[iSet] * dy
+                
+                iRow += 1
+                if iRow == self.NX[iSet]:
+                    iRow = 0
+                    iCol += 1
+                    if iCol == self.NY[iSet]:
+                        iCol = 0
+                        iLine = iTabLine + 1
+        # end of file reading
+        
+
         # initialize some grided data
         if bUseSecondPol:
-            self.fCoMag = 20*np.log10(np.absolute(self.cGridCross))
+            self._E_mag_copol = 20*np.log10(np.absolute(self._E_field_cross))
+            self._E_mag_cross = 20*np.log10(np.absolute(self._E_field_copol))
         else:
-            self.fCoMag = 20*np.log10(np.absolute(self.cGridCo))
-        self.fAzCoord = []
-        self.fElCoord = []
-        self.fCoGrad = []
-        self.fAzCoGrad = []
-        self.fElCoGrad = []
-        self.interpCoGrad = []
-        self.interpAzCoGrad = []
-        self.interpElCoGrad = []
-        self.interpCo = []
+            self._E_mag_copol = 20*np.log10(np.absolute(self._E_field_copol))
+            self._E_mag_cross = 20*np.log10(np.absolute(self._E_field_cross))
+        self._azimuth = []
+        self._elevation = []
+        self._E_gradient_copol = []
 
         if not alt == None and not lon == None:
-            x = alt * self.Azimuth() * np.pi / 180
-            y = alt * self.Elevation() * np.pi / 180
+            x = alt * self.azimuth() * np.pi / 180.0
+            y = alt * self.elevation() * np.pi / 180.0
             self.proj = prj.Proj(init='epsg:4326 +proj=geos +h=' + str(alt) + ' +a=6378137.00 +b=6378137.00 +lon_0=' + str(lon) + ' +x_0=0 +y_0=0 +units=meters +no_defs') 
-            self.fLonDeg, self.fLatDeg = self.proj(x,y,inverse=True)
+            self.longitude, self.latitude = self.proj(x,y,inverse=True)
 
-        self.fIsolvl = [25,30,35,38,40]
+        self.isolevel = [25,30,35,38,40]
         self.bDisplaySlope = bDisplaySlope
-        self.fSlope = [3,20]
+        self.slope_range = [3,20]
 
     # End of __init__
         
     # return Azimuth grid for this data set
-    def Azimuth(self):
-        if self.fAzCoord == []:
-            self.fAzCoord = -1*np.arctan(self.fXCoord/np.sqrt(1-self.fXCoord**2-self.fYCoord**2))*180/math.pi
-        return self.fAzCoord
+    def azimuth(self, set=0):
+        if self._azimuth == []:
+            if self.IGRID == 1:
+                self._azimuth = -1 * np.arctan(self._x[set] / np.sqrt(1 - self._x[set]**2 - self._y[set]**2)) * 180.0 / np.pi
+            elif self.IGRID == 4:
+                self._azimuth = self._x[set]
+            elif self.IGRID == 5:
+                self._azimuth = self._x[set]
+            elif self.IGRID == 6:
+                self._azimuth = self._x[set]
+        return self._azimuth
         
     # return Elevation grid for this data set
-    def Elevation(self):
-        if self.fElCoord == []:
-            self.fElCoord = np.arcsin(self.fYCoord)*180/math.pi
-        return self.fElCoord
-        
-    # return U coordinate grid for this data set
-    def UCoordinate(self):
-        return self.fXCoord
+    def elevation(self, set=0):
+        if self._elevation == []:
+            if self.IGRID == 1:
+                self._elevation = np.arcsin(self._y[set]) * RAD2DEG
+            elif self.IGRID == 4:
+                self._elevation = self._y[set]
+            elif self.IGRID == 5:
+                self._elevation = self._y[set]
+            elif self.IGRID == 6:
+                self._elevation = self._y[set]
+        return self._elevation
+
+    def theta(self, set=0):
+        if self.IGRID == 1:
+            # _x == u and _y == v
+            return np.arcsin(np.sqrt(self._x[set]**2 + self._y[set]**2)) * RAD2DEG
+        elif self.IGRID == 4 or self.IGRID == 5 or self.IGRID == 6:
+            # _x == az and _y == el
+            return np.arccos(np.cos(self._x[set] * DEG2RAD) * np.cos(self._y[set] * DEG2RAD)) * RAD2DEG
+
+    def phi(self, set=0):
+        if self.IGRID == 1:
+            # _x == u and _y == v
+            return np.arctan(self._x[set] / self._y[set]) * RAD2DEG
+        elif self.IGRID == 4 or self.IGRID == 5 or self.IGRID == 6:
+            # _x == az and _y == el
+            return np.arctan(np.tan(self._y[set] * DEG2RAD) / np.sin(self._x[set] * DEG2RAD))
+
+    def u(self):
+        """Returns u coordinates got from grd file or converted from az/el from file.
+        """
+        if self.IGRID == 1:
+            return self._x[set]
+        elif self.IGRID == 4:
+            return np.cos(self._y[set] * DEG2RAD) * np.sin(self._x[set] * DEG2RAD)
+        elif self.IGRID == 5:
+            # az = -theta*cos(phi), el=theta*sin(phi)
+            return np.sin(self.theta(set) * DEG2RAD) * np.cos(self.phi(set) * DEG2RAD)
     
-    # return Y coordinate grid for this data set
-    def VCoordinate(self):
-        return self.fYCoord
+    def v(self):
+        """Returns v coordinates got from grd file or converted from az/el from file.
+        """
+        if self.IGRID ==1:
+            return self._y[set]
+        elif self.IGRID == 4:
+            return np.sin(self._y[set] * np.pi / 180.0)
 
     # return minimum Azimuth of the grid
     def MinAz(self):
-        return np.min(self.Azimuth())
+        return np.min(self.azimuth())
         
     # return maximum Azimuth of the grid
     def MaxAz(self):
-        return np.max(self.Azimuth())
+        return np.max(self.azimuth())
     
     # return minimum Elevation of the grid
     def MinEl(self):
-        return np.min(self.Elevation())
+        return np.min(self.elevation())
     
     # return maximum Elevation of the grid
     def MaxEl(self):
-        return np.max(self.Elevation())
+        return np.max(self.elevation())
         
     # return Co-polarisation pattern
-    def Copol(self):
-        return self.fCoMag
+    def copol(self, set=0):
+        return self._E_mag_copol[set]
+
+    def cross(self, set = 0):
+        return self._E_mag_cross[set]
         
     # return gradient of Co-polarisation pattern
-    def Slope(self):
-        if self.fCoGrad == []:
+    def slope(self, set=0):
+        if self._E_gradient_copol == []:
             # get gradient of Azimuth coordinate
-            [self.fGradAz, A] = np.gradient(self.Azimuth())
+            azimuth_grad, _ = np.gradient(self.azimuth())
             # get gradient of Elevation coordinate
-            [A, self.fGradEl] = np.gradient(self.Elevation())
+            _, elevation_grad = np.gradient(self.elevation())
             # get gradient of pattern in Azimuth and Elevation             
-            [self.fCoGradX, self.fCoGradY] = np.gradient(self.fCoMag)
+            self.fCoGradX, self.fCoGradY = np.gradient(self.copol(set))
             # normalize gradient of pattern in Azimuth direction
-            self.fCoGradX /= self.fGradAz
+            self.fCoGradX /= azimuth_grad
             # normalize gradient of pattern in Elevation direction
-            self.fCoGradY /= self.fGradEl
+            self.fCoGradY /= elevation_grad
             # RSS the 2 directions gradient in one scalar field
-            self.fCoGrad = np.sqrt(self.fCoGradX**2+self.fCoGradY**2)
-        return self.fCoGrad
+            self._E_gradient_copol = np.sqrt(self.fCoGradX**2 + self.fCoGradY**2)
+        return self._E_gradient_copol
             
     # return gradient of Co-polarisation pattern along Azimuth
-    def AzElSlope(self,signed=False):
-        if self.fAzCoGrad == []:
-            # get gradient of Azimuth coordinate
-            [self.fGradAz, A] = np.gradient(self.Azimuth())
-            # get gradient of Elevation coordinate
-            [A, self.fGradEl] = np.gradient(self.Elevation())
-            # get gradient of pattern in Azimuth and Elevation             
-            [self.fAzCoGrad, self.fElCoGrad] = np.gradient(self.fCoMag)
-            # normalize gradient of pattern in Azimuth direction
-            self.fAzCoGrad /= self.fGradAz
-            # normalize gradient of pattern in Elevation direction
-            self.fElCoGrad /= self.fGradEl
+    def azel_slope(self,signed=False):
+        # get gradient of Azimuth coordinate
+        azimuth_grad, _ = np.gradient(self.azimuth())
+        # get gradient of Elevation coordinate
+        _, elevation_grad = np.gradient(self.elevation())
+        # get gradient of pattern in Azimuth and Elevation             
+        copol_azgrad, copol_elgrad = np.gradient(self._E_mag_copol)
+        # normalize gradient of pattern in Azimuth direction
+        copol_azgrad /= azimuth_grad
+        # normalize gradient of pattern in Elevation direction
+        copol_elgrad /= elevation_grad
         # use absolute value
         if not signed:
-            return {'Az':np.absolute(self.fAzCoGrad), 'El':np.absolute(self.fElCoGrad)}
+            return {'Az':np.absolute(copol_azgrad), 'El':np.absolute(copol_elgrad)}
         else:
-            return {'Az':self.fAzCoGrad, 'El':self.fElCoGrad}
+            return {'Az':copol_azgrad, 'El':copol_elgrad}
         
     # return interpolated value of the pattern
-    def InterpCo(self, az, el):
-        if self.interpCo == []:
-            if self.fXCoord[1,0] > self.fXCoord[0,0] and self.fYCoord[0,1] > self.fYCoord[0,0]:
-                self.interpCo = interp.RectBivariateSpline(self.fXCoord[:,0], self.fYCoord[0,:],self.Copol())
-            elif self.fXCoord[1,0] < self.fXCoord[0,0] and self.fYCoord[0,1] > self.fYCoord[0,0]:
-                self.interpCo = interp.RectBivariateSpline(self.fXCoord[::-1,0], self.fYCoord[0,:],self.Copol()[::-1,:])
-            elif self.fXCoord[1,0] < self.fXCoord[0,0] and self.fYCoord[0,1] < self.fYCoord[0,0]:
-                self.interpCo = interp.RectBivariateSpline(self.fXCoord[::-1,0], self.fYCoord[0,::-1],self.Copol()[::-1,::-1])
-            elif self.fXCoord[1,0] > self.fXCoord[0,0] and self.fYCoord[0,1] < self.fYCoord[0,0]:
-                self.interpCo = interp.RectBivariateSpline(self.fXCoord[:,0], self.fYCoord[0,::-1],self.Copol()[:,::-1])
+    def interpolate_copol(self, az, el, set=0):
+        if self._x[set][set][1,0] > self._x[set][0,0] and self._y[set][0,1] > self._y[set][0,0]:
+            interpolated_copol = interp.RectBivariateSpline(self._x[set][:,0], self._y[set][0,:],self.copol())
+        elif self._x[set][1,0] < self._x[set][0,0] and self._y[set][0,1] > self._y[set][0,0]:
+            interpolated_copol = interp.RectBivariateSpline(self._x[set][::-1,0], self._y[set][0,:],self.copol()[::-1,:])
+        elif self._x[set][1,0] < self._x[set][0,0] and self._y[set][0,1] < self._y[set][0,0]:
+            interpolated_copol = interp.RectBivariateSpline(self._x[set][::-1,0], self._y[set][0,::-1],self.copol()[::-1,::-1])
+        elif self._x[set][1,0] > self._x[set][0,0] and self._y[set][0,1] < self._y[set][0,0]:
+            interpolated_copol = interp.RectBivariateSpline(self._x[set][:,0], self._y[set][0,::-1],self.copol()[:,::-1])
         # transform azel into uv (-1 because azimuth positive toward East)
         u = -1 * np.cos(el * math.pi / 180) * np.sin(az * math.pi / 180)
         v = np.sin(el * math.pi / 180)
-        return np.reshape(self.interpCo.ev(u.flatten(),v.flatten()),np.array(az).shape)
+        return np.reshape(interpolated_copol.ev(u.flatten(),v.flatten()),np.array(az).shape)
         
     # return interpolated value of the pattern
-    def InterpSlope(self, az, el):
-        # if not yet use interpolation of slopes    
-        if self.interpCoGrad == []:
-            if self.fXCoord[1,0] > self.fXCoord[0,0] and self.fYCoord[0,1] > self.fYCoord[0,0]:
-                self.interpCoGrad = interp.RectBivariateSpline(self.fXCoord[:,0], self.fYCoord[0,:],self.Slope())
-            elif self.fXCoord[1,0] < self.fXCoord[0,0] and self.fYCoord[0,1] > self.fYCoord[0,0]:
-                self.interpCoGrad = interp.RectBivariateSpline(self.fXCoord[::-1,0], self.fYCoord[0,:],self.Slope()[::-1,:])
-            elif self.fXCoord[1,0] < self.fXCoord[0,0] and self.fYCoord[0,1] < self.fYCoord[0,0]:
-                self.interpCoGrad = interp.RectBivariateSpline(self.fXCoord[::-1,0], self.fYCoord[0,::-1],self.Slope()[::-1,::-1])
-            elif self.fXCoord[1,0] > self.fXCoord[0,0] and self.fYCoord[0,1] < self.fYCoord[0,0]:
-                self.interpCoGrad = interp.RectBivariateSpline(self.fXCoord[:,0], self.fYCoord[0,::-1],self.Slope()[:,::-1])
-            
-        # transform azel into uv (-1 because azimuth positive toward East)
-        u = -1 * np.cos(el * math.pi / 180) * np.sin(az * math.pi / 180)
-        v = np.sin(el * math.pi / 180)
-        # if uv are 2D, flat them
-        return np.reshape(self.interpCoGrad.ev(u.flatten(),v.flatten()),np.array(az).shape)
+    def interpolate_slope(self, az, el, set=0):
+        # if not yet use interpolation of slopes            
+        if self.azimuth(set)[1,0] > self.azimuth(set)[0,0] and self.elevation(set)[0,1] > self.elevation(set)[0,0]:
+            interpolated_copol_gradient = interp.RectBivariateSpline(self.azimuth(set)[:,0], self.elevation(set)[0,:],self.slope())
+        elif self.azimuth(set)[1,0] < self.azimuth(set)[0,0] and self.elevation(set)[0,1] > self.elevation(set)[0,0]:
+            interpolated_copol_gradient = interp.RectBivariateSpline(self.azimuth(set)[::-1,0], self.elevation(set)[0,:],self.slope()[::-1,:])
+        elif self.azimuth(set)[1,0] < self.azimuth(set)[0,0] and self.elevation(set)[0,1] < self.elevation(set)[0,0]:
+            interpolated_copol_gradient = interp.RectBivariateSpline(self.azimuth(set)[::-1,0], self.elevation(set)[0,::-1],self.slope()[::-1,::-1])
+        elif self.azimuth(set)[1,0] > self.azimuth(set)[0,0] and self.elevation(set)[0,1] < self.elevation(set)[0,0]:
+            interpolated_copol_gradient = interp.RectBivariateSpline(self.azimuth(set)[:,0], self.elevation(set)[0,::-1],self.slope()[:,::-1])
+        # flatten, interpolate and reshape
+        return np.reshape(interpolated_copol_gradient.ev(az.flatten(),el.flatten()),np.array(az).shape)
         
     # return interpolated value of the pattern
-    def InterpAzElSlope(self, az, el, signed=False):
-        # if not yet use interpolation of slopes    
-        if self.interpAzCoGrad == []:
-            if self.fXCoord[1,0] > self.fXCoord[0,0] and self.fYCoord[0,1] > self.fYCoord[0,0]:
-                self.interpAzCoGrad = interp.RectBivariateSpline(self.fXCoord[:,0], self.fYCoord[0,:],self.AzElSlope()['Az'])
-                self.interpElCoGrad = interp.RectBivariateSpline(self.fXCoord[:,0], self.fYCoord[0,:],self.AzElSlope()['El'])
-            elif self.fXCoord[1,0] < self.fXCoord[0,0] and self.fYCoord[0,1] > self.fYCoord[0,0]:
-                self.interpAzCoGrad = interp.RectBivariateSpline(self.fXCoord[::-1,0], self.fYCoord[0,:],self.AzElSlope()['Az'][::-1,:])
-                self.interpElCoGrad = interp.RectBivariateSpline(self.fXCoord[::-1,0], self.fYCoord[0,:],self.AzElSlope()['El'][::-1,:])
-            elif self.fXCoord[1,0] < self.fXCoord[0,0] and self.fYCoord[0,1] < self.fYCoord[0,0]:
-                self.interpAzCoGrad = interp.RectBivariateSpline(self.fXCoord[::-1,0], self.fYCoord[0,::-1],self.AzElSlope()['Az'][::-1,::-1])
-                self.interpElCoGrad = interp.RectBivariateSpline(self.fXCoord[::-1,0], self.fYCoord[0,::-1],self.AzElSlope()['El'][::-1,::-1])
-            elif self.fXCoord[1,0] > self.fXCoord[0,0] and self.fYCoord[0,1] < self.fYCoord[0,0]:
-                self.interpAzCoGrad = interp.RectBivariateSpline(self.fXCoord[:,0], self.fYCoord[0,::-1],self.AzElSlope()['Az'][:,::-1])
-                self.interpElCoGrad = interp.RectBivariateSpline(self.fXCoord[:,0], self.fYCoord[0,::-1],self.AzElSlope()['El'][:,::-1])
-            
-        # transform azel into uv (-1 because azimuth positive toward East)
-        u = -1 * np.cos(el * math.pi / 180) * np.sin(az * math.pi / 180)
-        v = np.sin(el * math.pi / 180)
-                
-        # if uv are 2D, flat them. Use absolute value
+    def interpolate_azel_slope(self, az, el, signed=False):
+        # if not yet use interpolation of slopes  
+        if self.azimuth(set)[1,0] > self.azimuth(set)[0,0] and self.elevation(set)[0,1] > self.elevation(set)[0,0]:
+            interpolated_copol_azgrad = interp.RectBivariateSpline(self.azimuth(set)[:,0], self.elevation(set)[0,:],self.azel_slope()['Az'])
+            interpolated_copol_elgrad = interp.RectBivariateSpline(self.azimuth(set)[:,0], self.elevation(set)[0,:],self.azel_slope()['El'])
+        elif self.azimuth(set)[1,0] < self.azimuth(set)[0,0] and self.elevation(set)[0,1] > self.elevation(set)[0,0]:
+            interpolated_copol_azgrad = interp.RectBivariateSpline(self.azimuth(set)[::-1,0], self.elevation(set)[0,:],self.azel_slope()['Az'][::-1,:])
+            interpolated_copol_elgrad = interp.RectBivariateSpline(self.azimuth(set)[::-1,0], self.elevation(set)[0,:],self.azel_slope()['El'][::-1,:])
+        elif self.azimuth(set)[1,0] < self.azimuth(set)[0,0] and self.elevation(set)[0,1] < self.elevation(set)[0,0]:
+            interpolated_copol_azgrad = interp.RectBivariateSpline(self.azimuth(set)[::-1,0], self.elevation(set)[0,::-1],self.azel_slope()['Az'][::-1,::-1])
+            interpolated_copol_elgrad = interp.RectBivariateSpline(self.azimuth(set)[::-1,0], self.elevation(set)[0,::-1],self.azel_slope()['El'][::-1,::-1])
+        elif self.azimuth(set)[1,0] > self.azimuth(set)[0,0] and self.elevation(set)[0,1] < self.elevation(set)[0,0]:
+            interpolated_copol_azgrad = interp.RectBivariateSpline(self.azimuth(set)[:,0], self.elevation(set)[0,::-1],self.azel_slope()['Az'][:,::-1])
+            interpolated_copol_elgrad = interp.RectBivariateSpline(self.azimuth(set)[:,0], self.elevation(set)[0,::-1],self.azel_slope()['El'][:,::-1])
+        
+        # if uv are 2D, flat them. Use absolute value depending on signed flag
         if not signed:
-            return {'Az':np.absolute(np.reshape(self.interpAzCoGrad.ev(u.flatten(),v.flatten()),np.array(az).shape)), \
-                    'El':np.absolute(np.reshape(self.interpElCoGrad.ev(u.flatten(),v.flatten()),np.array(az).shape))}
+            return {'Az':np.absolute(np.reshape(interpolated_copol_azgrad.ev(az.flatten(),el.flatten()),np.array(az).shape)), \
+                    'El':np.absolute(np.reshape(interpolated_copol_elgrad.ev(az.flatten(),el.flatten()),np.array(az).shape))}
         else:
-            return {'Az':np.reshape(self.interpAzCoGrad.ev(u.flatten(),v.flatten()),np.array(az).shape), \
-                    'El':np.reshape(self.interpElCoGrad.ev(u.flatten(),v.flatten()),np.array(az).shape)}
+            return {'Az':np.reshape(interpolated_copol_azgrad.ev(az.flatten(),el.flatten()),np.array(az).shape), \
+                    'El':np.reshape(interpolated_copol_elgrad.ev(az.flatten(),el.flatten()),np.array(az).shape)}
 
-    def getmax(self):
+    def getmax(self, set=0):
         """Get max directivity value and coordinates.
         """
-        max_value = np.max(self.fCoMag)
-        max_index = np.argmax(self.fCoMag)
-        max_longitude = self.fLonDeg.flatten()[max_index]
-        max_latitude = self.fLatDeg.flatten()[max_index]
+        max_value = np.max(self._E_mag_copol[set])
+        max_index = np.argmax(self._E_mag_copol[set])
+        max_longitude = self.longitude.flatten()[max_index]
+        max_latitude = self.latitude.flatten()[max_index]
         return max_value, max_longitude, max_latitude
     # end of function getmax
 
     def displaymax(self, earthmap):
         max_val, max_lon, max_lat = self.getmax()
         max_x, max_y = earthmap(max_lon, max_lat)
+        mark = Path(vertices=[(-100, 0),\
+                              (100, 0),\
+                              (0, -100),\
+                              (0, 100)],\
+                    codes=[Path.MOVETO,\
+                           Path.LINETO,\
+                           Path.MOVETO,\
+                           Path.LINETO])
         earthmap.scatter(x=max_x, y=max_y, s=20, marker='+', color='k', \
-                         linewidths=0.1, edgecolors='none')
+                         linewidths=25, edgecolors='none')
         earthmap.ax.annotate('{0:0.2f}'.format(max_val), xy=(max_x + 1e4, max_y + 1e4))
+
+    def shrink(self, az, el):
+        """Shrink pattern using an elliptical beam pointing error.
+        This function compute the pattern with different pointing error and
+        keep the minimum directivity for each station.
+        """
+
+    
 # end of class Grd
 
 
@@ -385,5 +481,5 @@ class GrdDialog(QDialog):
         if grd == None:
             return ",".join(str(x) for x in DEFAULT_ISOLEVEL_DBI)
         else:
-            return ",".join(str(x) for x in grd.fIsolvl)
+            return ",".join(str(x) for x in grd.isolevel)
     

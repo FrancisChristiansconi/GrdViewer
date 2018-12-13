@@ -89,35 +89,39 @@ class GrdViewer(QMainWindow):
 
         # Add File menu
         self._menufile = menubar.addMenu('File')
-
-        # Items
-        quit_action = QAction('Quit', self)
-        self._menufile.addAction(quit_action)
-        quit_action.triggered.connect(qApp.quit)
+        # saveas item
+        saveas_action = QAction('Save plot as', self)
+        self._menufile.addAction(saveas_action)
+        saveas_action.triggered.connect(self.saveas)
+        # save plot item
+        save_action = QAction('Save plot', self)
+        self._menufile.addAction(save_action)
+        save_action.triggered.connect(self.save)
+        # clear plot item
         clear_action = QAction('Clear plot', self)
         self._menufile.addAction(clear_action)
         clear_action.triggered.connect(self.clearplot)
+        # quit application item
+        quit_action = QAction('Quit', self)
+        self._menufile.addAction(quit_action)
+        quit_action.triggered.connect(qApp.quit)
 
         # Add Viewer Menu
         self._menuview = menubar.addMenu('View')
-
-        # Add Items
+        # viewer position item
         change_viewer_pos_action = QAction('Viewer position', self)
         self._menuview.addAction(change_viewer_pos_action)
         change_viewer_pos_action.triggered.connect(self.viewer_dialog)
-
-        # Add Item: Zoom
+        # zoom item
         update_zoom_action = QAction('Zoom', self)
         self._menuview.addAction(update_zoom_action)
         update_zoom_action.triggered.connect(self.zoom_dialog)
-
-        # Add Item: Projection
+        # projection submenu and items
         menuprojection = self._menuview.addMenu('Projection')
         menuprojection.addAction('Geo')
         menuprojection.addAction('Mercator')
         menuprojection.triggered[QAction].connect(self.toggleprojection)
-
-        # Add map resolution
+        # map resolution submenu and items
         menuresolution = self._menuview.addMenu('Map resolution')
         # c: crude
         # l: low
@@ -138,24 +142,23 @@ class GrdViewer(QMainWindow):
 
         # Add display grd Menu
         self.menupattern = menubar.addMenu('Pattern')
-        
-        # Add Items
+        # load grd item
         load_grd_action = QAction('Load Grd', self)
         self.menupattern.addAction(load_grd_action)
         load_grd_action.triggered.connect(self.load_grd_dialog)
 
         # Add Misc menu
         self._menumisc = menubar.addMenu('Misc.')
-        # Add Items
+        # elevation item
         disp_elev_action = QAction('Elevation Contour', self)
         self._menumisc.addAction(disp_elev_action)
         disp_elev_action.triggered.connect(self.elevation_dialog)
-
-        # Add menu item to add stations
+        # load stations file
         add_station_action = QAction('Add stations file', self)
         self._menumisc.addAction(add_station_action)
         add_station_action.triggered.connect(self.station_dialog)
 
+        # return statement
         return menubar
     # end of method createmenu
 
@@ -235,6 +238,22 @@ class GrdViewer(QMainWindow):
         self.earth_plot.set_resolution(action.text()[0].lower())
         self.earth_plot.draw()
     # end of set_earth_resolution
+
+    def saveas(self):
+        """Callback to save the Earth plot into file.
+        """
+        defaultfilename = 'plot.PNG'
+        dialogbox = QFileDialog(caption='Save As ...', directory=self.earth_plot.rootdir)
+        dialogbox.selectFile(defaultfilename)
+        filename, _ = dialogbox.getSaveFileName()
+        self.earth_plot.save(filename)
+    # end of callback saveas
+    
+    def save(self):
+        """Callback to save the Earth plot with default/previously given file name.
+        """
+        self.earth_plot.save()
+    # end of callback save
 
 # End of Class GrdViewer   
 

@@ -32,6 +32,9 @@ from zoom import ZoomDialog
 import station as stn
 from station import StationDialog
 
+# import polygon module
+import polygon
+
 
 class GrdViewer(QMainWindow):
     """Class to generate a window with Earth display.
@@ -157,6 +160,10 @@ class GrdViewer(QMainWindow):
         add_station_action = QAction('Add stations file', self)
         self._menumisc.addAction(add_station_action)
         add_station_action.triggered.connect(self.station_dialog)
+        # load polygons file
+        add_poly_action = QAction('Add polygons file', self)
+        self._menumisc.addAction(add_poly_action)
+        add_poly_action.triggered.connect(self.loadpolygon)
 
         # return statement
         return menubar
@@ -207,6 +214,18 @@ class GrdViewer(QMainWindow):
             # refresh display
             self.earth_plot.draw()
     # end of method station_dialog
+
+    def loadpolygon(self):
+        """Open dialog to get polygon to draw.
+        """
+        dialog = QFileDialog(caption='Add polygon', directory=self.earth_plot.rootdir)
+        filename, _ = QFileDialog.getOpenFileName()
+        if filename:
+            # get list of polygon and append it to the existing list
+            self.earth_plot._polygons.extend(polygon.getpolygons(filename))
+            # refresh display
+            self.earth_plot.draw()
+    # end of method 
 
     def toggleprojection(self, action):
         """Toggle between Geo and Mercator projection.

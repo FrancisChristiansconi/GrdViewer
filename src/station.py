@@ -4,6 +4,16 @@
 # PyQt5 widgets import
 from PyQt5.QtWidgets import QFileDialog
 
+# matplotlib import
+from mpl_toolkits.basemap import Basemap
+import matplotlib.pyplot as plt
+
+# numpy
+import numpy as np
+
+# angle conversion
+DEG2RAD = np.pi / 180
+RAD2DEG = 180 / np.pi
 
 class Station(object):
     """Represents a station, i.e. a position on the ground.
@@ -73,7 +83,36 @@ class Station(object):
         if s != None:
             self._tag = s
         return self._tag
-    
+
+    def visible(self, map):
+        """States if station is visible in the map frame. 
+        """
+        # get coordinates of station in earth plot frame
+        xsta, ysta = map(self._longitude,self._latitude)
+        return map.llcrnrx < xsta and \
+               xsta < map.urcrnrx and \
+               map.llcrnry < ysta and \
+               ysta < map.urcrnrx
+    # end of function visible
+
+    def plot(self, map, alt, **kwargs):
+        """Plot the station on the given map if in the frame.
+        """
+        # get coordinates of station in earth plot frame
+        xsta, ysta = map(self._longitude,self._latitude)
+        # if station is out of plot do not display
+        if self.visible(map):                
+            # if BPE defined, display circle around station
+            if self._beam_point_err:
+                circle = plt.Circle((xsta, ysta), alt * self._beam_point_err * DEG2RAD, \
+                                    color='k', fill=False, linewidth=0.3, linestyle='dashed')
+                map.ax.add_artist(circle)
+            # display a dot at station coordinates
+            map.scatter(xsta,ysta,1,marker='o',color='r')
+            # add station tag
+            map.ax.annotate(self._tag, xy=(xsta + self._tag_x, ysta + self._tag_y), **kwargs)
+    # end of method plot
+
 # end of class Station
 
 class StationDialog(QFileDialog):

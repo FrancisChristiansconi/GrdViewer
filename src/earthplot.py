@@ -57,7 +57,7 @@ class EarthPlot(FigureCanvas):
 
         # define figure in canvas
         self._figure = Figure(figsize=(self._width, self._height), \
-                          dpi=self._dpi)
+                              dpi=self._dpi)
         self._axes = self._figure.add_subplot(111)
 
         FigureCanvas.__init__(self, self._figure)
@@ -74,6 +74,7 @@ class EarthPlot(FigureCanvas):
         self._clrbar_axes = None
         self._earth_map = None
         self._stations = []
+        self._polygons = []
 
         # if a config has been provided by caller
         if config:
@@ -146,8 +147,6 @@ class EarthPlot(FigureCanvas):
     def draw(self):
         # clear display and reset it
         self._axes.clear()
-        if self._clrbar:
-            self._clrbar.ax.clear()
 
         # update the zoom
         self.updatezoom()
@@ -156,15 +155,34 @@ class EarthPlot(FigureCanvas):
         self.drawearth(proj=self._projection, resolution=self._resolution)
 
         # draw all patterns
+        at_least_one_slope = False
         for key in self._grds:
-            self.drawgrd(self._grds[key]['grd'])
+            self._grds[key]['grd'].plot(self._earth_map, self._viewer, \
+                                        self._figure, self._axes, \
+                                        self._clrbar, self._clrbar_axes)
+            if self._grds[key]['grd'].bDisplaySlope:
+                at_least_one_slope = True
+        if not at_least_one_slope:
+            for i in range(len(self._figure.axes)):
+                if i:
+                    self._figure.delaxes(self._figure.axes[i])
+
+        # Adjust subplot margins
+        # self._figure.subplots_adjust(left=0.1, right=1.0,\
+        #                              bottom=0.1, top=0.95,\
+        #                              wspace=0.0, hspace=0.0)
+
         # draw all Elevation contour
         if self._elev:
             self.drawelevation([self._elev[key].angle() for key in self._elev])
 
         # draw stations
-        if self._stations:
-            self.drawstations(self._stations)
+        for s in self._stations:
+            s.plot(self._earth_map, self._viewer.altitude(), fontsize='large')
+
+        # draw polygons
+        for p in self._polygons:
+            p.plot(self._earth_map, linestyle='--', linewidth=0.5)
 
         if self._projection == 'geos':
             self._axes.set_xlabel('Azimuth (deg)')
@@ -373,29 +391,6 @@ class EarthPlot(FigureCanvas):
 
             return pcmGrd
     # end of drawgrd method       
-
-    def drawstations(self, stations):
-        """This method display stations listed in the given stations list.
-        """
-        for s in stations:
-            # get coordinates of station in earth plot frame
-            xsta, ysta = self._earth_map(s.longitude(),s.latitude())
-            # if station is out of plot do not display
-            if self._earth_map.llcrnrx < xsta and \
-               xsta < self._earth_map.urcrnrx and \
-               self._earth_map.llcrnry < ysta and \
-               ysta < self._earth_map.urcrnrx:
-                    
-                # if BPE defined, display circle around station
-                if s.beampointingerr():
-                    circle = plt.Circle((xsta, ysta), self._viewer.altitude() * s.beampointingerr() * np.pi / 180, \
-                                        color='k', fill=False, linewidth=0.3, linestyle='dashed')
-                    self._earth_map.ax.add_artist(circle)
-                # display a dot at station coordinates
-                self._earth_map.scatter(xsta,ysta,2,marker='o',color='r')
-                # add station tag
-                self._earth_map.ax.annotate(s.tag(), xy=(xsta + s.xtag(), ysta + s.ytag()))
-    # end of method drawstations
 
     # Zoom on the _earth_map
     def updatezoom(self):

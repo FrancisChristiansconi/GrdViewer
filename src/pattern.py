@@ -15,11 +15,16 @@ from scipy import interpolate as interp
 import pyproj as prj
 # import path for customised marker
 from matplotlib.path import Path
+# axes manipulation
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+# other matplotlib utilities
+import matplotlib.pyplot as plt
 
 # PyQt5 widgets import
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, QLineEdit, \
                             QHBoxLayout, QVBoxLayout, QPushButton, QWidget, QFileDialog, QLabel, \
                             QGridLayout, QCheckBox
+from PyQt5.QtGui import QColor, QPalette
 
 # Constants
 # Default isolevel to be displayed at patten loading
@@ -35,7 +40,8 @@ RAD2DEG = 180.0 / np.pi
 class Grd(object):
     
     # constructor
-    def __init__(self, filename=None, bRevertX=False, bRevertY=False, bUseSecondPol=False, alt=None, lon=None, bDisplaySlope=False):
+    def __init__(self, filename=None, bRevertX=False, bRevertY=False, bUseSecondPol=False, \
+                 alt=None, lon=None, bDisplaySlope=False, shrink=False, azshrink=None, elshrink=None):
 
         self.filename = filename
 
@@ -168,11 +174,15 @@ class Grd(object):
             x = alt * self.azimuth() * np.pi / 180.0
             y = alt * self.elevation() * np.pi / 180.0
             self.proj = prj.Proj(init='epsg:4326 +proj=geos +h=' + str(alt) + ' +a=6378137.00 +b=6378137.00 +lon_0=' + str(lon) + ' +x_0=0 +y_0=0 +units=meters +no_defs') 
-            self.longitude, self.latitude = self.proj(x,y,inverse=True)
+            self.longitude, self.latitude = self.proj(x, y, inverse=True)
 
         self.isolevel = [25,30,35,38,40]
         self.bDisplaySlope = bDisplaySlope
         self.slope_range = [3,20]
+
+        self.shrink = shrink
+        self.azshrink = azshrink
+        self.elshrink = elshrink
 
     # End of __init__
         
@@ -373,13 +383,122 @@ class Grd(object):
                          linewidths=25, edgecolors='none')
         earthmap.ax.annotate('{0:0.2f}'.format(max_val), xy=(max_x + 1e4, max_y + 1e4))
 
-    def shrink(self, az, el):
+    def shrink_copol(self, az, el, step=0.05, set=0):
         """Shrink pattern using an elliptical beam pointing error.
         This function compute the pattern with different pointing error and
         keep the minimum directivity for each station.
         """
+        # Create azel meshgrid (rectangular grid)
+        az_vec = np.arange(-az, az, step, endpoint=True)
+        el_vec = np.arange(-el, el, step, endpoint=True)
+        az_grid, el_grid = np.meshgrid(az_vec, el_vec)
+        # exclude point out of the ellipse
+        for i in len(az_grid):
+            if (az_grid[i]/az)**2 + (el_grid[i]/el)**2 > 1:
+                az_grid[i] = np.nan
+                el_grid[i] = np.nan
+        # add points of the ellipse
+        az_ellipse =[]
+        el_ellipse = []        
+        if az > el:
+            a = az
+            b = el
+        else:
+            a = el
+            b = az
+        c = np.sqrt(a**2 + b**2)
+        e = c / a
+        theta_vec = np.linspace(-np.pi, np.pi, np.pi / 20)
+        rho_vec = a * (1 - e**2) / (1 + e * np.cos(theta_vec)) 
+        if az > el:
+            az_ellipse = rho_vec * np.cos(theta_vec)
+            el_ellipse = rho_vec * np.sin(theta_vec)
+        else:
+            az_ellipse = rho_vec * np.sin(theta_vec)
+            el_ellipse = rho_vec * np.cos(theta_vec)
+        # concatenate grid and surrounding ellipse
+        az_depointing = np.concatenate([f for f in az_grid.flatten() if not np.isnan(f)], az_ellipse)
+        el_depointing = np.concatenate([f for f in el_grid.flatten() if not np.isnan(f)], el_ellipse)
 
-    
+        # interpolate copol into a step accurate grid
+        az_min = self.MinAz() - az
+        az_max = self.MaxAz() + az
+        el_min = self.MinEl() - el
+        el_max = self.MaxEl() + el
+        az_co_grid, el_co_grid = np.meshgrid(np.arange(az_min, az_max, step, endpoint=True))
+        co = []
+
+        # create interpolation object
+        if self._x[set][set][1,0] > self._x[set][0,0] and self._y[set][0,1] > self._y[set][0,0]:
+            interpolated_copol = interp.RectBivariateSpline(self._x[set][:,0], self._y[set][0,:],self.copol())
+        elif self._x[set][1,0] < self._x[set][0,0] and self._y[set][0,1] > self._y[set][0,0]:
+            interpolated_copol = interp.RectBivariateSpline(self._x[set][::-1,0], self._y[set][0,:],self.copol()[::-1,:])
+        elif self._x[set][1,0] < self._x[set][0,0] and self._y[set][0,1] < self._y[set][0,0]:
+            interpolated_copol = interp.RectBivariateSpline(self._x[set][::-1,0], self._y[set][0,::-1],self.copol()[::-1,::-1])
+        elif self._x[set][1,0] > self._x[set][0,0] and self._y[set][0,1] < self._y[set][0,0]:
+            interpolated_copol = interp.RectBivariateSpline(self._x[set][:,0], self._y[set][0,::-1],self.copol()[:,::-1])
+      
+        for i in len(az_co_grid):
+            co[i] = np.min(interpolated_copol.ev(az_co_grid[i] + az_depointing, el_co_grid[i] + el_depointing))
+
+        return co
+    # end of function shrink
+
+    def plot(self, map, viewer, figure, axes, cbar, cbar_axes):
+        """Draw pattern on the earth plot from the provided grd.
+        """
+        x, y = map(self.longitude, self.latitude)
+        
+        if not self.bDisplaySlope:
+            try:
+                if not self.shrink:
+                    cs_grd = map.contour(x, y, self.copol(), self.isolevel, linestyles='solid', linewidths=0.5)
+                    self.displaymax(map)
+                else:
+                    cs_grd = map.contour(x, y, self.shrink_copol(self.azshrink, self.elshrink), self.isolevel, linestyles='solid', linewidths=0.5)
+                figure.axes[0].clabel(cs_grd, self.isolevel, inline=True, fmt='%1.1f',fontsize=5)
+
+                # # resize plot
+                # l = axes.figure.subplotpars.left
+                # r = axes.figure.subplotpars.right
+                # t = axes.figure.subplotpars.top
+                # b = axes.figure.subplotpars.bottom
+                # figw = float(figure.get_figwidth())/(r-l) * 0.95
+                # figh = float(figure.get_figheight())/(t-b) * 0.95
+                # axes.figure.set_size_inches(figw, figh)
+                
+                return cs_grd
+            except ValueError as value_err:
+                print(value_err)
+                print('Pattern ' + self.filename + ' will not be displayed.')
+                return None
+        else:
+            # define grid
+            iNx = 1001
+            iNy = 1001
+            fAzlin = np.linspace(self.MinAz(), self.MaxAz(), iNx)
+            fEllin = np.linspace(self.MinEl(), self.MaxEl(), iNy)
+            fAzMesh, fElMesh = np.meshgrid(fAzlin, fEllin)
+            x = fAzMesh * viewer.altitude() * DEG2RAD
+            y = fElMesh * viewer.altitude() * DEG2RAD
+            # display color mesh
+            cmap = plt.get_cmap('jet')
+            cmap.set_over('white', self.slope_range[1])
+            cmap.set_under('white', self.slope_range[0])
+            xOrigin, yOrigin = map(viewer.longitude(), viewer.latitude())
+            pcmGrd = map.pcolormesh(x + xOrigin, \
+                                    y + yOrigin, \
+                                    self.interpolate_slope(fAzMesh, fElMesh), \
+                                    vmin=self.slope_range[0], vmax=self.slope_range[1], \
+                                    cmap=cmap, alpha=0.5)
+            # add color bar
+            if cbar:
+                cbar = figure.colorbar(pcmGrd, cax=cbar_axes)     
+            else:
+                divider = make_axes_locatable(axes)
+                cbar_axes = divider.append_axes("right", size="5%", pad=0.05)  
+                cbar = figure.colorbar(pcmGrd, cax=cbar_axes)   
+            cbar.ax.set_ylabel('Pattern slope (dB/deg)')
 # end of class Grd
 
 
@@ -441,6 +560,24 @@ class GrdDialog(QDialog):
         vbox.addWidget(self.chkSlope)
         vbox.addStretch(1)
 
+        # add shrink sub form
+        self.chkshrink = QCheckBox('Shrink', parent=self)
+        self.azshrklbl = QLabel('Az.', parent=self)
+        self.azfield = QLineEdit('0.25', parent=self)
+        self.azfield.setFixedWidth(50)
+        self.elshrklbl = QLabel('El.', parent=self)
+        self.elfield = QLineEdit('0.25', parent=self)
+        self.elfield.setFixedWidth(50)
+        hbox5 = QHBoxLayout(None)
+        hbox5.addWidget(self.chkshrink)
+        hbox5.addWidget(self.azshrklbl)
+        hbox5.addWidget(self.azfield)
+        hbox5.addWidget(self.elshrklbl)
+        hbox5.addWidget(self.elfield)
+        vbox.addLayout(hbox5)
+        self.chkshrink.stateChanged.connect(self.chkshrinkstatechanged)
+        self.chkshrinkstatechanged()
+
         # Add Ok/Cancel buttons
         okButton = QPushButton('OK',self)
         cancelButton = QPushButton('Cancel',self)
@@ -482,4 +619,28 @@ class GrdDialog(QDialog):
             return ",".join(str(x) for x in DEFAULT_ISOLEVEL_DBI)
         else:
             return ",".join(str(x) for x in grd.isolevel)
+
+    def chkshrinkstatechanged(self):
+        """Callback deactivating the shrink fields wheb shrink checkbox is unchecked.
+        """
+        palette = QPalette()
+        if self.chkshrink.checkState():
+            palette.setColor(QPalette.Base, QColor(255, 255, 255))
+            self.azfield.setStyleSheet("color: rgb(0, 0, 0);")
+            self.elfield.setStyleSheet("color: rgb(0, 0, 0);")
+            self.azfield.setReadOnly(False)
+            self.azfield.setPalette(palette)
+            self.elfield.setReadOnly(False)
+            self.elfield.setPalette(palette)
+        else:
+            palette.setColor(QPalette.Base, QColor(230, 230, 230))
+            self.azfield.setStyleSheet("color: rgb(180, 180, 180);")
+            self.elfield.setStyleSheet("color: rgb(180, 180, 180);")
+            self.azfield.setReadOnly(True)
+            self.azfield.setPalette(palette)
+            self.elfield.setReadOnly(True)
+            self.elfield.setPalette(palette)
+    # end of callback
+
+    
     

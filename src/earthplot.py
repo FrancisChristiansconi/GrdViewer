@@ -132,7 +132,7 @@ class EarthPlot(FigureCanvas):
                                        revertx=revertx, reverty=reverty, \
                                        secondpol=secondpol, dispslope=slope)['grd']       
                     self.settitle(title)
-                    grd.fIsolvl = [float(s) for s in level.split(',')]
+                    grd.isolevel = [float(s) for s in level.split(',')]
         
         # initialize angle of view
         # Satellite Longitude, latitude and altitude
@@ -298,7 +298,8 @@ class EarthPlot(FigureCanvas):
         # Return vector
         return elev
     
-    def loadgrd(self, filename, lon, alt, revertx=False, reverty=False, secondpol=False, dispslope=False):
+    def loadgrd(self, filename, lon, alt, revertx=False, reverty=False, secondpol=False, dispslope=False, \
+                shrink=False, azshrink=None, elshrink=None):
         """Load and display a grd file.
         """    
         # add item in Grd menu
@@ -318,7 +319,10 @@ class EarthPlot(FigureCanvas):
                                            bUseSecondPol=secondpol, \
                                            alt=alt, \
                                            lon=lon, \
-                                           bDisplaySlope=dispslope), \
+                                           bDisplaySlope=dispslope, \
+                                           shrink=shrink, \
+                                           azshrink=azshrink, \
+                                           elshrink=elshrink), \
                                 'menu': patternmenu}
                                        
         return self._grds[filename]

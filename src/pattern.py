@@ -307,7 +307,7 @@ class Grd(object):
         
     # return interpolated value of the pattern
     def interpolate_copol(self, az, el, set=0):
-        if self._x[set][set][1,0] > self._x[set][0,0] and self._y[set][0,1] > self._y[set][0,0]:
+        if self._x[set][1,0] > self._x[set][0,0] and self._y[set][0,1] > self._y[set][0,0]:
             interpolated_copol = interp.RectBivariateSpline(self._x[set][:,0], self._y[set][0,:],self.copol())
         elif self._x[set][1,0] < self._x[set][0,0] and self._y[set][0,1] > self._y[set][0,0]:
             interpolated_copol = interp.RectBivariateSpline(self._x[set][::-1,0], self._y[set][0,:],self.copol()[::-1,:])
@@ -389,57 +389,36 @@ class Grd(object):
         keep the minimum directivity for each station.
         """
         # Create azel meshgrid (rectangular grid)
-        az_vec = np.arange(-az, az, step, endpoint=True)
-        el_vec = np.arange(-el, el, step, endpoint=True)
+        az_vec = np.arange(-az, az + step, step)
+        el_vec = np.arange(-el, el + step, step)
         az_grid, el_grid = np.meshgrid(az_vec, el_vec)
         # exclude point out of the ellipse
-        for i in len(az_grid):
-            if (az_grid[i]/az)**2 + (el_grid[i]/el)**2 > 1:
-                az_grid[i] = np.nan
-                el_grid[i] = np.nan
+        for i in range(len(az_grid)):
+            for j in range(len(az_grid[i])):
+                if (az_grid[i][j]/az)**2 + (el_grid[i][j]/el)**2 > 1:
+                    az_grid[i][j] = np.nan
+                    el_grid[i][j] = np.nan
         # add points of the ellipse
         az_ellipse =[]
-        el_ellipse = []        
-        if az > el:
-            a = az
-            b = el
-        else:
-            a = el
-            b = az
-        c = np.sqrt(a**2 + b**2)
-        e = c / a
-        theta_vec = np.linspace(-np.pi, np.pi, np.pi / 20)
-        rho_vec = a * (1 - e**2) / (1 + e * np.cos(theta_vec)) 
-        if az > el:
-            az_ellipse = rho_vec * np.cos(theta_vec)
-            el_ellipse = rho_vec * np.sin(theta_vec)
-        else:
-            az_ellipse = rho_vec * np.sin(theta_vec)
-            el_ellipse = rho_vec * np.cos(theta_vec)
-        # concatenate grid and surrounding ellipse
-        az_depointing = np.concatenate([f for f in az_grid.flatten() if not np.isnan(f)], az_ellipse)
-        el_depointing = np.concatenate([f for f in el_grid.flatten() if not np.isnan(f)], el_ellipse)
+        el_ellipse = []   
+        x = np.arange(-az, az + step, step)
+        y = np.arange(-el, el + step, step)
+        y_prime = np.concatenate((el * np.sqrt(1 - x**2 / az**2), -el * np.sqrt(1 - x**2 / az**2)))
+        x_prime = np.concatenate((az * np.sqrt(1 - y**2 / el**2), -az * np.sqrt(1 - y**2 / el**2)))
+
+        az_depointing = np.concatenate(([f for f in az_grid.flatten() if not np.isnan(f)], x, x, x_prime))
+        el_depointing = np.concatenate(([f for f in el_grid.flatten() if not np.isnan(f)], y_prime, y, y))
 
         # interpolate copol into a step accurate grid
-        az_min = self.MinAz() - az
-        az_max = self.MaxAz() + az
-        el_min = self.MinEl() - el
-        el_max = self.MaxEl() + el
-        az_co_grid, el_co_grid = np.meshgrid(np.arange(az_min, az_max, step, endpoint=True))
+        az_co = self.azimuth().flatten()
+        el_co = self.elevation().flatten()
         co = []
 
         # create interpolation object
-        if self._x[set][set][1,0] > self._x[set][0,0] and self._y[set][0,1] > self._y[set][0,0]:
-            interpolated_copol = interp.RectBivariateSpline(self._x[set][:,0], self._y[set][0,:],self.copol())
-        elif self._x[set][1,0] < self._x[set][0,0] and self._y[set][0,1] > self._y[set][0,0]:
-            interpolated_copol = interp.RectBivariateSpline(self._x[set][::-1,0], self._y[set][0,:],self.copol()[::-1,:])
-        elif self._x[set][1,0] < self._x[set][0,0] and self._y[set][0,1] < self._y[set][0,0]:
-            interpolated_copol = interp.RectBivariateSpline(self._x[set][::-1,0], self._y[set][0,::-1],self.copol()[::-1,::-1])
-        elif self._x[set][1,0] > self._x[set][0,0] and self._y[set][0,1] < self._y[set][0,0]:
-            interpolated_copol = interp.RectBivariateSpline(self._x[set][:,0], self._y[set][0,::-1],self.copol()[:,::-1])
-      
-        for i in len(az_co_grid):
-            co[i] = np.min(interpolated_copol.ev(az_co_grid[i] + az_depointing, el_co_grid[i] + el_depointing))
+        for i in range(len(az_co)):
+            co.append(np.min(self.interpolate_copol(az_co[i] + az_depointing, el_co[i] + el_depointing)))
+
+        co = np.reshape(co, self.azimuth().shape)
 
         return co
     # end of function shrink
@@ -609,9 +588,12 @@ class GrdDialog(QDialog):
                                       revertx=self.chkRevertX.checkState(), \
                                       reverty=self.chkRevertY.checkState(), \
                                       secondpol=self.chkXPol.checkState(), \
-                                      dispslope=self.chkSlope.checkState())['grd']
+                                      dispslope=self.chkSlope.checkState(), \
+                                      shrink=self.chkshrink.checkState(),\
+                                      azshrink=float(self.azfield.text()),\
+                                      elshrink=float(self.elfield.text()))['grd']
         self.earth_plot.settitle(self.viewTitleField.text())
-        grd.fIsolvl = [float(s) for s in self.viewIsoLvlField.text().split(',')]
+        grd.isolevel = [float(s) for s in self.viewIsoLvlField.text().split(',')]
         self.earth_plot.draw()
 
     def getIsoLvl(self, grd: Grd=None):

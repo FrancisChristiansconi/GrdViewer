@@ -19,12 +19,18 @@ from matplotlib.path import Path
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 # other matplotlib utilities
 import matplotlib.pyplot as plt
+# import Basemap of mpltoolkit
+from mpl_toolkits.basemap import Basemap
 
 # PyQt5 widgets import
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, QLineEdit, \
                             QHBoxLayout, QVBoxLayout, QPushButton, QWidget, QFileDialog, QLabel, \
                             QGridLayout, QCheckBox
 from PyQt5.QtGui import QColor, QPalette
+
+# local import
+# from viewer import ViewerPos
+
 
 # Constants
 # Default isolevel to be displayed at patten loading
@@ -183,6 +189,10 @@ class Grd(object):
         self.shrink = shrink
         self.azshrink = azshrink
         self.elshrink = elshrink
+        self.interpolated_copol = None
+        self.interpolated_copol_gradient = None
+        self.interpolated_copol_azgrad = None
+        self.interpolated_copol_elgrad = None
 
     # End of __init__
         
@@ -263,12 +273,20 @@ class Grd(object):
     def MaxEl(self):
         return np.max(self.elevation())
         
-    # return Co-polarisation pattern
     def copol(self, set=0):
+        """Return co-polarisation pattern. In dBi.
+        """
         return self._E_mag_copol[set]
 
     def cross(self, set = 0):
+        """Return cross-polarisation pattern. In dBi.
+        """
         return self._E_mag_cross[set]
+
+    def xpd(self, set=0):
+        """Return XPD pattern. In dB.
+        """
+        return self._E_mag_copol[set] - self._E_mag_cross[set]
         
     # return gradient of Co-polarisation pattern
     def slope(self, set=0):
@@ -288,13 +306,13 @@ class Grd(object):
         return self._E_gradient_copol
             
     # return gradient of Co-polarisation pattern along Azimuth
-    def azel_slope(self,signed=False):
+    def azel_slope(self, signed=False, set=0):
         # get gradient of Azimuth coordinate
         azimuth_grad, _ = np.gradient(self.azimuth())
         # get gradient of Elevation coordinate
         _, elevation_grad = np.gradient(self.elevation())
         # get gradient of pattern in Azimuth and Elevation             
-        copol_azgrad, copol_elgrad = np.gradient(self._E_mag_copol)
+        copol_azgrad, copol_elgrad = np.gradient(self.copol(set))
         # normalize gradient of pattern in Azimuth direction
         copol_azgrad /= azimuth_grad
         # normalize gradient of pattern in Elevation direction
@@ -307,56 +325,59 @@ class Grd(object):
         
     # return interpolated value of the pattern
     def interpolate_copol(self, az, el, set=0):
-        if self._x[set][1,0] > self._x[set][0,0] and self._y[set][0,1] > self._y[set][0,0]:
-            interpolated_copol = interp.RectBivariateSpline(self._x[set][:,0], self._y[set][0,:],self.copol())
-        elif self._x[set][1,0] < self._x[set][0,0] and self._y[set][0,1] > self._y[set][0,0]:
-            interpolated_copol = interp.RectBivariateSpline(self._x[set][::-1,0], self._y[set][0,:],self.copol()[::-1,:])
-        elif self._x[set][1,0] < self._x[set][0,0] and self._y[set][0,1] < self._y[set][0,0]:
-            interpolated_copol = interp.RectBivariateSpline(self._x[set][::-1,0], self._y[set][0,::-1],self.copol()[::-1,::-1])
-        elif self._x[set][1,0] > self._x[set][0,0] and self._y[set][0,1] < self._y[set][0,0]:
-            interpolated_copol = interp.RectBivariateSpline(self._x[set][:,0], self._y[set][0,::-1],self.copol()[:,::-1])
+        if not self.interpolated_copol:
+            if self._x[set][1,0] > self._x[set][0,0] and self._y[set][0,1] > self._y[set][0,0]:
+                self.interpolated_copol = interp.RectBivariateSpline(self._x[set][:,0], self._y[set][0,:],self.copol())
+            elif self._x[set][1,0] < self._x[set][0,0] and self._y[set][0,1] > self._y[set][0,0]:
+                self.interpolated_copol = interp.RectBivariateSpline(self._x[set][::-1,0], self._y[set][0,:],self.copol()[::-1,:])
+            elif self._x[set][1,0] < self._x[set][0,0] and self._y[set][0,1] < self._y[set][0,0]:
+                self.interpolated_copol = interp.RectBivariateSpline(self._x[set][::-1,0], self._y[set][0,::-1],self.copol()[::-1,::-1])
+            elif self._x[set][1,0] > self._x[set][0,0] and self._y[set][0,1] < self._y[set][0,0]:
+                self.interpolated_copol = interp.RectBivariateSpline(self._x[set][:,0], self._y[set][0,::-1],self.copol()[:,::-1])
         # transform azel into uv (-1 because azimuth positive toward East)
         u = -1 * np.cos(el * math.pi / 180) * np.sin(az * math.pi / 180)
         v = np.sin(el * math.pi / 180)
-        return np.reshape(interpolated_copol.ev(u.flatten(),v.flatten()),np.array(az).shape)
+        return np.reshape(self.interpolated_copol.ev(u.flatten(),v.flatten()),np.array(az).shape)
         
     # return interpolated value of the pattern
     def interpolate_slope(self, az, el, set=0):
-        # if not yet use interpolation of slopes            
-        if self.azimuth(set)[1,0] > self.azimuth(set)[0,0] and self.elevation(set)[0,1] > self.elevation(set)[0,0]:
-            interpolated_copol_gradient = interp.RectBivariateSpline(self.azimuth(set)[:,0], self.elevation(set)[0,:],self.slope())
-        elif self.azimuth(set)[1,0] < self.azimuth(set)[0,0] and self.elevation(set)[0,1] > self.elevation(set)[0,0]:
-            interpolated_copol_gradient = interp.RectBivariateSpline(self.azimuth(set)[::-1,0], self.elevation(set)[0,:],self.slope()[::-1,:])
-        elif self.azimuth(set)[1,0] < self.azimuth(set)[0,0] and self.elevation(set)[0,1] < self.elevation(set)[0,0]:
-            interpolated_copol_gradient = interp.RectBivariateSpline(self.azimuth(set)[::-1,0], self.elevation(set)[0,::-1],self.slope()[::-1,::-1])
-        elif self.azimuth(set)[1,0] > self.azimuth(set)[0,0] and self.elevation(set)[0,1] < self.elevation(set)[0,0]:
-            interpolated_copol_gradient = interp.RectBivariateSpline(self.azimuth(set)[:,0], self.elevation(set)[0,::-1],self.slope()[:,::-1])
+        if not self.interpolated_copol_gradient:
+            # if not yet use interpolation of slopes            
+            if self.azimuth(set)[1,0] > self.azimuth(set)[0,0] and self.elevation(set)[0,1] > self.elevation(set)[0,0]:
+                self.interpolated_copol_gradient = interp.RectBivariateSpline(self.azimuth(set)[:,0], self.elevation(set)[0,:],self.slope())
+            elif self.azimuth(set)[1,0] < self.azimuth(set)[0,0] and self.elevation(set)[0,1] > self.elevation(set)[0,0]:
+                self.interpolated_copol_gradient = interp.RectBivariateSpline(self.azimuth(set)[::-1,0], self.elevation(set)[0,:],self.slope()[::-1,:])
+            elif self.azimuth(set)[1,0] < self.azimuth(set)[0,0] and self.elevation(set)[0,1] < self.elevation(set)[0,0]:
+                self.interpolated_copol_gradient = interp.RectBivariateSpline(self.azimuth(set)[::-1,0], self.elevation(set)[0,::-1],self.slope()[::-1,::-1])
+            elif self.azimuth(set)[1,0] > self.azimuth(set)[0,0] and self.elevation(set)[0,1] < self.elevation(set)[0,0]:
+                self.interpolated_copol_gradient = interp.RectBivariateSpline(self.azimuth(set)[:,0], self.elevation(set)[0,::-1],self.slope()[:,::-1])
         # flatten, interpolate and reshape
-        return np.reshape(interpolated_copol_gradient.ev(az.flatten(),el.flatten()),np.array(az).shape)
+        return np.reshape(self.interpolated_copol_gradient.ev(az.flatten(),el.flatten()),np.array(az).shape)
         
     # return interpolated value of the pattern
     def interpolate_azel_slope(self, az, el, signed=False):
-        # if not yet use interpolation of slopes  
-        if self.azimuth(set)[1,0] > self.azimuth(set)[0,0] and self.elevation(set)[0,1] > self.elevation(set)[0,0]:
-            interpolated_copol_azgrad = interp.RectBivariateSpline(self.azimuth(set)[:,0], self.elevation(set)[0,:],self.azel_slope()['Az'])
-            interpolated_copol_elgrad = interp.RectBivariateSpline(self.azimuth(set)[:,0], self.elevation(set)[0,:],self.azel_slope()['El'])
-        elif self.azimuth(set)[1,0] < self.azimuth(set)[0,0] and self.elevation(set)[0,1] > self.elevation(set)[0,0]:
-            interpolated_copol_azgrad = interp.RectBivariateSpline(self.azimuth(set)[::-1,0], self.elevation(set)[0,:],self.azel_slope()['Az'][::-1,:])
-            interpolated_copol_elgrad = interp.RectBivariateSpline(self.azimuth(set)[::-1,0], self.elevation(set)[0,:],self.azel_slope()['El'][::-1,:])
-        elif self.azimuth(set)[1,0] < self.azimuth(set)[0,0] and self.elevation(set)[0,1] < self.elevation(set)[0,0]:
-            interpolated_copol_azgrad = interp.RectBivariateSpline(self.azimuth(set)[::-1,0], self.elevation(set)[0,::-1],self.azel_slope()['Az'][::-1,::-1])
-            interpolated_copol_elgrad = interp.RectBivariateSpline(self.azimuth(set)[::-1,0], self.elevation(set)[0,::-1],self.azel_slope()['El'][::-1,::-1])
-        elif self.azimuth(set)[1,0] > self.azimuth(set)[0,0] and self.elevation(set)[0,1] < self.elevation(set)[0,0]:
-            interpolated_copol_azgrad = interp.RectBivariateSpline(self.azimuth(set)[:,0], self.elevation(set)[0,::-1],self.azel_slope()['Az'][:,::-1])
-            interpolated_copol_elgrad = interp.RectBivariateSpline(self.azimuth(set)[:,0], self.elevation(set)[0,::-1],self.azel_slope()['El'][:,::-1])
+        if not self.interpolated_copol_azgrad or not self.interpolated_copol_elgrad:
+            # if not yet use interpolation of slopes  
+            if self.azimuth(set)[1,0] > self.azimuth(set)[0,0] and self.elevation(set)[0,1] > self.elevation(set)[0,0]:
+                self.interpolated_copol_azgrad = interp.RectBivariateSpline(self.azimuth(set)[:,0], self.elevation(set)[0,:],self.azel_slope()['Az'])
+                self.interpolated_copol_elgrad = interp.RectBivariateSpline(self.azimuth(set)[:,0], self.elevation(set)[0,:],self.azel_slope()['El'])
+            elif self.azimuth(set)[1,0] < self.azimuth(set)[0,0] and self.elevation(set)[0,1] > self.elevation(set)[0,0]:
+                self.interpolated_copol_azgrad = interp.RectBivariateSpline(self.azimuth(set)[::-1,0], self.elevation(set)[0,:],self.azel_slope()['Az'][::-1,:])
+                self.interpolated_copol_elgrad = interp.RectBivariateSpline(self.azimuth(set)[::-1,0], self.elevation(set)[0,:],self.azel_slope()['El'][::-1,:])
+            elif self.azimuth(set)[1,0] < self.azimuth(set)[0,0] and self.elevation(set)[0,1] < self.elevation(set)[0,0]:
+                self.interpolated_copol_azgrad = interp.RectBivariateSpline(self.azimuth(set)[::-1,0], self.elevation(set)[0,::-1],self.azel_slope()['Az'][::-1,::-1])
+                self.interpolated_copol_elgrad = interp.RectBivariateSpline(self.azimuth(set)[::-1,0], self.elevation(set)[0,::-1],self.azel_slope()['El'][::-1,::-1])
+            elif self.azimuth(set)[1,0] > self.azimuth(set)[0,0] and self.elevation(set)[0,1] < self.elevation(set)[0,0]:
+                self.interpolated_copol_azgrad = interp.RectBivariateSpline(self.azimuth(set)[:,0], self.elevation(set)[0,::-1],self.azel_slope()['Az'][:,::-1])
+                self.interpolated_copol_elgrad = interp.RectBivariateSpline(self.azimuth(set)[:,0], self.elevation(set)[0,::-1],self.azel_slope()['El'][:,::-1])
         
         # if uv are 2D, flat them. Use absolute value depending on signed flag
         if not signed:
-            return {'Az':np.absolute(np.reshape(interpolated_copol_azgrad.ev(az.flatten(),el.flatten()),np.array(az).shape)), \
-                    'El':np.absolute(np.reshape(interpolated_copol_elgrad.ev(az.flatten(),el.flatten()),np.array(az).shape))}
+            return {'Az':np.absolute(np.reshape(self.interpolated_copol_azgrad.ev(az.flatten(),el.flatten()),np.array(az).shape)), \
+                    'El':np.absolute(np.reshape(self.interpolated_copol_elgrad.ev(az.flatten(),el.flatten()),np.array(az).shape))}
         else:
-            return {'Az':np.reshape(interpolated_copol_azgrad.ev(az.flatten(),el.flatten()),np.array(az).shape), \
-                    'El':np.reshape(interpolated_copol_elgrad.ev(az.flatten(),el.flatten()),np.array(az).shape)}
+            return {'Az':np.reshape(self.interpolated_copol_azgrad.ev(az.flatten(),el.flatten()),np.array(az).shape), \
+                    'El':np.reshape(self.interpolated_copol_elgrad.ev(az.flatten(),el.flatten()),np.array(az).shape)}
 
     def getmax(self, set=0):
         """Get max directivity value and coordinates.
@@ -369,6 +390,8 @@ class Grd(object):
     # end of function getmax
 
     def displaymax(self, earthmap):
+        """Display max directivity location of the pattern.
+        """
         max_val, max_lon, max_lat = self.getmax()
         max_x, max_y = earthmap(max_lon, max_lat)
         mark = Path(vertices=[(-100, 0),\
@@ -382,6 +405,7 @@ class Grd(object):
         earthmap.scatter(x=max_x, y=max_y, s=20, marker='+', color='k', \
                          linewidths=25, edgecolors='none')
         earthmap.ax.annotate('{0:0.2f}'.format(max_val), xy=(max_x + 1e4, max_y + 1e4))
+    # end of method displaymax
 
     def shrink_copol(self, az, el, step=0.05, set=0):
         """Shrink pattern using an elliptical beam pointing error.
@@ -399,6 +423,7 @@ class Grd(object):
                     az_grid[i][j] = np.nan
                     el_grid[i][j] = np.nan
         # add points of the ellipse
+        # TODO improve this part. Ellipse is not very well defined
         az_ellipse =[]
         el_ellipse = []   
         x = np.arange(-az, az + step, step)
@@ -414,12 +439,12 @@ class Grd(object):
         el_co = self.elevation().flatten()
         co = []
 
-        # create interpolation object
+        # create interpolation object, and create shrunk pattern
         for i in range(len(az_co)):
             co.append(np.min(self.interpolate_copol(az_co[i] + az_depointing, el_co[i] + el_depointing)))
-
         co = np.reshape(co, self.azimuth().shape)
 
+        # return result pattern
         return co
     # end of function shrink
 
@@ -478,6 +503,7 @@ class Grd(object):
                 cbar_axes = divider.append_axes("right", size="5%", pad=0.05)  
                 cbar = figure.colorbar(pcmGrd, cax=cbar_axes)   
             cbar.ax.set_ylabel('Pattern slope (dB/deg)')
+    # end of method plot
 # end of class Grd
 
 
@@ -581,20 +607,64 @@ class GrdDialog(QDialog):
         self.setModal(True)
         self.show()
 
-    def setLoadGrd(self):
+    def addpattern(self):
         self.close()
-        grd = self.earth_plot.loadgrd(self.filename, lon=float(self.viewLonField.text()), \
-                                      alt=ALTGEO, \
-                                      revertx=self.chkRevertX.checkState(), \
-                                      reverty=self.chkRevertY.checkState(), \
-                                      secondpol=self.chkXPol.checkState(), \
-                                      dispslope=self.chkSlope.checkState(), \
-                                      shrink=self.chkshrink.checkState(),\
-                                      azshrink=float(self.azfield.text()),\
-                                      elshrink=float(self.elfield.text()))['grd']
+
+        # add item in Grd menu
+        patternindex = len(self.earth_plot._grds) + 1
+        patternmenu = self.parent.menupattern.addMenu('Pattern ' + \
+                                                        str(patternindex))
+        remove_pat_action = QAction('Remove', self.parent)
+        edit_pat_action = QAction('Edit', self.parent)
+        patternmenu.addAction(remove_pat_action)
+        patternmenu.addAction(edit_pat_action)
+        remove_pat_action.triggered.connect(self.make_remgrd(self.filename, self.earth_plot._grds, self.earth_plot))
+        edit_pat_action.triggered.connect(self.make_editgrd(self.filename, self.earth_plot._grds))
+
+        if self.filename[-3:] == 'grd':
+            pattern = Grd(self.filename, \
+                          bRevertX=self.chkRevertX.checkState(), \
+                          bRevertY=self.chkRevertY.checkState(), \
+                          bUseSecondPol=self.chkXPol.checkState(), \
+                          alt=ALTGEO, \
+                          lon=float(self.viewLonField.text()), \
+                          bDisplaySlope=self.chkSlope.checkState(), \
+                          shrink=self.chkshrink.checkState(), \
+                          azshrink=float(self.azfield.text()), \
+                          elshrink=float(self.elfield.text()))
+        elif self.filename[-3:] == 'pat':
+            pattern = Pat(self.filename)
+
+        self.earth_plot._grds[self.filename] = {'grd':pattern, 'menu': patternmenu}
         self.earth_plot.settitle(self.viewTitleField.text())
-        grd.isolevel = [float(s) for s in self.viewIsoLvlField.text().split(',')]
+        pattern.isolevel = [float(s) for s in self.viewIsoLvlField.text().split(',')]
         self.earth_plot.draw()
+    # end of function setLoadGrd
+    
+    def make_remgrd(self, filename, grds, eplot):
+        """Callback maker for remove pattern menu items.
+        """
+        def remgrd():
+            menu = grds[filename]['menu']
+            menu_action = menu.menuAction()
+            menu.parent().removeAction(menu_action)
+            del grds[filename]
+            eplot.draw()
+        return remgrd
+    # end of function make_remgrd
+
+    def make_editgrd(self,filename, grds):
+        """Callback maker for edit pattern menu items.
+        """
+        def editgrd():
+            menu = grds[filename]['menu']
+            menu_action = menu.menuAction()
+            menu.parent().removeAction(menu_action)
+            del grds[filename]
+            dialbox = GrdDialog(filename, self.parent)
+            dialbox.exec_()
+        return editgrd  
+    # end of function make_editgrd
 
     def getIsoLvl(self, grd: Grd=None):
         if grd == None:
@@ -623,6 +693,330 @@ class GrdDialog(QDialog):
             self.elfield.setReadOnly(True)
             self.elfield.setPalette(palette)
     # end of callback
+# end of classe GrdDialog
 
+class Pat(object):
+    """This class implement reading and processing of Satsoft .pat files.
+    """
     
+    def __init__(self, filename):
+        self.filename = filename
+
+        # open file and read text data
+        file = open(filename, "r")
+        # read all lines in a table
+        lines = file.readlines()
+        # close file        
+        file.close()
+        
+         # line number
+        linesnumber = len(lines)
+        iStart = -1
+        
+        # map header data into dicData        
+        for i in range(linesnumber):
+            # detect end of comments
+            if lines[i][:4] == '++++':
+                iStart = i+1
+                break
+
+        # Line 1
+        # select separator
+        if ',' in lines[iStart]:
+            sep = ','
+        else:
+            sep = None
+        # read file parameters
+        # number of beams in the file
+        self.NBEAMS = int(lines[iStart].split(sep)[0])
+        # field component type
+        # 0 - Scalar field (no crosspol)
+        # 1 - Linear theta and phi components
+        # 2 - Circular right-hand and left-hand components
+        # 3 - linear co and cross
+        # 4 - major and minor axis of polarisation ellipse
+        # 5 - az/el components
+        # 6 - Alpha and epsilon components 
+        self.KCOMP = int(lines[iStart].split(sep)[1])
+        # number of field components (1 or 2)
+        self.NCOMP = int(lines[iStart].split(sep)[2])
+        # grid type
+        # 1 - uv
+        # 2 - theta, phi
+        # 3 - az, el
+        # 4 - alpha, epsilon
+        # 101 - x, y Plane rectangular grid used for array excitations
+        self.KGRID = int(lines[iStart].split(sep)[3])
+        # X dimension of grid
+        self.NX = int(lines[iStart].split(sep)[4])
+        # Y dimension of grid
+        self.NY = int(lines[iStart].split(sep)[5])
+        # read optional parameters
+        if len(lines[iStart].split(sep)) > 6:
+            # Specification of input rotation matrix
+            # 0 - No rotation (default)
+            # 1 - Exchange X and Y axes
+            # 2 - Invert X axis
+            # 3 - 1 + 2
+            # 4 - Invert Y axis
+            # 5 - 1 + 4
+            # 6 - 2 + 4
+            # 7 - 1 + 2 + 4
+            self.IMAT = int(lines[iStart].split(sep)[6])
+        else:
+            # default value 0
+            self.IMAT = 0
+        if len(lines[iStart].split(sep)) > 7:
+            # Unit of field data
+            # 0 - complex rectangular voltage
+            # 1 - magnitude (dB) and phase (deg) of field
+            self.IUNIT = int(lines[iStart].split(sep)[7])
+        else:
+            # default value 0
+            self.IUNIT = 0
+        
+        # next line
+        iStart += 1
+
+        # line 2: XS, YS, XE, YE
+        # grid limits
+        # select separator
+        if ',' in lines[iStart]:
+            sep = ','
+        else:
+            sep = None
+        self.XS = float(lines[iStart].split(sep)[0]) * RAD2DEG
+        self.YS = float(lines[iStart].split(sep)[1]) * RAD2DEG
+        self.XE = float(lines[iStart].split(sep)[2]) * RAD2DEG
+        self.YE = float(lines[iStart].split(sep)[3]) * RAD2DEG
+
+        DX = (self.XE-self.XS)/(self.NX-1)
+        DY = (self.YE-self.YS)/(self.NY-1)
+
+        # next line
+        iStart += 2
+
+        # line 4: beams center
+        self.IX = []
+        self.IY = []
+        # select separator
+        if ',' in lines[iStart]:
+            sep = ','
+        else:
+            sep = None
+        # get beam center for all beams
+        for i in range(self.NBEAMS):
+            self.IX.append(float(lines[iStart + i].split(sep)[0]))
+            self.IY.append(float(lines[iStart + i].split(sep)[1]))
+
+        # create grids
+        x_vec = []
+        y_vec = []
+        self._x = [None] * self.NBEAMS
+        self._y = [None] * self.NBEAMS
+        for k in range(self.NBEAMS):
+            x_vec.append(np.linspace(start=self.XS, stop=self.XE, num=self.NX, endpoint=True) + self.IX[k]) 
+            y_vec.append(np.linspace(start=self.YS, stop=self.YE, num=self.NY, endpoint=True) + self.IY[k]) 
+            self._x[k], self._y[k] = np.meshgrid(x_vec[k], y_vec[k])
+            
+        # next line
+        iStart += 1
+
+        # line 5: frequency
+        self.FREQ = []
+        for i in range(self.NBEAMS):
+            self.FREQ.append(float(lines[iStart + i]))
+
+        # next line
+        iStart += 1
+
+        # patterns
+        self._E_mag_co = [] # first component of copol
+        self._E_phs_co = [] # second component of copol
+        self._E_mag_cr = [] # first component of crosspol
+        self._E_phs_cr = [] # second component of crosspol
+        if self.NCOMP == 2:
+            np.zeros((self.NX, self.NY), dtype=float)
+        # select separator
+        if ',' in lines[iStart]:
+            sep = ','
+        else:
+            sep = None
+        
+        # for each beam
+        for k in range(self.NBEAMS):            
+            # initialize grids
+            C11 = np.zeros((self.NY, self.NX), dtype=float)
+            C12 = np.zeros((self.NY, self.NX), dtype=float)
+            if self.NCOMP == 2:
+                C21 = np.zeros((self.NY, self.NX), dtype=float)
+                C22 = np.zeros((self.NY, self.NX), dtype=float)
+            # extract line per line
+            for j in range(self.NY):
+                for i in range(self.NX):
+                    C11[j][i] = float(lines[iStart].split(sep)[0])
+                    C12[j][i] = float(lines[iStart].split(sep)[1])
+                    if self.NCOMP == 2:
+                        C21[j][i] = float(lines[iStart].split(sep)[2])
+                        C22[j][i] = float(lines[iStart].split(sep)[3])
+                    iStart += 1
+            
+            # pattern is read, put it in the right format
+            self._E_mag_co.append(self.magnitude(self.IUNIT, C11, C12))
+            self._E_phs_co.append(self.phase(self.IUNIT, C11, C12))
+            if self.NCOMP == 2:
+                self._E_mag_cr.append(self.magnitude(self.IUNIT, C21, C22))
+                self._E_mag_cr.append(self.phase(self.IUNIT, C21, C22))
+        # end for
+
+        # initialize class attributes
+        self._azimuth = []
+        self._elevation = []
+        self.isolevel = [25,30,35,38,40]
+        self.bDisplaySlope = False
+    # end of constructor for class Pat
     
+    # Directivity
+    ###################################################################
+        
+    def magnitude(self, iunit, c1, c2):
+        """Convert (C1, C2) to magnitude (dB) depending on IUNIT value
+        """            
+
+        def convert(c1, c2):
+            return  20 * np.log10(np.absolute(c1 + 1j * c2))
+        
+        def identity(c1, c2):
+            return c1
+        
+        converter = {0: convert, \
+                     1: identity}
+        
+        return converter[iunit](c1, c2)
+    # end of function magnitude
+
+    def phase(self, iunit, c1, c2):
+        """Convert (C1, C2) to phase (deg) depending on IUNIT value
+        """         
+
+        def convert(c1, c2):
+            return np.angle(c1 + 1j * c2) * RAD2DEG
+        
+        def identity(c1, c2):
+            return c2
+
+        converter = {0: convert, \
+                     1: identity}
+
+        return converter[iunit](c1, c2)
+    # end of function phase
+
+    def copol(self, k: int=0):
+        """Get magnitude of copolarisation field.
+        """
+        return self._E_mag_co[k]
+    # end of function copol
+    
+    def getmax(self, observer, k=0):
+        """Get max directivity value and coordinates.
+        """
+        max_value = np.max(self._E_mag_co[k])
+        max_index = np.argmax(self._E_mag_co[k])
+        max_longitude = self.longitude(observer).flatten()[max_index]
+        max_latitude = self.latitude(observer).flatten()[max_index]
+        return max_value, max_longitude, max_latitude
+    # end of function getmax
+
+
+    # Azimuth / Elevation
+    ###################################################################
+
+    def azimuth(self, k: int=0):
+        """This function provide azimuth grid for self, beam number k.
+        """
+        if not len(self._azimuth):
+            if self.KGRID == 1:
+                # uv to azel
+                self._azimuth = -1 * np.arctan(self._x[k] / np.sqrt(1 - self._x[k]**2 - self._y[k]**2)) * RAD2DEG
+            elif self.KGRID == 3:
+                # already azel
+                self._azimuth = self._x[k]
+        return self._azimuth
+        
+    def elevation(self, k: int=0):
+        """This function provide elevation grid for self, beam number k.
+        """
+        if not len(self._elevation):
+            if self.KGRID == 1:
+                # uv to azel
+                self._elevation = np.arcsin(self._y[k]) * RAD2DEG
+            elif self.KGRID == 3:
+                # already azel
+                self._elevation = self._y[k]
+        return self._elevation
+
+
+    # Longitude/ Latitude
+    ###################################################################
+
+    def longitude(self, observer):
+        """Project grid on Earth viewed from observer point of view. Return longitude.
+        """
+        x = observer.altitude() * self.azimuth() * DEG2RAD
+        y = observer.altitude() * self.elevation() * DEG2RAD
+        self.proj = prj.Proj(init='epsg:4326 +proj=geos +h=' + \
+                                  str(observer.altitude()) + \
+                                  ' +a=6378137.00 +b=6378137.00 +lon_0=' + \
+                                  str(observer.longitude()) + \
+                                  ' +x_0=0 +y_0=0 +units=meters +no_defs') 
+        longitude, _ = self.proj(x, y, inverse=True)
+        return longitude
+    # end of function longitude
+
+    def latitude(self, observer):
+        """Project grid on Earth viewed from observer point of view. Return latitude.
+        """
+        x = observer.altitude() * self.azimuth() * DEG2RAD
+        y = observer.altitude() * self.elevation() * DEG2RAD
+        self.proj = prj.Proj(init='epsg:4326 +proj=geos +h=' + \
+                             str(observer.altitude()) + \
+                             ' +a=6378137.00 +b=6378137.00 +lon_0=' + \
+                             str(observer.longitude()) + \
+                             ' +x_0=0 +y_0=0 +units=meters +no_defs') 
+        _, latitude = self.proj(x, y, inverse=True)
+        return latitude
+    # end of function latitude
+
+    # Plot
+    ###################################################################
+    
+    def displaymax(self, map: Basemap, observer):
+        """Display max of pattern as a cross on the map.
+        """
+        max_val, max_lon, max_lat = self.getmax(observer)
+        max_x, max_y = map(max_lon, max_lat)
+        mark = Path(vertices=[(-100, 0),\
+                              (100, 0),\
+                              (0, -100),\
+                              (0, 100)],\
+                    codes=[Path.MOVETO,\
+                           Path.LINETO,\
+                           Path.MOVETO,\
+                           Path.LINETO])
+        map.scatter(x=max_x, y=max_y, s=20, marker='+', color='k', \
+                    linewidths=25, edgecolors='none')
+        map.ax.annotate('{0:0.2f}'.format(max_val), xy=(max_x + 1e4, max_y + 1e4))
+
+    def plot(self, map: Basemap, observer, fig, ax, cbar, cbar_ax):
+        """Plot current pattern in the map.
+        """
+        # Project pattern grid in map coordinates
+        x, y = map(self.longitude(observer), self.latitude(observer))
+
+        # plot the contours
+        cs_grd = map.contour(x, y, self.copol(), self.isolevel, linestyles='solid', linewidths=0.5)
+        self.displaymax(map, observer)
+        fig.axes[0].clabel(cs_grd, self.isolevel, inline=True, fmt='%1.1f',fontsize=5)
+    # end of method plot
+
+# end of class Pat

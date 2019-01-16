@@ -22,9 +22,8 @@ import numpy as np
 
 # local module
 import pattern
-from pattern import Grd
-from pattern import GrdDialog
-from viewer import ViewerPos
+from pattern import Grd, Pat, GrdDialog
+from viewer import Viewer
 from zoom import Zoom
 
 
@@ -68,7 +67,7 @@ class EarthPlot(FigureCanvas):
         FigureCanvas.updateGeometry(self)
         
         # initialize EarthPlot fields
-        self._grds = {}
+        self._patterns = {}
         self._elev = {}
         self._clrbar = None
         self._clrbar_axes = None
@@ -128,7 +127,7 @@ class EarthPlot(FigureCanvas):
                     reverty = config.getboolean('PATTERN', 'revert y-axis', fallback=False)
                     secondpol = config.getboolean('PATTERN', 'second polarisation', fallback=False)
                     slope = config.getboolean('PATTERN', 'slope', fallback=False)
-                    grd = self.loadgrd(filename=file, lon=satlon, alt=pattern.ALTGEO, \
+                    grd = self.load_pattern(filename=file, lon=satlon, alt=pattern.ALTGEO, \
                                        revertx=revertx, reverty=reverty, \
                                        secondpol=secondpol, dispslope=slope)['grd']       
                     self.settitle(title)
@@ -136,7 +135,7 @@ class EarthPlot(FigureCanvas):
         
         # initialize angle of view
         # Satellite Longitude, latitude and altitude
-        self._viewer = ViewerPos(lon=longitude, lat=latitude, alt=altitude)
+        self._viewer = Viewer(lon=longitude, lat=latitude, alt=altitude)
 
         # default file name to save figure
         self.filename = 'plot.PNG'
@@ -156,11 +155,11 @@ class EarthPlot(FigureCanvas):
 
         # draw all patterns
         at_least_one_slope = False
-        for key in self._grds:
-            self._grds[key]['grd'].plot(self._earth_map, self._viewer, \
+        for key in self._patterns:
+            self._patterns[key]['grd'].plot(self._earth_map, self._viewer, \
                                         self._figure, self._axes, \
                                         self._clrbar, self._clrbar_axes)
-            if self._grds[key]['grd'].bDisplaySlope:
+            if self._patterns[key]['grd']._display_slope:
                 at_least_one_slope = True
         if not at_least_one_slope:
             for i in range(len(self._figure.axes)):
@@ -298,103 +297,120 @@ class EarthPlot(FigureCanvas):
         # Return vector
         return elev
     
-    def loadgrd(self, filename, lon, alt, revertx=False, reverty=False, secondpol=False, dispslope=False, \
-                shrink=False, azshrink=None, elshrink=None):
+    def load_pattern(self, filename, lon, alt, revertx=False, reverty=False, secondpol=False, dispslope=False, \
+                     shrink=False, azshrink=None, elshrink=None):
         """Load and display a grd file.
         """    
         # add item in Grd menu
-        patternindex = len(self._grds) + 1
+        patternindex = len(self._patterns) + 1
         patternmenu = self.parent().parent().menupattern.addMenu('Pattern ' \
                                                                   + str(patternindex))
         remove_pat_action = QAction('Remove', self.parent().parent())
         edit_pat_action = QAction('Edit', self.parent().parent())
         patternmenu.addAction(remove_pat_action)
         patternmenu.addAction(edit_pat_action)
-        remove_pat_action.triggered.connect(self.make_remgrd(filename))
-        edit_pat_action.triggered.connect(self.make_editgrd(filename))
+        remove_pat_action.triggered.connect(self.make_remove_pattern(filename))
+        edit_pat_action.triggered.connect(self.make_edit_pattern(filename))
+
+
+        if filename[-3:] == 'grd':
+            pattern = Grd(filename=filename, \
+                          revert_x=revertx, \
+                          revert_y=reverty, \
+                          use_second_pol=secondpol, \
+                          sat_alt=alt, \
+                          sat_lon=lon, \
+                          display_slope=dispslope, \
+                          shrink=shrink, \
+                          azshrink=azshrink, \
+                          elshrink=elshrink)
+        elif filename[-3:] == 'pat':
+            pattern = Pat(filename=filename, \
+                          revert_x=revertx, \
+                          revert_y=reverty, \
+                          use_second_pol=secondpol, \
+                          sat_alt=alt, \
+                          sat_lon=lon, \
+                          display_slope=dispslope, \
+                          shrink=shrink, \
+                          azshrink=azshrink, \
+                          elshrink=elshrink)
 
         # Add grd in grd dictionary
-        self._grds[filename] = {'grd': Grd(filename, bRevertX=revertx, \
-                                           bRevertY=reverty, \
-                                           bUseSecondPol=secondpol, \
-                                           alt=alt, \
-                                           lon=lon, \
-                                           bDisplaySlope=dispslope, \
-                                           shrink=shrink, \
-                                           azshrink=azshrink, \
-                                           elshrink=elshrink), \
-                                'menu': patternmenu}
+        self._patterns[filename] = {'grd': pattern, \
+                                    'menu': patternmenu}
                                        
-        return self._grds[filename]
+        return self._patterns[filename]
     # end of loadgrd
 
-    def make_remgrd(self,filename):
+    def make_remove_pattern(self,filename):
         """Callback maker for remove pattern menu items.
         """
-        def remgrd():
-            menu = self._grds[filename]['menu']
+        def remove_pattern():
+            menu = self._patterns[filename]['menu']
             menu_action = menu.menuAction()
             menu.parent().removeAction(menu_action)
-            del self._grds[filename]
+            del self._patterns[filename]
             self.draw()
-        return remgrd
-    # end of function make_remgrd
+        return remove_pattern
+    # end of function make_remove_pattern
 
-    def make_editgrd(self,filename):
+    def make_edit_pattern(self,filename):
         """Callback maker for edit pattern menu items.
         """
-        def editgrd():
-            menu = self._grds[filename]['menu']
+        def edit_pattern():
+            menu = self._patterns[filename]['menu']
             menu_action = menu.menuAction()
             menu.parent().removeAction(menu_action)
-            del self._grds[filename]
-            dialbox = GrdDialog(filename, self.parent().parent())
+            dialbox = GrdDialog(filename, self.parent().parent(), self._patterns[filename]['grd'])
+            del self._patterns[filename]
             dialbox.exec_()
-        return editgrd  
-    # end of function make_editgrd
+        return edit_pattern  
+    # end of function make_edit_pattern
 
-    def drawgrd(self, grd):
-        """Draw pattern on the earth plot from the provided grd.
-        """
-        x, y = self._earth_map(grd.longitude, grd.latitude)
-        if not grd.bDisplaySlope:
-            try:
-                cs_grd = self._earth_map.contour(x, y, grd.copol(), grd.isolevel, linestyles='solid', linewidths=0.5)
-                self._axes.clabel(cs_grd, grd.isolevel, inline=True, fmt='%1.1f',fontsize=5)
-                grd.displaymax(self._earth_map)
-                return cs_grd
-            except ValueError as value_err:
-                print(value_err)
-                print('Pattern ' + grd.filename + ' will not be displayed.')
-                return None
-        else:
-            # define grid
-            iNx = 1001
-            iNy = 1001
-            fAzlin = np.linspace(grd.MinAz(),grd.MaxAz(),iNx)
-            fEllin = np.linspace(grd.MinEl(),grd.MaxEl(),iNy)
-            fAzMesh, fElMesh = np.meshgrid(fAzlin, fEllin)
-            # display color mesh
-            cmap = plt.get_cmap('jet')
-            cmap.set_over('white',grd.slope_range[1])
-            cmap.set_under('white',grd.slope_range[0])
-            xOrigin, yOrigin = self._earth_map(self._viewer.longitude(),self._viewer.latitude())
-            pcmGrd = self._earth_map.pcolormesh(self.az2x(fAzMesh) + xOrigin, \
-                                         self.el2y(fElMesh) + yOrigin, \
-                                         grd.interpolate_slope(fAzMesh,fElMesh), \
-                                         vmin=grd.slope_range[0],vmax=grd.slope_range[1], \
-                                         cmap=cmap,alpha=0.5)
-            # add color bar
-            if self._clrbar:
-                self._clrbar = self._figure.colorbar(pcmGrd, cax=self._clrbar_axes)     
-            else:
-                divider = make_axes_locatable(self._axes)
-                self._clrbar_axes = divider.append_axes("right", size="5%", pad=0.05)
-                self._clrbar = self._figure.colorbar(pcmGrd, cax=self._clrbar_axes)     
-            self._clrbar.ax.set_ylabel('Pattern slope (dB/deg)')
+    # Obsolete: any object should be able to draw itself
+    # def drawgrd(self, grd):
+    #     """Draw pattern on the earth plot from the provided grd.
+    #     """
+    #     x, y = self._earth_map(grd.longitude(), grd.latitude())
+    #     if not grd.display_slope:
+    #         try:
+    #             cs_grd = self._earth_map.contour(x, y, grd.copol(), grd.isolevel, linestyles='solid', linewidths=0.5)
+    #             self._axes.clabel(cs_grd, grd.isolevel, inline=True, fmt='%1.1f',fontsize=5)
+    #             grd.displaymax(self._earth_map)
+    #             return cs_grd
+    #         except ValueError as value_err:
+    #             print(value_err)
+    #             print('Pattern ' + grd.filename + ' will not be displayed.')
+    #             return None
+    #     else:
+    #         # define grid
+    #         iNx = 1001
+    #         iNy = 1001
+    #         fAzlin = np.linspace(grd.MinAz(),grd.MaxAz(),iNx)
+    #         fEllin = np.linspace(grd.MinEl(),grd.MaxEl(),iNy)
+    #         fAzMesh, fElMesh = np.meshgrid(fAzlin, fEllin)
+    #         # display color mesh
+    #         cmap = plt.get_cmap('jet')
+    #         cmap.set_over('white',grd.slope_range[1])
+    #         cmap.set_under('white',grd.slope_range[0])
+    #         xOrigin, yOrigin = self._earth_map(self._viewer.longitude(),self._viewer.latitude())
+    #         pcmGrd = self._earth_map.pcolormesh(self.az2x(fAzMesh) + xOrigin, \
+    #                                      self.el2y(fElMesh) + yOrigin, \
+    #                                      grd.interpolate_slope(fAzMesh,fElMesh), \
+    #                                      vmin=grd.slope_range[0],vmax=grd.slope_range[1], \
+    #                                      cmap=cmap,alpha=0.5)
+    #         # add color bar
+    #         if self._clrbar:
+    #             self._clrbar = self._figure.colorbar(pcmGrd, cax=self._clrbar_axes)     
+    #         else:
+    #             divider = make_axes_locatable(self._axes)
+    #             self._clrbar_axes = divider.append_axes("right", size="5%", pad=0.05)
+    #             self._clrbar = self._figure.colorbar(pcmGrd, cax=self._clrbar_axes)     
+    #         self._clrbar.ax.set_ylabel('Pattern slope (dB/deg)')
 
-            return pcmGrd
-    # end of drawgrd method       
+    #         return pcmGrd
+    # # end of drawgrd method       
 
     # Zoom on the _earth_map
     def updatezoom(self):

@@ -13,6 +13,9 @@ import configparser
 from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, qApp, \
                             QVBoxLayout, QWidget, QFileDialog
 
+# import os
+import os
+
 # local modules
 import earthplot as plc
 
@@ -21,7 +24,7 @@ from pattern import GrdDialog
 from elevation import ElevDialog
 
 # import from viewer module
-from viewer import ViewerPos
+from viewer import Viewer
 from viewer import ViewerPosDialog
 
 # import from zoom module
@@ -59,8 +62,17 @@ class GrdViewer(QMainWindow):
         self.revert_y_axis = False
         self.second_polarisation = False
 
+        # get current dir
+        cwd = os.getcwd()
+        # go to .ini directory
+        # target work directory is
+        target_dir = "C:\\Users\\cfrance\\Dev\\Python\\PayPat"
+        os.chdir(target_dir)
+        # read .ini file
         self.config = configparser.ConfigParser()
-        self.config.read('C:\\Users\\cfrance\\Dev\\Python\\PayPat\\grdviewer.ini')
+        self.config.read('grdviewer.ini')
+        # go back to original directory
+        os.chdir(cwd)
 
         # Create Main window central widget
         self.centralwidget = QWidget(self)
@@ -143,12 +155,12 @@ class GrdViewer(QMainWindow):
         menuresolution.addAction(res_full_action)
         menuresolution.triggered[QAction].connect(self.set_earth_resolution)
 
-        # Add display grd Menu
+        # Add display pattern Menu
         self.menupattern = menubar.addMenu('Pattern')
-        # load grd item
-        load_grd_action = QAction('Load Grd', self)
-        self.menupattern.addAction(load_grd_action)
-        load_grd_action.triggered.connect(self.load_grd_dialog)
+        # load pattern item
+        load_pattern_action = QAction('Load Grd', self)
+        self.menupattern.addAction(load_pattern_action)
+        load_pattern_action.triggered.connect(self.load_pattern_dialog)
 
         # Add Misc menu
         self._menumisc = menubar.addMenu('Misc.')
@@ -177,15 +189,15 @@ class GrdViewer(QMainWindow):
         dialbox.exec_()
     # end of method viewer_dialog
     
-    def load_grd_dialog(self):
+    def load_pattern_dialog(self):
         """Pops up dialog box to load Grd file and display it
         on the Earth plot.
         """
         # Get filename
-        grd_file_name, _ = QFileDialog.getOpenFileName()
+        file_name, _ = QFileDialog.getOpenFileName()
         # if file name provided open the customised dialog box
-        if grd_file_name:
-            dialbox = GrdDialog(grd_file_name, self)
+        if file_name:
+            dialbox = GrdDialog(file_name, self)
             dialbox.exec_()
     # end of method load_grd_dialog
 
@@ -241,14 +253,14 @@ class GrdViewer(QMainWindow):
     def clearplot(self):
         """Clear the Earth map plot 
         """
-        for key in self.earth_plot._grds:
-            menu_action = self.earth_plot._grds[key]['menu'].menuAction()
+        for key in self.earth_plot._patterns:
+            menu_action = self.earth_plot._patterns[key]['menu'].menuAction()
             self.menupattern.removeAction(menu_action)
-        self.earth_plot._grds.clear()
+        self.earth_plot._patterns.clear()
         self.earth_plot._stations.clear()
         self.earth_plot._elev.clear()
         self.earth_plot.zoom(Zoom())
-        self.earth_plot.viewer(ViewerPos())
+        self.earth_plot.viewer(Viewer())
         self.earth_plot.draw()
     
     def set_earth_resolution(self, action):

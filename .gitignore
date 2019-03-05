@@ -2,6 +2,7 @@
 ./data
 ./out
 ./src/__pycache__
+./src/pattern/__pycache__
 
 # files
 ./src/*.pyc

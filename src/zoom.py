@@ -10,16 +10,16 @@ class Zoom(object):
     """This class represents the current zoom of the earth plot.
     """
    
-    def __init__(self, proj='geos', geo=(-9.0, -9.0, 9.0, 9.0), \
+    def __init__(self, proj='nsper', nsper=(-9.0, -9.0, 9.0, 9.0), \
                  merc=(-180.0, -85.0, 180.0, -85.0)):
         """Default constructor for Zoom objects.
         Works if zoom defined in AzEl of LL coordinates.
         """
         self._projection = proj      # projection
-        self.min_azimuth = geo[0]    # deg Azimuth
-        self.min_elevation = geo[1]  # deg Elevation
-        self.max_azimuth = geo[2]    # deg Azimuth
-        self.max_elevation = geo[3]  # deg Elevation
+        self.min_azimuth = nsper[0]    # deg Azimuth
+        self.min_elevation = nsper[1]  # deg Elevation
+        self.max_azimuth = nsper[2]    # deg Azimuth
+        self.max_elevation = nsper[3]  # deg Elevation
         self.min_longitude = merc[0] # deg Longitude
         self.min_latitude = merc[1]  # deg Latitude
         self.max_longitude = merc[2] # deg Longitude
@@ -64,7 +64,7 @@ class ZoomDialog(QDialog):
         self.min_y_field = QLineEdit(parent=self)
         self.max_x_field = QLineEdit(parent=self)
         self.max_y_field = QLineEdit(parent=self)
-        if self.earth_plot.projection() == 'geos':
+        if self.earth_plot.projection() == 'nsper':
             min_x_label.setText('min. Az')
             min_y_label.setText('min. El')
             max_x_label.setText('max. Az')
@@ -119,7 +119,7 @@ class ZoomDialog(QDialog):
         """This method update the earth plot zoom depending on
         the projection.
         """
-        if self.earth_plot.projection() == 'geos':
+        if self.earth_plot.projection() == 'nsper':
             self._zoom.min_azimuth = float(self.min_x_field.text())
             self._zoom.min_elevation = float(self.min_y_field.text())
             self._zoom.max_azimuth = float(self.max_x_field.text())
@@ -130,7 +130,8 @@ class ZoomDialog(QDialog):
             self._zoom.max_longitude = float(self.max_x_field.text())
             self._zoom.max_latitude = float(self.max_y_field.text())
         self.earth_plot.updatezoom()
-        self.earth_plot.draw()
+        self.earth_plot.draw_elements()
+        self.earth_plot.draw_axis()
         self.close()
     # end of method updatezoom
 # end of class ZoomDialog

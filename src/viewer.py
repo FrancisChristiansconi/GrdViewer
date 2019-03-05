@@ -6,6 +6,9 @@ from PyQt5.QtWidgets import QDialog, QLineEdit, QVBoxLayout, QHBoxLayout, \
                             QPushButton, QLabel
 import PyQt5.QtCore as QtCore
 
+# import constant file
+import constant as cst
+
 
 class Viewer(object):
     """Viewer represents position of observer of the projection.
@@ -141,10 +144,14 @@ class ViewerPosDialog(QDialog):
 
     # Update Viewer fields with dialog box fields values 
     def update_viewerpos(self):
+        if self._alt_field.text().upper() == 'GEO':
+            alt = cst.ALTGEO
+        else:
+            alt = float(self._alt_field.text())
         self._viewerpos.set(float(self._lon_field.text()), \
                             float(self._lat_field.text()), \
-                            float(self._alt_field.text()))
-        self.parent.draw()
+                            alt)
+        self.parent.draw_elements()
         self.close()
 
 # End of class ViewerPosDialog

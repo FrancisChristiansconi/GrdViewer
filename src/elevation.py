@@ -7,15 +7,13 @@ from PyQt5.QtWidgets import QDialog, QLineEdit, \
 
 
 # Constants
-# Default elevation contour
-DEFAULT_ELEVATION = 10
-
+import constant as cst
 
 # Classes
 class Elevation(object):
     """This class defines an elevation angle.
     """
-    def __init__(self, elev=DEFAULT_ELEVATION):
+    def __init__(self, elev=cst.DEFAULT_ELEVATION):
         self._angle = elev
 
     def angle(self,a: float = None) -> float:
@@ -84,9 +82,9 @@ class ElevDialog(QDialog):
     def addElevContour(self):
         self.close()
         self.earth_plot._elev['Elev' + self.fldElev.text()] = Elevation(float(self.fldElev.text()))
-        self.earth_plot.draw()
+        self.earth_plot.draw_elements()
 
     def remElevContour(self):
         self.close()
         del self.earth_plot._elev['Elev' + self.fldElev.text()]
-        self.earth_plot.draw()
+        self.earth_plot.draw_elements()

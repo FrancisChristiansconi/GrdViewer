@@ -14,27 +14,25 @@ from matplotlib import cm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # import PyQt5 and link with matplotlib
-from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction
+from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, QFileDialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
-# import numpy
+# import numpy for arrays and mathematical operations
 import numpy as np
 
+# import os module for files and directories manipulation
+import os
+
 # local module
-import pattern
-from pattern import Grd, Pat, GrdDialog
+import utils
+from pattern.control import PatternControler
+from pattern.dialog import PatternDialog
 from viewer import Viewer
 from zoom import Zoom
+import angles
 
-
-# Constants 
-# Earth radius at equator and pole
-EARTH_RAD_EQUATOR_M = 6378137.0000 # m
-EARTH_RAD_POLE_M = 6356752.3142 # m
-
-# angle conversion
-DEG2RAD = np.pi / 180
-RAD2DEG = 180 / np.pi
+# import constant file
+import constant as cst
 
 
 class EarthPlot(FigureCanvas):
@@ -43,13 +41,15 @@ class EarthPlot(FigureCanvas):
     """ 
     # EarthPlot constructor
     def __init__(self, parent=None, width=5, height=5, dpi=300, \
-                 proj='geos', res='c', config=None):
+                 proj='nsper', res='c', config=None):
+        utils.trace('in')
 
         # Store Canvas properties
         self._plot_title = 'Default Title'
         self._width = width
         self._height = height
         self._dpi = dpi
+        self._centralwidget = parent
         # store _earth_map properties
         self._projection = proj
         self._resolution = res
@@ -60,7 +60,7 @@ class EarthPlot(FigureCanvas):
         self._axes = self._figure.add_subplot(111)
 
         FigureCanvas.__init__(self, self._figure)
-        self.setParent(parent)
+        self.setParent(self._centralwidget)
         FigureCanvas.setSizePolicy(self, \
                                    QSizePolicy.Expanding, \
                                    QSizePolicy.Expanding)
@@ -69,11 +69,15 @@ class EarthPlot(FigureCanvas):
         # initialize EarthPlot fields
         self._patterns = {}
         self._elev = {}
+        self._stations = []
+        self._polygons = []
         self._clrbar = None
         self._clrbar_axes = None
         self._earth_map = None
-        self._stations = []
-        self._polygons = []
+        self._coastlines_collection = None
+        self._countries_collection = None
+        self._parallels_collection = None
+        self._meridians_collection = None
 
         # if a config has been provided by caller
         if config:
@@ -92,7 +96,16 @@ class EarthPlot(FigureCanvas):
             # get point of view coordinates if defined
             longitude = config.getfloat('VIEWER', 'longitude', fallback=0.0)
             latitude = config.getfloat('VIEWER', 'latitude', fallback=0.0)
-            altitude = config.getfloat('VIEWER', 'altitude', fallback=35786000.0)
+            altitude = config.getfloat('VIEWER', 'altitude', fallback=cst.ALTGEO)
+
+            self._coastlines = config.getfloat('DEFAULT', 'coast lines', fallback=0.2)
+            self._countries = config.getfloat('DEFAULT', 'countries', fallback=0.2)
+            self._parallels = config.getfloat('DEFAULT', 'parallels', fallback=0.2)
+            self._meridians = config.getfloat('DEFAULT', 'meridians', fallback=0.2)
+
+            # initialize angle of view
+            # Satellite Longitude, latitude and altitude
+            self._viewer = Viewer(lon=longitude, lat=latitude, alt=altitude)
 
             # get default directory
             self.rootdir = config.get('DEFAULT', 'root')
@@ -110,40 +123,54 @@ class EarthPlot(FigureCanvas):
                     self._zoom.max_elevation = config.getfloat('GEO', 'max elevation')
             if 'MERCATOR' in config:
                 if 'min longitude' in config['MERCATOR']:
-                    self._zoom.fLowLeftLon = config.getfloat('MERCATOR', 'min longitude')
+                    self._zoom.min_longitude = config.getfloat('MERCATOR', 'min longitude')
                 if 'min latitude' in config['MERCATOR']:
-                    self._zoom.fLowLeftLat = config.getfloat('MERCATOR', 'min latitude')
+                    self._zoom.min_latitude = config.getfloat('MERCATOR', 'min latitude')
                 if 'max longitude' in config['MERCATOR']:
-                    self._zoom.fUpRightLon = config.getfloat('MERCATOR', 'max longitude')
+                    self._zoom.max_longitude = config.getfloat('MERCATOR', 'max longitude')
                 if 'max latitude' in config['MERCATOR']:
-                    self._zoom.fUpRightLat = config.getfloat('MERCATOR', 'max latitude')
-            if 'PATTERN' in config:
-                if 'file' in config['PATTERN']:
-                    file = config.get('PATTERN', 'file')
-                    satlon = config.getfloat('PATTERN', 'longitude', fallback=0.0)
-                    title = config.get('PATTERN', 'title', fallback='Default title')
-                    level = config.get('PATTERN', 'level', fallback='25, 30, 35, 38, 40')
-                    revertx = config.getboolean('PATTERN', 'revert x-axis', fallback=False)
-                    reverty = config.getboolean('PATTERN', 'revert y-axis', fallback=False)
-                    secondpol = config.getboolean('PATTERN', 'second polarisation', fallback=False)
-                    slope = config.getboolean('PATTERN', 'slope', fallback=False)
-                    grd = self.load_pattern(filename=file, lon=satlon, alt=pattern.ALTGEO, \
-                                       revertx=revertx, reverty=reverty, \
-                                       secondpol=secondpol, dispslope=slope)['grd']       
-                    self.settitle(title)
-                    grd.isolevel = [float(s) for s in level.split(',')]
-        
-        # initialize angle of view
-        # Satellite Longitude, latitude and altitude
-        self._viewer = Viewer(lon=longitude, lat=latitude, alt=altitude)
+                    self._zoom.max_latitude = config.getfloat('MERCATOR', 'max latitude')
+            pattern_index = 1
+            pattern_section = 'PATTERN' + str(pattern_index)
+            while pattern_section in config:
+                if 'file' in config[pattern_section]:
+                    conf = {}
+                    conf['filename'] = config.get(pattern_section, 'file')
+                    conf['sat_lon'] = config.getfloat(pattern_section, 'longitude', fallback=0.0)
+                    conf['sat_lat'] = config.getfloat(pattern_section, 'latitude', fallback=0.0)
+                    conf['sat_alt'] = config.getfloat(pattern_section, 'altitude', fallback=cst.ALTGEO)
+                    conf['title'] = config.get(pattern_section, 'title', fallback='Default title')
+                    conf['level'] = config.get(pattern_section, 'level', fallback='25, 30, 35, 38, 40')
+                    conf['revert_x'] = config.getboolean(pattern_section, 'revert x-axis', fallback=False)
+                    conf['revert_y'] = config.getboolean(pattern_section, 'revert y-axis', fallback=False)
+                    conf['rotate'] = config.getboolean(pattern_section, 'rotate', fallback=False)
+                    conf['use_second_pol'] = config.getboolean(pattern_section, 'second polarisation', fallback=False)
+                    conf['display_slope'] = config.getboolean(pattern_section, 'slope', fallback=False)
+                    conf['shrink'] = config.getboolean(pattern_section, 'shrink', fallback=False)
+                    conf['azshrink'] = config.getfloat(pattern_section, 'azimuth shrink', fallback=0.0)
+                    conf['elshrink'] = config.getfloat(pattern_section, 'elevation shrink', fallback=0.0)
+                    conf['offset'] = config.getboolean(pattern_section, 'offset', fallback=False)
+                    conf['azoffset'] = config.getfloat(pattern_section, 'azimuth offset', fallback=0.0)
+                    conf['eloffset'] = config.getfloat(pattern_section, 'elevation offset', fallback=0.0)
+                    conf['cf'] = config.getfloat(pattern_section, 'conversion factor', fallback=0.0)
+                    pattern = self.load_pattern(conf=conf)
+                    self.settitle(conf['title'])
+                    pattern.isolevel = [float(s) for s in conf['level'].split(',')]
 
+                    # check for next pattern
+                    pattern_index += 1
+                    pattern_section = 'PATTERN' + str(pattern_index)
+        
         # default file name to save figure
         self.filename = 'plot.PNG'
 
+        self.draw_elements()
+        utils.trace('out')
     # End of EarthPlot constructor
 
     # Redefine draw function
-    def draw(self):
+    def draw_elements(self):
+        utils.trace('in')
         # clear display and reset it
         self._axes.clear()
 
@@ -156,21 +183,16 @@ class EarthPlot(FigureCanvas):
         # draw all patterns
         at_least_one_slope = False
         for key in self._patterns:
-            self._patterns[key]['grd'].plot(self._earth_map, self._viewer, \
-                                        self._figure, self._axes, \
-                                        self._clrbar, self._clrbar_axes)
-            if self._patterns[key]['grd']._display_slope:
-                at_least_one_slope = True
-        if not at_least_one_slope:
+            self._patterns[key].plot()
+            if 'display_slope' in self._patterns[key]._config:
+                if self._patterns[key]._config['display_slope']:
+                    at_least_one_slope = True
+        if not at_least_one_slope and len(self._patterns):
             for i in range(len(self._figure.axes)):
                 if i:
                     self._figure.delaxes(self._figure.axes[i])
 
-        # Adjust subplot margins
-        # self._figure.subplots_adjust(left=0.1, right=1.0,\
-        #                              bottom=0.1, top=0.95,\
-        #                              wspace=0.0, hspace=0.0)
-
+        
         # draw all Elevation contour
         if self._elev:
             self.drawelevation([self._elev[key].angle() for key in self._elev])
@@ -183,39 +205,64 @@ class EarthPlot(FigureCanvas):
         for p in self._polygons:
             p.plot(self._earth_map, linestyle='--', linewidth=0.5)
 
-        if self._projection == 'geos':
+        # draw axis
+        self.draw_axis()
+
+        # call to surcharged draw function
+        self.draw()  
+        utils.trace('out')     
+    # end of draw_elements function
+    
+    def draw_axis(self):
+        utils.trace('in')
+        if self._projection == 'nsper':
             self._axes.set_xlabel('Azimuth (deg)')
             self._axes.set_ylabel('Elevation (deg)')
             # compute and add x-axis ticks
             azticks = np.arange(self._zoom.min_azimuth, self._zoom.max_azimuth + 0.1, 2)
-            self._axes.set_xticks(self.az2x(azticks)
-                                  + self._earth_map(self._viewer.longitude(), 0.0)[0])
+            self._axes.set_xticks(self.az2x(azticks) +
+                                  self._earth_map(self._viewer.longitude(), self._viewer.latitude())[0])
             self._axes.set_xticklabels(str(f) for f in azticks)
             # compute and add y-axis ticks
             elticks = np.arange(self._zoom.min_elevation, self._zoom.max_elevation + 0.1, 2)
-            self._axes.set_yticks(self.el2y(elticks)
-                                  + self._earth_map(self._viewer.longitude(), 0.0)[1])
+            self._axes.set_yticks(self.el2y(elticks) +
+                                  self._earth_map(self._viewer.longitude(), self._viewer.latitude())[1])
             self._axes.set_yticklabels(str(f) for f in elticks)
         elif self._projection == 'merc':
             self._axes.set_xlabel('Longitude (deg)')
             self._axes.set_ylabel('Latitude (deg)')
+            lonticks = np.arange(int(self._zoom.min_longitude / 10) * 10, self._zoom.max_longitude + 0.1, 20)
+            lonticks_converted, _ = np.array(self._earth_map(lonticks, np.ones(lonticks.shape) * self._zoom.min_latitude))
+            self._axes.set_xticks(lonticks_converted)
+            self._axes.set_xticklabels(str(f) for f in lonticks)
+            # compute and add y-axis ticks
+            latticks = np.arange(int(self._zoom.min_latitude / 10) * 10, self._zoom.max_latitude + 0.1, 20)
+            _, latticks_converted = np.array(self._earth_map(np.ones(latticks.shape) * self._zoom.min_longitude, latticks))
+            self._axes.set_yticks(latticks_converted)
+            self._axes.set_yticklabels(str(f) for f in latticks)
         self._axes.set_title(self._plot_title)
+        utils.trace('out')
+    # end of function draw_axis
 
-        # call to super draw method
-        super().draw()
-    # end of draw function
 
     def settitle(self, title: str):
         """Set Earth plot title.
         """
+        utils.trace('in')
         self._plot_title = title
+        self._axes.set_title(self._plot_title)
+        utils.trace('out')
+    # end of method settitle
 
     # Change observer Longitude 
     def setviewerlongitude(self, lon):
+        utils.trace()
         self._viewer.longitude(lon)
-        
+    # end of method setviewerlongitude
+
     # Draw Earth and return Basemap handler
-    def drawearth(self, proj='geos', resolution='c'):
+    def drawearth(self, proj='nsper', resolution='c'):
+        utils.trace('in')
         # if self._earth_map:
             # ax = self._earth_map.ax
         # else:
@@ -227,47 +274,57 @@ class EarthPlot(FigureCanvas):
         # i: intermediate
         # h: high
         # f: full
-        if proj == 'geos':
-            # NB: latitude has to stay 0.0 for geos projection
-            self._earth_map = Basemap(projection=proj, \
-                            rsphere=(EARTH_RAD_EQUATOR_M,EARTH_RAD_POLE_M), \
+        if proj == 'nsper':
+            self._earth_map = Basemap(projection='nsper', \
+                            # rsphere=(cst.EARTH_RAD_EQUATOR_M,cst.EARTH_RAD_POLE_M), \
                             llcrnrx=self.llcrnrx, \
                             llcrnry=self.llcrnry, \
                             urcrnrx=self.urcrnrx, \
                             urcrnry=self.urcrnry, \
                             lon_0=self._viewer.longitude(), \
-                            lat_0=0.0, \
+                            lat_0=self._viewer.latitude(), \
                             satellite_height=self._viewer.altitude(), \
                             resolution=resolution, \
                             ax=ax)
-            
-            self._earth_map.drawcoastlines(linewidth=0.5)
-            self._earth_map.drawcountries(linewidth=0.5)
-            self._earth_map.drawparallels(np.arange(-90., 120., 30.), linewidth=0.5)
-            self._earth_map.drawmeridians(np.arange(0., 390., 30.), linewidth=0.5)
-            self._earth_map.drawmapboundary(linewidth=0.5)
+            # self._earth_map.bluemarble()
+            # self._earth_map.arcgisimage(service = "ESRI_Imagery_World_2D", xpixels = 2000)
+
         elif proj=='merc':
             self._earth_map = Basemap(projection=proj, \
-                            rsphere=(EARTH_RAD_EQUATOR_M,EARTH_RAD_POLE_M), \
+                            rsphere=(cst.EARTH_RAD_EQUATOR_M,cst.EARTH_RAD_POLE_M), \
                             llcrnrlat=self.llcrnrlat, \
                             urcrnrlat=self.urcrnrlat,\
                             llcrnrlon=self.llcrnrlon, \
                             urcrnrlon=self.urcrnrlon, \
                             lat_ts=20, \
                             resolution=resolution, \
-                            ax=ax)    
-
-            self._earth_map.drawcoastlines(linewidth=0.5)
-            self._earth_map.drawcountries(linewidth=0.5)
-            self._earth_map.drawparallels(np.arange(-90., 91., 30.), linewidth=0.5)
-            self._earth_map.drawmeridians(np.arange(-180., 181., 30.), linewidth=0.5)
-            self._earth_map.drawmapboundary(linewidth=0.5)
+                            ax=ax) 
+                               
+        # Earth map drawing options
+        if self._coastlines_collection:
+            try:
+                self._coastlines_collection.remove()
+            except ValueError:
+                print('drawearth: Something went wrong here.')
+        if self._coastlines:
+            self._coastlines_collection = self._earth_map.drawcoastlines(linewidth=self._coastlines)
+        if self._countries:
+            self._earth_map.drawcountries(linewidth=self._countries)
+        if self._parallels:
+            self._earth_map.drawparallels(np.arange(-80., 81., 20.),
+                                          linewidth=self._parallels)
+        if self._meridians:
+            self._earth_map.drawmeridians(np.arange(-180., 181., 20.),
+                                          linewidth=self._meridians)
+        self._earth_map.drawmapboundary(linewidth=0.2)
     
+        utils.trace('out')
         return self._earth_map
     # end of drawEarth function    
         
     # Draw isoElevation contours
     def drawelevation(self, level=(10, 20, 30)):
+        utils.trace('in')
         # define grid
         iNx = 200
         iNy = 200
@@ -278,139 +335,73 @@ class EarthPlot(FigureCanvas):
         # define Elevation matrix
         fElev = self.elevation(fLonMesh, fLatMesh)
         csElev = self._earth_map.contour(fXMesh,fYMesh,fElev, level, colors='black', linestyles='dotted', linewidths=0.5)
+        utils.trace('out')
         return csElev
     # end of drawelevation    
 
     def elevation(self, stalon, stalat):
         """Compute elevation of spacecraft seen from a station on the ground.
         """  
+        utils.trace('in')
         # compute phi
-        phi = np.arccos(np.cos(DEG2RAD * stalat)
-              * np.cos(DEG2RAD * (self._viewer.longitude() - stalon)))
+        phi = np.arccos(np.cos(cst.DEG2RAD * stalat)
+              * np.cos(cst.DEG2RAD * (self._viewer.longitude() - stalon)))
 
         # compute elevation
-        elev = np.reshape([90 if phi == 0 else RAD2DEG * np.arctan((np.cos(phi) - (EARTH_RAD_EQUATOR_M/(EARTH_RAD_EQUATOR_M+self._viewer.altitude())))/ np.sin(phi)) for phi in phi.flatten()], phi.shape)
+        elev = np.reshape([90 if phi == 0 else cst.RAD2DEG * np.arctan((np.cos(phi) - (cst.EARTH_RAD_EQUATOR_M/(cst.EARTH_RAD_EQUATOR_M+self._viewer.altitude())))/ np.sin(phi)) for phi in phi.flatten()], phi.shape)
         
         # remove station out of view
         elev = np.where(np.absolute(stalon - self._viewer.longitude()) < 90, elev, -1)
         
+        utils.trace('out')
         # Return vector
         return elev
-    
-    def load_pattern(self, filename, lon, alt, revertx=False, reverty=False, secondpol=False, dispslope=False, \
-                     shrink=False, azshrink=None, elshrink=None):
+    # end of function elevation
+
+
+    def get_file_key(self, filename):    
+        utils.trace('in')    
+        file_index = 1
+        f = os.path.basename(filename)
+        file_key = f + ' ' + str(file_index)
+        while (file_key in self._patterns) and file_index <= 50:
+            file_index = file_index + 1
+            file_key = f + ' ' + str(file_index)
+        if file_index == 50:
+            print('Max repetition of same file reached. Index 50 will be overwritten')
+        utils.trace('out')
+        return file_key
+    # end of function get_file_key
+
+    def load_pattern(self, conf=None):
         """Load and display a grd file.
         """    
-        # add item in Grd menu
-        patternindex = len(self._patterns) + 1
-        patternmenu = self.parent().parent().menupattern.addMenu('Pattern ' \
-                                                                  + str(patternindex))
-        remove_pat_action = QAction('Remove', self.parent().parent())
-        edit_pat_action = QAction('Edit', self.parent().parent())
-        patternmenu.addAction(remove_pat_action)
-        patternmenu.addAction(edit_pat_action)
-        remove_pat_action.triggered.connect(self.make_remove_pattern(filename))
-        edit_pat_action.triggered.connect(self.make_edit_pattern(filename))
+        utils.trace('in')
+        try:
+            filename = conf['filename']
+        except KeyError:
+            print('load_pattern:File name is mandatory.')
+            utils.trace('out')
+            return None
+        file_key = self.get_file_key(filename)
+        conf['key'] = file_key
 
-
-        if filename[-3:] == 'grd':
-            pattern = Grd(filename=filename, \
-                          revert_x=revertx, \
-                          revert_y=reverty, \
-                          use_second_pol=secondpol, \
-                          sat_alt=alt, \
-                          sat_lon=lon, \
-                          display_slope=dispslope, \
-                          shrink=shrink, \
-                          azshrink=azshrink, \
-                          elshrink=elshrink)
-        elif filename[-3:] == 'pat':
-            pattern = Pat(filename=filename, \
-                          revert_x=revertx, \
-                          revert_y=reverty, \
-                          use_second_pol=secondpol, \
-                          sat_alt=alt, \
-                          sat_lon=lon, \
-                          display_slope=dispslope, \
-                          shrink=shrink, \
-                          azshrink=azshrink, \
-                          elshrink=elshrink)
+        pattern = PatternControler(parent=self, filename=filename)
+        if not 'sat_lon' in conf:
+            dialog = True
+            conf['sat_lon'] = self._viewer.longitude()
+            conf['sat_lat'] = self._viewer.latitude()
+            conf['sat_alt'] = self._viewer.altitude()
+        else:
+            dialog = False
+        pattern.configure(dialog=dialog, config=conf)
 
         # Add grd in grd dictionary
-        self._patterns[filename] = {'grd': pattern, \
-                                    'menu': patternmenu}
-                                       
-        return self._patterns[filename]
-    # end of loadgrd
+        self._patterns[file_key] = pattern
 
-    def make_remove_pattern(self,filename):
-        """Callback maker for remove pattern menu items.
-        """
-        def remove_pattern():
-            menu = self._patterns[filename]['menu']
-            menu_action = menu.menuAction()
-            menu.parent().removeAction(menu_action)
-            del self._patterns[filename]
-            self.draw()
-        return remove_pattern
-    # end of function make_remove_pattern
-
-    def make_edit_pattern(self,filename):
-        """Callback maker for edit pattern menu items.
-        """
-        def edit_pattern():
-            menu = self._patterns[filename]['menu']
-            menu_action = menu.menuAction()
-            menu.parent().removeAction(menu_action)
-            dialbox = GrdDialog(filename, self.parent().parent(), self._patterns[filename]['grd'])
-            del self._patterns[filename]
-            dialbox.exec_()
-        return edit_pattern  
-    # end of function make_edit_pattern
-
-    # Obsolete: any object should be able to draw itself
-    # def drawgrd(self, grd):
-    #     """Draw pattern on the earth plot from the provided grd.
-    #     """
-    #     x, y = self._earth_map(grd.longitude(), grd.latitude())
-    #     if not grd.display_slope:
-    #         try:
-    #             cs_grd = self._earth_map.contour(x, y, grd.copol(), grd.isolevel, linestyles='solid', linewidths=0.5)
-    #             self._axes.clabel(cs_grd, grd.isolevel, inline=True, fmt='%1.1f',fontsize=5)
-    #             grd.displaymax(self._earth_map)
-    #             return cs_grd
-    #         except ValueError as value_err:
-    #             print(value_err)
-    #             print('Pattern ' + grd.filename + ' will not be displayed.')
-    #             return None
-    #     else:
-    #         # define grid
-    #         iNx = 1001
-    #         iNy = 1001
-    #         fAzlin = np.linspace(grd.MinAz(),grd.MaxAz(),iNx)
-    #         fEllin = np.linspace(grd.MinEl(),grd.MaxEl(),iNy)
-    #         fAzMesh, fElMesh = np.meshgrid(fAzlin, fEllin)
-    #         # display color mesh
-    #         cmap = plt.get_cmap('jet')
-    #         cmap.set_over('white',grd.slope_range[1])
-    #         cmap.set_under('white',grd.slope_range[0])
-    #         xOrigin, yOrigin = self._earth_map(self._viewer.longitude(),self._viewer.latitude())
-    #         pcmGrd = self._earth_map.pcolormesh(self.az2x(fAzMesh) + xOrigin, \
-    #                                      self.el2y(fElMesh) + yOrigin, \
-    #                                      grd.interpolate_slope(fAzMesh,fElMesh), \
-    #                                      vmin=grd.slope_range[0],vmax=grd.slope_range[1], \
-    #                                      cmap=cmap,alpha=0.5)
-    #         # add color bar
-    #         if self._clrbar:
-    #             self._clrbar = self._figure.colorbar(pcmGrd, cax=self._clrbar_axes)     
-    #         else:
-    #             divider = make_axes_locatable(self._axes)
-    #             self._clrbar_axes = divider.append_axes("right", size="5%", pad=0.05)
-    #             self._clrbar = self._figure.colorbar(pcmGrd, cax=self._clrbar_axes)     
-    #         self._clrbar.ax.set_ylabel('Pattern slope (dB/deg)')
-
-    #         return pcmGrd
-    # # end of drawgrd method       
+        utils.trace('out')              
+        return self._patterns[file_key]
+    # end of load_pattern
 
     # Zoom on the _earth_map
     def updatezoom(self):
@@ -426,68 +417,159 @@ class EarthPlot(FigureCanvas):
         self.centery   = (self.llcrnry + self.urcrnry) / 2
         self.cntrlon   = (self.llcrnrlon + self.urcrnrlon) / 2
         self.cntrlat   = (self.llcrnrlat + self.urcrnrlat) / 2
+    # end of method updatezoom
 
     # convert Azimuth to _earth_map.x
     def az2x(self, az):
-        return az * np.pi / 180 * self._viewer.altitude()
+        return np.tan(az * cst.DEG2RAD) * self._viewer.altitude()
     
     # convert Elevation to _earth_map.y
     def el2y(self, el):
-        return el * np.pi / 180 * self._viewer.altitude()
+        return np.tan(el * cst.DEG2RAD) * self._viewer.altitude()
     
     def x2az(self, x):
-        return x / (np.pi / 180 * self._viewer.altitude())
+        return np.arctan2(x / self._viewer.altitude()) * cst.RAD2DEG
     
     def y2el(self, y):
-        return y / (np.pi / 180 * self._viewer.altitude())
+        return np.arctan2(y / self._viewer.altitude()) * cst.RAD2DEG
 
     def projection(self,proj: str = None):
         """This function allows access to attribute _projection.
-        """ 
+        """
+        utils.trace('in') 
         if proj:
-            if proj=='geos' or proj == 'merc':
+            if proj=='nsper' or proj == 'merc':
                 self._projection = proj
             else:
-                raise ValueError("Projection is either 'geos' or 'merc'.")
+                raise ValueError("Projection is either 'nsper' or 'merc'.")
+        utils.trace('out')
         return self._projection
     # end of function projection
-
-    def viewer(self, v=None):
-        """Get _viewer attribute.
-        """
-        if v:
-            self._viewer = v
-        return self._viewer
-
-    def zoom(self, z=None):
-        """Get _zoom attribute.
-        """
-        if z:
-            self._zoom = z
-        return self._zoom
 
     def set_resolution(self, resolution: str = 'c'):
         """Set Earth map resolution.
         """
+        utils.trace('in')
         self._resolution = resolution
+        self._earth_map.resolution = self._resolution
+        self.draw_elements()
+        utils.trace('out')
     # end of function set_resolution
 
     def save(self,filename=None):
         """Save the plot with given filename. If file name not provided,
         use last used name.
         """
+        utils.trace('in')
         # store file name for future call to this function
         if filename:
             self.filename = filename
         # save plot into file
         # plt.savefig(self.filename, dpi='figure')
         self.print_figure(self.filename)
+        utils.trace('out')
     # end of function save
 
-    # def drawpolygon(self, vertex):
-        
+    ###################################################################
+    #
+    #       Getters and Setters
+    #
+    ###################################################################
 
-        
+    def viewer(self, v = None):
+        """Get _viewer attribute.
+        """
+        if v:
+            self._viewer = v
+        return self._viewer
+
+    def zoom(self, z = None):
+        """Get _zoom attribute.
+        """
+        if z:
+            self._zoom = z
+        return self._zoom
+
+    def get_coastlines(self):
+        """Return value of private attribute _coastlines
+        """
+        return self._coastlines
+    # end of function get_coastlines
+    
+    def set_coastlines(self, c: float, refresh: bool = False):
+        """Set private attribute _coastlines value.
+        If refresh is True, redraw Earth.
+        Return the value passed to the function.
+        """
+        utils.trace('in')
+        self._coastlines = c
+        if refresh:
+            self.drawearth(proj=self._projection,
+                           resolution=self._resolution)
+            self.draw()
+        utils.trace('out')
+        return self._coastlines
+    # end of function set_coastlines
+
+    def get_countries(self):
+        """Return value of private attribute _countries
+        """
+        return self._countries
+    # end of function get_countries
+
+    def set_countries(self, c: float, refresh: bool = False):
+        """Set private attribute _countries value.
+        If refresh is True, redraw Earth.
+        Return the value passed to the function.
+        """
+        utils.trace('in')
+        self._countries = c
+        if refresh:
+            self.drawearth()
+            self.draw()
+        utils.trace('out')
+        return self._countries
+    # end of function set_countries
+
+    def get_parallels(self):
+        """Return the value of private attribute _parallels
+        """
+        return self._parallels
+    # end of function get_parallels
+
+    def set_parallels(self, p: int):
+        """Set the value of private attribute _parallels.
+        If refresh is True, redraw Earth.
+        Return the value passed to the function.
+        """
+        utils.trace('in')
+        self._parallels = p
+        if refresh:
+            self.drawearth()
+            self.draw()
+        utils.trace('out')
+        return self._parallels
+    # end of function set_parallels
+
+    def get_meridians(self):
+        """Return the value of private attribute _meridians.
+        """
+        return self._meridians
+    # end of function get_meridians
+
+    def set_meridians(self, m: int, refresh: bool = False):
+        """Set the value of the private attribute _meridians.
+        If refresh is True, redraw Earth.
+        Return the value passed to the function.
+        """
+        utils.trace('in')
+        self._meridians = m
+        if refresh:
+            self.drawearth()
+            self.draw()
+        utils.trace('out')
+        return self._meridians
+    # end of function set_meridians
 
 # end of class EarthPlot
 

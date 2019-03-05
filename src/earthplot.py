@@ -74,10 +74,10 @@ class EarthPlot(FigureCanvas):
         self._clrbar = None
         self._clrbar_axes = None
         self._earth_map = None
-        self._coastlines_collection = None
-        self._countries_collection = None
-        self._parallels_collection = None
-        self._meridians_collection = None
+        self._coastlines_col = None
+        self._countries_col = None
+        self._parallels_col = None
+        self._meridians_col = None
 
         # if a config has been provided by caller
         if config:
@@ -287,6 +287,7 @@ class EarthPlot(FigureCanvas):
                             resolution=resolution, \
                             ax=ax)
             # self._earth_map.bluemarble()
+            # self._earth_map.etopo()
             # self._earth_map.arcgisimage(service = "ESRI_Imagery_World_2D", xpixels = 2000)
 
         elif proj=='merc':
@@ -299,23 +300,62 @@ class EarthPlot(FigureCanvas):
                             lat_ts=20, \
                             resolution=resolution, \
                             ax=ax) 
+            # self._earth_map.bluemarble()
                                
         # Earth map drawing options
-        if self._coastlines_collection:
+        # 1. Drawing coast lines
+        if self._coastlines_col:
             try:
-                self._coastlines_collection.remove()
+                # coast lines LineCollection can be remove at once
+                self._coastlines_col.remove()
             except ValueError:
-                print('drawearth: Something went wrong here.')
+                print('drawearth: issue removing coastlines.')
         if self._coastlines:
-            self._coastlines_collection = self._earth_map.drawcoastlines(linewidth=self._coastlines)
+            self._coastlines_col = \
+                self._earth_map.drawcoastlines(
+                    linewidth=self._coastlines)
+        # 2. Drawing countries borders
+        if self._countries_col:
+            try:
+                # Country borders LineCollection can be remove at once
+                self._countries_col.remove()
+            except ValueError:
+                print('drawearth: issue removing borders.')
         if self._countries:
-            self._earth_map.drawcountries(linewidth=self._countries)
+            self._countries_col = \
+                self._earth_map.drawcountries(
+                    linewidth=self._countries)
+        # 3. Drawing parallels
+        if self._parallels_col:
+            try:
+                # Parallels are a dictionary of 2D lines to be 
+                # removed one by one
+                for k in self._parallels_col:
+                    self._parallels_col[k][0][0].remove()
+                self._parallels_col.clear()
+            except ValueError:
+                print('drawearth: issue removing parallels.')
         if self._parallels:
-            self._earth_map.drawparallels(np.arange(-80., 81., 20.),
-                                          linewidth=self._parallels)
+            self._parallels_col = \
+                self._earth_map.drawparallels(
+                    np.arange(-80., 81., 20.),
+                    linewidth=self._parallels)
+        # 4. Drawing meridians        
+        if self._meridians_col:
+            try:
+                # Meridians are a dictionary of 2D lines to be 
+                # removed one by one
+                for k in self._meridians_col:
+                    self._meridians_col[k][0][0].remove()
+                self._meridians_col.clear()
+            except ValueError:
+                print('drawearth: issue removing meridians.')
         if self._meridians:
-            self._earth_map.drawmeridians(np.arange(-180., 181., 20.),
-                                          linewidth=self._meridians)
+            self._meridians_col = \
+                self._earth_map.drawmeridians(
+                    np.arange(-180., 181., 20.),
+                    linewidth=self._meridians)
+        # Unconditional drawing of Earth boundary
         self._earth_map.drawmapboundary(linewidth=0.2)
     
         utils.trace('out')
@@ -525,7 +565,8 @@ class EarthPlot(FigureCanvas):
         utils.trace('in')
         self._countries = c
         if refresh:
-            self.drawearth()
+            self.drawearth(proj=self._projection,
+                           resolution=self._resolution)
             self.draw()
         utils.trace('out')
         return self._countries
@@ -537,7 +578,7 @@ class EarthPlot(FigureCanvas):
         return self._parallels
     # end of function get_parallels
 
-    def set_parallels(self, p: int):
+    def set_parallels(self, p: float, refresh: bool = False):
         """Set the value of private attribute _parallels.
         If refresh is True, redraw Earth.
         Return the value passed to the function.
@@ -545,7 +586,8 @@ class EarthPlot(FigureCanvas):
         utils.trace('in')
         self._parallels = p
         if refresh:
-            self.drawearth()
+            self.drawearth(proj=self._projection,
+                           resolution=self._resolution)
             self.draw()
         utils.trace('out')
         return self._parallels
@@ -557,7 +599,7 @@ class EarthPlot(FigureCanvas):
         return self._meridians
     # end of function get_meridians
 
-    def set_meridians(self, m: int, refresh: bool = False):
+    def set_meridians(self, m: float, refresh: bool = False):
         """Set the value of the private attribute _meridians.
         If refresh is True, redraw Earth.
         Return the value passed to the function.
@@ -565,7 +607,8 @@ class EarthPlot(FigureCanvas):
         utils.trace('in')
         self._meridians = m
         if refresh:
-            self.drawearth()
+            self.drawearth(proj=self._projection,
+                           resolution=self._resolution)
             self.draw()
         utils.trace('out')
         return self._meridians

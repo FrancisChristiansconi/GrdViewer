@@ -182,6 +182,7 @@ class GrdViewer(QMainWindow):
         menuresolution.addAction(res_full_action)
         menuresolution.triggered[QAction].connect(self.set_earth_resolution)
         # configure Earth lines
+        # 1. Coast lines
         coastlines_menu = self._menuview.addMenu('Coast lines')
         no_coastlines_action = QAction('no line', self)
         coastlines_light_action = QAction('light', self)
@@ -192,6 +193,43 @@ class GrdViewer(QMainWindow):
         coastlines_menu.addAction(coastlines_medium_action)
         coastlines_menu.addAction(coastlines_heavy_action)
         coastlines_menu.triggered[QAction].connect(self.set_coastlines)
+
+        # 2. Country borders
+        countries_menu = self._menuview.addMenu('Country borders')
+        no_countries_action = QAction('no line', self)
+        countries_light_action = QAction('light', self)
+        countries_medium_action = QAction('medium', self)
+        countries_heavy_action = QAction('heavy', self)
+        countries_menu.addAction(no_countries_action)
+        countries_menu.addAction(countries_light_action)
+        countries_menu.addAction(countries_medium_action)
+        countries_menu.addAction(countries_heavy_action)
+        countries_menu.triggered[QAction].connect(self.set_countries)
+
+        # 3. Parallels
+        parallels_menu = self._menuview.addMenu('Parallels')
+        no_parallels_action = QAction('no line', self)
+        parallels_light_action = QAction('light', self)
+        parallels_medium_action = QAction('medium', self)
+        parallels_heavy_action = QAction('heavy', self)
+        parallels_menu.addAction(no_parallels_action)
+        parallels_menu.addAction(parallels_light_action)
+        parallels_menu.addAction(parallels_medium_action)
+        parallels_menu.addAction(parallels_heavy_action)
+        parallels_menu.triggered[QAction].connect(self.set_parallels)
+
+        # 4. Meridians
+        meridians_menu = self._menuview.addMenu('Meridians')
+        no_meridians_action = QAction('no line', self)
+        meridians_light_action = QAction('light', self)
+        meridians_medium_action = QAction('medium', self)
+        meridians_heavy_action = QAction('heavy', self)
+        meridians_menu.addAction(no_meridians_action)
+        meridians_menu.addAction(meridians_light_action)
+        meridians_menu.addAction(meridians_medium_action)
+        meridians_menu.addAction(meridians_heavy_action)
+        meridians_menu.triggered[QAction].connect(self.set_meridians)
+
 
 
         # Add display pattern Menu
@@ -349,6 +387,42 @@ class GrdViewer(QMainWindow):
         self.earth_plot.set_coastlines(boldness[action.text()], True)
         utils.trace('out')
     # end of method set_coastlines
+
+    def set_countries(self, action):
+        """Callback to set the boldness of country borders on Earth map
+        """
+        utils.trace('in')
+        boldness = {'no line': 0,
+                    'light': 0.1,
+                    'medium': 0.3,
+                    'heavy':0.5}
+        self.earth_plot.set_countries(boldness[action.text()], True)
+        utils.trace('out')
+    # end of method set_countries
+
+    def set_parallels(self, action):
+        """Callback to set the boldness of parallels on Earth map
+        """
+        utils.trace('in')
+        boldness = {'no line': 0,
+                    'light': 0.1,
+                    'medium': 0.5,
+                    'heavy':0.9}
+        self.earth_plot.set_parallels(boldness[action.text()], True)
+        utils.trace('out')
+    # end of method set_parallels
+
+    def set_meridians(self, action):
+        """Callback to set the boldness of meridians on Earth map
+        """
+        utils.trace('in')
+        boldness = {'no line': 0,
+                    'light': 0.1,
+                    'medium': 0.5,
+                    'heavy':0.9}
+        self.earth_plot.set_meridians(boldness[action.text()], True)
+        utils.trace('out')
+    # end of method set_meridians
 
     def saveas(self):
         """Callback to save the Earth plot into file.

@@ -93,8 +93,8 @@ class GrdViewer(QMainWindow):
         self._menubar = self.createmenu()
 
         # Add map
-        self.earth_plot = plc.EarthPlot(parent=self.centralwidget, config=self.config)
-
+        self.earth_plot = plc.EarthPlot(parent=self.centralwidget,
+                                        config=self.config)
 
         # place test field in a vertical box layout
         vbox = QVBoxLayout(self.centralwidget)
@@ -160,8 +160,10 @@ class GrdViewer(QMainWindow):
         update_zoom_action.triggered.connect(self.zoom_dialog)
         # projection submenu and items
         menuprojection = self._menuview.addMenu('Projection')
-        menuprojection.addAction('Geo')
-        menuprojection.addAction('Mercator')
+        geo_action = QAction('Geo', self, checkable=True)
+        merc_action = QAction('Mercator', self, checkable=True)
+        menuprojection.addAction(geo_action)
+        menuprojection.addAction(merc_action)
         menuprojection.triggered[QAction].connect(self.toggleprojection)
         # map resolution submenu and items
         menuresolution = self._menuview.addMenu('Map resolution')
@@ -170,24 +172,25 @@ class GrdViewer(QMainWindow):
         # i: intermediate
         # h: high
         # f: full
-        res_crude_action = QAction('crude', self)
-        res_low_action = QAction('low', self)
-        res_int_action = QAction('intermediate', self)
-        res_high_action = QAction('high', self)
-        res_full_action = QAction('full', self)
+        res_crude_action = QAction('crude', self, checkable=True)
+        res_low_action = QAction('low', self, checkable=True)
+        res_int_action = QAction('intermediate', self, checkable=True)
+        res_high_action = QAction('high', self, checkable=True)
+        res_full_action = QAction('full', self, checkable=True)
         menuresolution.addAction(res_crude_action)
         menuresolution.addAction(res_low_action)
         menuresolution.addAction(res_int_action)
         menuresolution.addAction(res_high_action)
         menuresolution.addAction(res_full_action)
         menuresolution.triggered[QAction].connect(self.set_earth_resolution)
+
         # configure Earth lines
         # 1. Coast lines
         coastlines_menu = self._menuview.addMenu('Coast lines')
-        no_coastlines_action = QAction('no line', self)
-        coastlines_light_action = QAction('light', self)
-        coastlines_medium_action = QAction('medium', self)
-        coastlines_heavy_action = QAction('heavy', self)
+        no_coastlines_action = QAction('no line', self, checkable=True)
+        coastlines_light_action = QAction('light', self, checkable=True)
+        coastlines_medium_action = QAction('medium', self, checkable=True)
+        coastlines_heavy_action = QAction('heavy', self, checkable=True)
         coastlines_menu.addAction(no_coastlines_action)
         coastlines_menu.addAction(coastlines_light_action)
         coastlines_menu.addAction(coastlines_medium_action)
@@ -196,10 +199,10 @@ class GrdViewer(QMainWindow):
 
         # 2. Country borders
         countries_menu = self._menuview.addMenu('Country borders')
-        no_countries_action = QAction('no line', self)
-        countries_light_action = QAction('light', self)
-        countries_medium_action = QAction('medium', self)
-        countries_heavy_action = QAction('heavy', self)
+        no_countries_action = QAction('no line', self, checkable=True)
+        countries_light_action = QAction('light', self, checkable=True)
+        countries_medium_action = QAction('medium', self, checkable=True)
+        countries_heavy_action = QAction('heavy', self, checkable=True)
         countries_menu.addAction(no_countries_action)
         countries_menu.addAction(countries_light_action)
         countries_menu.addAction(countries_medium_action)
@@ -208,10 +211,10 @@ class GrdViewer(QMainWindow):
 
         # 3. Parallels
         parallels_menu = self._menuview.addMenu('Parallels')
-        no_parallels_action = QAction('no line', self)
-        parallels_light_action = QAction('light', self)
-        parallels_medium_action = QAction('medium', self)
-        parallels_heavy_action = QAction('heavy', self)
+        no_parallels_action = QAction('no line', self, checkable=True)
+        parallels_light_action = QAction('light', self, checkable=True)
+        parallels_medium_action = QAction('medium', self, checkable=True)
+        parallels_heavy_action = QAction('heavy', self, checkable=True)
         parallels_menu.addAction(no_parallels_action)
         parallels_menu.addAction(parallels_light_action)
         parallels_menu.addAction(parallels_medium_action)
@@ -220,17 +223,15 @@ class GrdViewer(QMainWindow):
 
         # 4. Meridians
         meridians_menu = self._menuview.addMenu('Meridians')
-        no_meridians_action = QAction('no line', self)
-        meridians_light_action = QAction('light', self)
-        meridians_medium_action = QAction('medium', self)
-        meridians_heavy_action = QAction('heavy', self)
+        no_meridians_action = QAction('no line', self, checkable=True)
+        meridians_light_action = QAction('light', self, checkable=True)
+        meridians_medium_action = QAction('medium', self, checkable=True)
+        meridians_heavy_action = QAction('heavy', self, checkable=True)
         meridians_menu.addAction(no_meridians_action)
         meridians_menu.addAction(meridians_light_action)
         meridians_menu.addAction(meridians_medium_action)
         meridians_menu.addAction(meridians_heavy_action)
         meridians_menu.triggered[QAction].connect(self.set_meridians)
-
-
 
         # Add display pattern Menu
         self.menupattern = menubar.addMenu('Pattern')
@@ -281,8 +282,8 @@ class GrdViewer(QMainWindow):
         dialbox.exec_()
         
         # refresh satellite position display
-        self._lon_label.setText(str(self.earth_plot.viewer().longitude()) + 'deg. N')
-        self._lat_label.setText(str(self.earth_plot.viewer().latitude()) + 'deg. E')
+        self._lon_label.setText(str(self.earth_plot.viewer().longitude()) + 'deg. E')
+        self._lat_label.setText(str(self.earth_plot.viewer().latitude()) + 'deg. N')
         self._alt_label.setText(str(self.earth_plot.viewer().altitude()) + 'm.')
     # end of method viewer_dialog
     

@@ -98,10 +98,11 @@ class EarthPlot(FigureCanvas):
             latitude = config.getfloat('VIEWER', 'latitude', fallback=0.0)
             altitude = config.getfloat('VIEWER', 'altitude', fallback=cst.ALTGEO)
 
-            self._coastlines = config.getfloat('DEFAULT', 'coast lines', fallback=0.2)
-            self._countries = config.getfloat('DEFAULT', 'countries', fallback=0.2)
-            self._parallels = config.getfloat('DEFAULT', 'parallels', fallback=0.2)
-            self._meridians = config.getfloat('DEFAULT', 'meridians', fallback=0.2)
+            # get Earth plot configuration
+            self._coastlines = config.getfloat('DEFAULT', 'coast lines', fallback=0.1)
+            self._countries = config.getfloat('DEFAULT', 'countries', fallback=0.1)
+            self._parallels = config.getfloat('DEFAULT', 'parallels', fallback=0.1)
+            self._meridians = config.getfloat('DEFAULT', 'meridians', fallback=0.1)
 
             # initialize angle of view
             # Satellite Longitude, latitude and altitude

@@ -203,6 +203,10 @@ class PatternDialog(QDialog):
 
     def configure(self, pattern):
         utils.trace('in')
+        try:
+            self.title_field.setText(pattern._conf['title'])
+        except KeyError:
+            print('pattern.dialog: No title in pattern._conf dictionary.')
         self.lon_field.setText(str(pattern.satellite().longitude()))
         self.lat_field.setText(str(pattern.satellite().latitude()))
         self.alt_field.setText(str(pattern.satellite().altitude()))

@@ -540,8 +540,23 @@ class AbstractPattern(ABC):
             # if wrong pol is chosen, isolevel value might not be found, hence an exception is thrown
             # and has to be caught
             try:
+                # get linestyles for contour plot
+                if 'linestyles' in self._conf:
+                    linestyles = self._conf['linestyles']
+                else:
+                    linestyles = 'solid'
+                # get linewidths for contour plot
+                if 'linewidths' in self._conf:
+                    linewidths = self._conf['linewidths']
+                else:
+                    linewidths = 0.2
+                
                 # if shrink pattern option is selected, use shrink_copol function
-                cs_pattern = map.contour(x, y, self._to_plot + self._conversion_factor, self._isolevel, linestyles='solid', linewidths=0.2)
+                cs_pattern = map.contour(x, y,
+                                        self._to_plot + self._conversion_factor, 
+                                         self._isolevel, 
+                                         linestyles=linestyles,
+                                         linewidths=linewidths)
                 if not self._shrink:
                     cs_marker, cs_tag = self.displaymax(map)
                 else:

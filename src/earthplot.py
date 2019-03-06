@@ -154,6 +154,8 @@ class EarthPlot(FigureCanvas):
                     conf['azoffset'] = config.getfloat(pattern_section, 'azimuth offset', fallback=0.0)
                     conf['eloffset'] = config.getfloat(pattern_section, 'elevation offset', fallback=0.0)
                     conf['cf'] = config.getfloat(pattern_section, 'conversion factor', fallback=0.0)
+                    conf['linestyles'] = config.get(pattern_section, 'linestyles', fallback='solid')
+                    conf['linewidths'] = config.getfloat(pattern_section, 'linewidths', fallback=0.2)
                     pattern = self.load_pattern(conf=conf)
                     self.settitle(conf['title'])
                     pattern.isolevel = [float(s) for s in conf['level'].split(',')]

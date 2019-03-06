@@ -56,6 +56,7 @@ class PatternControler(object):
 
         # define _plot attribute for Controler
         self._plot = None
+        self._plot_type = None
 
         # create dialog box to configure the pattern
         self._pdialog = PatternDialog(filename=self._config['filename'], parent=self._earthplot, control=self)
@@ -115,20 +116,28 @@ class PatternControler(object):
     # end of isgrd function
 
     def plot(self):
+        """Plot the antenna pattern into the parent EarthPlot.
+        """
         utils.trace('in')
         if self._plot:
             self.clear_plot()
         self._plot = self._pattern.plot(self._earthplot._earth_map, self._earthplot._viewer, \
                                         self._earthplot._figure, self._earthplot._axes, \
                                         self._earthplot._clrbar, self._earthplot._clrbar_axes)
+        if self._config['display_slope'] == True:
+            self._plot_type = 'surf'
+        else:
+            self._plot_type = 'contour'
         self._earthplot.draw()
         utils.trace('out')
+    # end of function plot
         
     def clear_plot(self):
         """Clear the current plot
         """
         utils.trace('in')
-        if self._config['display_slope']:
+        # if self._config['display_slope']:
+        if self._plot_type == 'surf':
             self._plot.remove()
         else:
             for c in self._plot[0].collections:
@@ -142,7 +151,7 @@ class PatternControler(object):
                 for t in self._plot[3]:
                     t.remove()
         utils.trace('out')
-
+    # end of function clear_plot
 
     # def make_remove_pattern(self, file_key, patterns, eplot):
     def remove_pattern(self):
@@ -152,7 +161,7 @@ class PatternControler(object):
         menu = self._pattern_sub_menu
         menu_action = menu.menuAction()
         menu.parent().removeAction(menu_action)
-        # del patterns[file_key]
+        
         del self._earthplot._patterns[self._config['key']]
 
         self._earthplot.draw_elements()

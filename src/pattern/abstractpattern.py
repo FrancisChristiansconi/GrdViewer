@@ -345,14 +345,20 @@ class AbstractPattern(ABC):
     def copol(self, set: int=0):
         """Return co-polarisation pattern. In dBi.
         """
-        return self._E_mag_co[set]
+        z = self._E_mag_co[set]
+        z[np.where(np.isnan(z))] = -99
+        z[np.where(np.isneginf(z))] = -99
+        return z
     # end of function copol
 
     def cross(self, set: int=0):
         """Return cross-polarisation pattern. In dBi.
         """
         try:
-            return self._E_mag_cr[set]
+            z = self._E_mag_cr[set]
+            z[np.where(np.isnan(z))] = -99
+            z[np.where(np.isneginf(z))] = -99
+            return z
         except IndexError:
             print('cross: This pattern does not have crosspol information.')
             return None
@@ -397,25 +403,29 @@ class AbstractPattern(ABC):
     def slope(self, set: int=0):
         """Return gradient of Co-polarisation pattern
         """
+        utils.trace('in')
         if self._E_grad_co == []:
             # get gradient of Azimuth coordinate
             azimuth_grad, _ = np.gradient(self.azimuth())
             # get gradient of Elevation coordinate
             _, elevation_grad = np.gradient(self.elevation())
             # get gradient of pattern in Azimuth and Elevation             
-            co_grad_az, co_grad_el = np.gradient(self.copol(set))
+            co_grad_az, co_grad_el = np.gradient(self._to_plot)
             # normalize gradient of pattern in Azimuth direction
             co_grad_az /= azimuth_grad
             # normalize gradient of pattern in Elevation direction
             co_grad_el /= elevation_grad
             # RSS the 2 directions gradient in one scalar field
             self._E_grad_co = np.sqrt(co_grad_az**2 + co_grad_el**2)
+        utils.trace('out')
         return self._E_grad_co
     # end of function slope
 
     def interpolate_copol(self, az, el, set: int=0, spline=None):
-        """return interpolated value of the pattern
+        """Return interpolated value of the pattern.
+        The spline object is also returned for reuse.
         """
+        utils.trace('in')
         if spline == None:
             if self._x[set][0,0] == self._x[set][1,0]:
                 x = self._x[set][0, :]
@@ -439,12 +449,17 @@ class AbstractPattern(ABC):
         # transform azel into native coordinates
         x, y = self.azel2xy(az, el)
 
-        return np.reshape(spline.ev(x.flatten(), y.flatten()), np.array(az).shape), spline
+        # prepare results for return statement
+        a, b = np.reshape(spline.ev(x.flatten(), y.flatten()), np.array(az).shape), spline
+
+        utils.trace('out')
+        return a, b
     # end of function interpolate_copol
 
     def interpolate_slope(self, az, el, set: int=0, spline=None):
         """return interpolated value of the pattern
         """
+        utils.trace('in')
         if spline == None:
             if self._x[set][0,0] == self._x[set][1,0]:
                 x = self._x[set][0, :]
@@ -454,13 +469,24 @@ class AbstractPattern(ABC):
                 x = self._x[set][:, 0]
                 y = self._y[set][0, :]
                 z = self.slope(set)
+            if x[0] > x[1]:
+                x = x[::-1]
+                z = z[::-1,:]
+            if y[0] > y[1]:
+                y = y[::-1]
+                z = z[:,::-1]
+            z[np.where(np.isnan(z))] = -99
+            z[np.where(np.isneginf(z))] = -99
             spline = interp.RectBivariateSpline(x, y, z)
             
         # transform azel into native coordinates
         x, y = self.azel2xy(az, el)
 
-        # flatten, interpolate and reshape
-        return np.reshape(spline.ev(x.flatten(), y.flatten()),np.array(az).shape), spline
+        # prepare results for return statement
+        a, b = np.reshape(spline.ev(x.flatten(), y.flatten()),np.array(az).shape), spline
+
+        utils.trace('out')
+        return a, b
     # end of function interpolate_slope
 
     def shrink_copol(self, azshrink, elshrink, az_co=[], el_co=[], step=None, set: int=0):
@@ -591,7 +617,8 @@ class AbstractPattern(ABC):
             y = np.tan(el_mesh * cst.DEG2RAD) * self._satellite.altitude()
             
             # compute plot origin (Nadir of spacecraft)
-            x_origin, y_origin = map(self._satellite.longitude(), self._satellite.latitude())
+            x_origin, y_origin = map(self._satellite.longitude(),
+                                     self._satellite.latitude())
             
             # display color mesh
             cmap = plt.get_cmap('jet')

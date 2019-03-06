@@ -12,6 +12,7 @@ from matplotlib.ticker import FuncFormatter
 from matplotlib.figure import Figure
 from matplotlib import cm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from matplotlib.transforms import Bbox
 
 # import PyQt5 and link with matplotlib
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, QFileDialog
@@ -289,9 +290,6 @@ class EarthPlot(FigureCanvas):
                             satellite_height=self._viewer.altitude(), \
                             resolution=resolution, \
                             ax=ax)
-            # self._earth_map.bluemarble()
-            # self._earth_map.etopo()
-            # self._earth_map.arcgisimage(service = "ESRI_Imagery_World_2D", xpixels = 2000)
 
         elif proj=='merc':
             self._earth_map = Basemap(projection=proj, \
@@ -616,6 +614,31 @@ class EarthPlot(FigureCanvas):
         utils.trace('out')
         return self._meridians
     # end of function set_meridians
+
+    def croppedbluemarble(self):
+        im = self._earth_map.bluemarble()
+        data = im.get_array()
+        nx, ny, _ = data.shape
+        ead = self.earth_angular_diameter()         
+        stepx = ead / (nx - 1)
+        stepy = ead / (ny - 1)
+
+        azmin = self._zoom.min_azimuth
+        azmax = self._zoom.max_azimuth
+        elmin = self._zoom.min_elevation
+        elmax = self._zoom.max_elevation
+        new_nx = (azmax - azmin) / stepx
+        new_ny = (elmax - elmin) / stepy
+        new_data = np.zeros((new_nx, new_ny, 4))
+
+
+
+
+    def earth_angular_diameter(self):
+        d = 2 * np.arcsin(cst.EARTH_RAD_BASEMAP / (cst.EARTH_RAD_BASEMAP + self._viewer.altitude())) * cst.RAD2DEG
+        return d
+
+
 
 # end of class EarthPlot
 

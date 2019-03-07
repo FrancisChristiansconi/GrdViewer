@@ -244,6 +244,7 @@ class EarthPlot(FigureCanvas):
             _, latticks_converted = np.array(self._earth_map(np.ones(latticks.shape) * self._zoom.min_longitude, latticks))
             self._axes.set_yticks(latticks_converted)
             self._axes.set_yticklabels(str(f) for f in latticks)
+        self._axes.tick_params(axis='both', width=0.2)
         self._axes.set_title(self._plot_title)
         utils.trace('out')
     # end of function draw_axis

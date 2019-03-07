@@ -358,7 +358,7 @@ class GrdViewer(QMainWindow):
         """
         # remove pattern menu items
         for f in self.earth_plot._patterns:
-            menu = self.earth_plot._patterns[f]['menu']
+            menu = self.earth_plot._patterns[f]._pattern_sub_menu
             menu_action = menu.menuAction()
             menu.parent().removeAction(menu_action)
         self.earth_plot._patterns.clear()

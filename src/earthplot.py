@@ -2,8 +2,11 @@
 the Earth plot and all the subsequent elements plots.
 """
 
-
 # Imports
+
+# import os module for files and directories manipulation
+import os
+
 # import Matplotlib and Base_earth_map
 from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
@@ -21,9 +24,6 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 # import numpy for arrays and mathematical operations
 import numpy as np
 
-# import os module for files and directories manipulation
-import os
-
 # local module
 import utils
 from pattern.control import PatternControler
@@ -39,7 +39,8 @@ import constant as cst
 class EarthPlot(FigureCanvas):
     """This class is the core of the appliccation. It display the Earth
     map, the patterns, stations, elevation contour, etc.
-    """ 
+    """
+
     # EarthPlot constructor
     def __init__(self, parent=None, width=5, height=5, dpi=300, \
                  proj='nsper', res='c', config=None):
@@ -66,7 +67,7 @@ class EarthPlot(FigureCanvas):
                                    QSizePolicy.Expanding, \
                                    QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
-        
+
         # initialize EarthPlot fields
         self._patterns = {}
         self._elev = {}
@@ -188,8 +189,8 @@ class EarthPlot(FigureCanvas):
         at_least_one_slope = False
         for key in self._patterns:
             self._patterns[key].plot()
-            if 'display_slope' in self._patterns[key]._config:
-                if self._patterns[key]._config['display_slope']:
+            if 'display_slope' in self._patterns[key].get_config():
+                if self._patterns[key].get_config()['display_slope']:
                     at_least_one_slope = True
         if not at_least_one_slope and len(self._patterns):
             for i in range(len(self._figure.axes)):

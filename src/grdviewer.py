@@ -1,13 +1,13 @@
-"""This module is the entry point of the application. It defines 
-the main window and call the constructor to earthplot object where 
+"""This module is the entry point of the application. It defines
+the main window and call the constructor to earthplot object where
 all the work is done.
 """
 
+# import os
+import os
+
 # system module
 import sys
-
-# debug utilities
-import utils
 
 # import configparser module to manage ini files
 import configparser
@@ -17,8 +17,8 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, qApp, \
                             QVBoxLayout, QHBoxLayout, QWidget, QFileDialog, \
                             QLabel
 
-# import os
-import os
+# debug utilities
+import utils
 
 # traceback
 import utils
@@ -38,7 +38,7 @@ from viewer import ViewerPosDialog
 from zoom import Zoom
 from zoom import ZoomDialog
 
-# imports from station module 
+# imports from station module
 import station as stn
 from station import StationDialog
 
@@ -51,7 +51,7 @@ import constant as cst
 
 class GrdViewer(QMainWindow):
     """Class to generate a window with Earth display.
-    """   
+    """
 
     # constructor
     def __init__(self):
@@ -442,6 +442,12 @@ class GrdViewer(QMainWindow):
         """
         self.earth_plot.save()
     # end of callback save
+
+    def get_centralwidget(self):
+        """Accessor to central widget.
+        """
+        return self.centralwidget
+    # end of get_centralwidget
 
 # End of Class GrdViewer   
 

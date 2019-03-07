@@ -1,11 +1,14 @@
+"""This module defines controler for patterns objects.
+"""
+
 # file manipulation
 import os.path
 
-# import traceback utilities
-import utils
-
 # to be able to add action to menu Pattern
 from PyQt5.QtWidgets import QAction, QFileDialog
+
+# import traceback utilities
+import utils
 
 # Import dialog to configure pattern display
 from .dialog import PatternDialog
@@ -16,8 +19,9 @@ from .pat import Pat
 from .grd import Grd
 
 
-class PatternControler(object):
-    """A pattern controler is an attribute of and EarthPlot that links together a pattern, a dialog box and a menu
+class PatternControler():
+    """A pattern controler is an attribute of and EarthPlot that links together a pattern,
+    a dialog box and a menu.
     """
 
 
@@ -27,16 +31,16 @@ class PatternControler(object):
         filename is the name of the file containing the pattern data
         """
         utils.trace('in')
-        self._config ={}
+        self._config = {}
 
         # name and path to the pattern data file
         self._config['filename'] = filename
 
         # reference of the parent EarthPlot
         self._earthplot = parent
-        
+
         # reference of the Central Widget
-        self._centralwidget = parent._centralwidget
+        self._centralwidget = parent.get_centralwidget()
 
         # Reference to the Main Window
         self._mainwindow = self._centralwidget.parent()
@@ -52,14 +56,17 @@ class PatternControler(object):
         # get Menu Pattern reference
         self._pattern_menu = self._mainwindow.menupattern
         # pattern sub menu
-        self._pattern_sub_menu = self.add_menu_items(self._earthplot.get_file_key(self._config['filename']))
+        file_key = self._earthplot.get_file_key(self._config['filename'])
+        self._pattern_sub_menu = self.add_menu_items(file_key)
 
         # define _plot attribute for Controler
         self._plot = None
         self._plot_type = None
 
         # create dialog box to configure the pattern
-        self._pdialog = PatternDialog(filename=self._config['filename'], parent=self._earthplot, control=self)
+        self._pdialog = PatternDialog(filename=self._config['filename'],
+                                      parent=self._earthplot,
+                                      control=self)
         utils.trace('out')
     # end of constructor
 
@@ -81,6 +88,8 @@ class PatternControler(object):
     # end of function configure
 
     def add_menu_items(self, file_key):
+        """Add Pattern menu elements to exploit current pattern.
+        """
         utils.trace('in')
         # get Pattern menu reference and add sub menu for current pattern
         patternmenu = self._pattern_menu.addMenu(file_key)
@@ -124,14 +133,14 @@ class PatternControler(object):
         self._plot = self._pattern.plot(self._earthplot._earth_map, self._earthplot._viewer, \
                                         self._earthplot._figure, self._earthplot._axes, \
                                         self._earthplot._clrbar, self._earthplot._clrbar_axes)
-        if self._config['display_slope'] == True:
+        if self._config['display_slope'] is True:
             self._plot_type = 'surf'
         else:
             self._plot_type = 'contour'
         self._earthplot.draw()
         utils.trace('out')
     # end of function plot
-        
+
     def clear_plot(self):
         """Clear the current plot
         """
@@ -140,16 +149,16 @@ class PatternControler(object):
         if self._plot_type == 'surf':
             self._plot.remove()
         else:
-            for c in self._plot[0].collections:
+            for element in self._plot[0].collections:
                 try:
-                    c.remove()
+                    element.remove()
                 except ValueError:
-                    print(c)
+                    print(element)
             if len(self._plot) > 1:
                 self._plot[1][0].remove()
                 self._plot[2].remove()
-                for t in self._plot[3]:
-                    t.remove()
+                for element in self._plot[3]:
+                    element.remove()
         utils.trace('out')
     # end of function clear_plot
 
@@ -161,7 +170,7 @@ class PatternControler(object):
         menu = self._pattern_sub_menu
         menu_action = menu.menuAction()
         menu.parent().removeAction(menu_action)
-        
+
         del self._earthplot._patterns[self._config['key']]
 
         self._earthplot.draw_elements()
@@ -173,7 +182,7 @@ class PatternControler(object):
         """
         utils.trace('in')
         self.configure(dialog=True)
-        utils.trace('out') 
+        utils.trace('out')
     # end of function make_edit_pattern
 
     def export_pattern(self):
@@ -183,15 +192,23 @@ class PatternControler(object):
         # get directory
         directory = self._earthplot.rootdir
         # recreate default filename with .pat extension
-        f = os.path.basename(self._config['filename'])
-        defaultfilename = f[:-4] + '.pat'
+        origin_filename = os.path.basename(self._config['filename'])
+        default_filename = origin_filename[:-4] + '.pat'
         # Get filename for exporting file
         filename, _ = QFileDialog.getSaveFileName(self._mainwindow,
                                                   'Select file',
-                                                  os.path.join(directory, defaultfilename), 
+                                                  os.path.join(directory, default_filename),
                                                   'PAT (*.pat)')
         # get pattern to export
         if filename:
-            self._pattern.export_to_file(filename, shrunk = self._pattern._shrink)
+            self._pattern.export_to_file(filename, shrunk=self._pattern._shrink)
         utils.trace('out')
     # end of function export_pattern
+
+    def get_config(self):
+        """Return _config protected attribute.
+        """
+        return self._config
+    # end of function get_config
+
+# end of module control

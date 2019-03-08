@@ -617,14 +617,24 @@ class EarthPlot(FigureCanvas):
         return self._meridians
     # end of function set_meridians
 
+    def get_centralwidget(self):
+        """Accessor to central widget.
+        """
+        return self._centralwidget
+    # end of get_centralwidget
+
     def croppedbluemarble(self):
+        # get blue marble data projected on the current projection
         im = self._earth_map.bluemarble()
         data = im.get_array()
+
+        # get data array dimension
         nx, ny, _ = data.shape
         ead = self.earth_angular_diameter()         
         stepx = ead / (nx - 1)
         stepy = ead / (ny - 1)
 
+        # create new matrix to the dimension of the current plot
         azmin = self._zoom.min_azimuth
         azmax = self._zoom.max_azimuth
         elmin = self._zoom.min_elevation
@@ -633,12 +643,34 @@ class EarthPlot(FigureCanvas):
         new_ny = (elmax - elmin) / stepy
         new_data = np.zeros((new_nx, new_ny, 4))
 
+        # compute first azimuth index of source array and destination array
+        x0_source = 0
+        x0_destination = 0
+        if azmin > -ead/2:
+            # crop in azimuth
+            x0_source = np.abs(azmin - ead/2) / stepx
+        else:
+            x0_destination = np.abs(azmin - ead/2) / stepx
 
+        # compute first elevation index of source array and destination array
+        y0_source = 0
+        y0_destination = 0
+        if elmin > -ead/2:
+            # crop in azimuth
+            y0_source = np.abs(elmin - ead/2) / stepy
+        else:
+            y0_destination = np.abs(elmin - ead/2) / stepy
+        
+    # end of method croppedbluemarble
 
 
     def earth_angular_diameter(self):
-        d = 2 * np.arcsin(cst.EARTH_RAD_BASEMAP / (cst.EARTH_RAD_BASEMAP + self._viewer.altitude())) * cst.RAD2DEG
+        """Compute Earth anguar diameter from spacecraft point of view dpending on the altitude.
+        """
+        sat_height = cst.EARTH_RAD_BASEMAP + self._viewer.altitude()
+        d = 2 * np.arcsin(cst.EARTH_RAD_BASEMAP / sat_height) * cst.RAD2DEG
         return d
+    # end of function earth_angular_diameter
 
 
 

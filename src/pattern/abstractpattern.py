@@ -95,6 +95,9 @@ class AbstractPattern(ABC):
         # latitude grid
         self._latitude = []
 
+        # rotated pattern
+        self._rotated = False
+
         # satellite position
         try:
             sat_lon = conf['sat_lon']
@@ -295,11 +298,13 @@ class AbstractPattern(ABC):
         self._satellite = Viewer(sat_lon, sat_lat, sat_alt)
 
         for set in range(self._nb_sets):
-            if self._rotate:
+            if (self._rotate and not self._rotated) or \
+               (not self._rotate and self._rotated):
                 x_offset = (np.max(self._x[set][:]) - np.min(self._x[set][:]))
                 y_offset = (np.max(self._y[set][:][:]) - np.min(self._y[set][:][:]))
                 self._x[set] = -1*self._x[set]
                 self._y[set] = -1*self._y[set]
+                self._rotated = self._rotate
 
         self.reshapedata()
 
@@ -386,6 +391,12 @@ class AbstractPattern(ABC):
         return max_value, max_longitude, max_latitude
     # end of function getmax
 
+    def get_isolevel(self):
+        """This function is a simple getter for _isolevel attribute.
+        """
+        return self._isolevel
+    # end of function get_isolevel
+
     def displaymax(self, map: Basemap, set: int=0):
         """Display max of pattern as a cross on the map.
         """
@@ -425,7 +436,7 @@ class AbstractPattern(ABC):
         """Return interpolated value of the pattern.
         The spline object is also returned for reuse.
         """
-        utils.trace('in')
+        
         if spline == None:
             if self._x[set][0,0] == self._x[set][1,0]:
                 x = self._x[set][0, :]
@@ -452,7 +463,6 @@ class AbstractPattern(ABC):
         # prepare results for return statement
         a, b = np.reshape(spline.ev(x.flatten(), y.flatten()), np.array(az).shape), spline
 
-        utils.trace('out')
         return a, b
     # end of function interpolate_copol
 
@@ -513,13 +523,26 @@ class AbstractPattern(ABC):
                     el_grid[i][j] = np.nan
         # add points of the ellipse
         # TODO improve this part. Ellipse is not very well defined
-        x = np.arange(-azshrink, azshrink + az_step, az_step)
-        y = np.arange(-elshrink, elshrink + el_step, el_step)
-        y_prime = np.concatenate((elshrink * np.sqrt(1 - x**2 / azshrink**2), -elshrink * np.sqrt(1 - x**2 / azshrink**2)))
-        x_prime = np.concatenate((azshrink * np.sqrt(1 - y**2 / elshrink**2), -azshrink * np.sqrt(1 - y**2 / elshrink**2)))
+        # x = np.arange(-azshrink, azshrink + az_step, az_step)
+        # y = np.arange(-elshrink, elshrink + el_step, el_step)
+        # y_prime = np.concatenate((elshrink * np.sqrt(1 - x**2 / azshrink**2), -elshrink * np.sqrt(1 - x**2 / azshrink**2)))
+        # x_prime = np.concatenate((azshrink * np.sqrt(1 - y**2 / elshrink**2), -azshrink * np.sqrt(1 - y**2 / elshrink**2)))
+        # az_depointing = np.concatenate(([f for f in az_grid.flatten() if not np.isnan(f)], x, x, x_prime))
+        # el_depointing = np.concatenate(([f for f in el_grid.flatten() if not np.isnan(f)], y_prime, y, y))
+        
+        # approximation of ellipse circumference with Ramanujan 1
+        a = azshrink * 2
+        b = elshrink * 2
+        h = ((a - b) / (a + b)) ** 2
+        l = np.pi * (a + b) * (3 - np.sqrt(4 - h))
+        nb_step = l / min(az_step, el_step)
+        theta = np.arange(0, 2*np.pi, nb_step)
+        x_ellipse = azshrink * np.cos(theta)
+        y_ellipse = elshrink * np.sin(theta)
 
-        az_depointing = np.concatenate(([f for f in az_grid.flatten() if not np.isnan(f)], x, x, x_prime))
-        el_depointing = np.concatenate(([f for f in el_grid.flatten() if not np.isnan(f)], y_prime, y, y))
+        # concatenate ellipse filling grid and circumference points
+        az_depointing = np.concatenate(([f for f in az_grid.flatten() if not np.isnan(f)], x_ellipse))
+        el_depointing = np.concatenate(([f for f in el_grid.flatten() if not np.isnan(f)], y_ellipse))
 
         # interpolate copol into a step accurate grid
         if not len(az_co):
@@ -550,7 +573,114 @@ class AbstractPattern(ABC):
         utils.trace('out')
         # return result pattern
         return co
-    # end of function shrink
+    # end of function shrink_copol
+#==================================================================================================
+
+# grid conversion functions and getters
+#--------------------------------------------------------------------------------------------------
+    def azel_grid(self, set: int = 0):
+        """This function convert grid format to azimuth elevation.
+        set is the data set to be used
+        """
+        def id(x, y):
+            return x, y
+
+        convert = {1:ang.uv2azel, \
+                   2:ang.thetaphi2azel, \
+                   3:id, \
+                   4:ang.elovaz2azel, \
+                   5:ang.azovel2azel}
+
+        return convert[self.grid_type()](self._x[set], self._y[set])
+    # end of function azel_grid
+
+    def azel2xy(self, az, el):
+        """Convert (az, el) to native coordinates.
+        az is the azimuth coordinate vector to be converted
+        el is the elevation coordinate vector to be converted
+        """
+        def id(x, y):
+            return x, y
+
+        convert = {1:ang.azel2uv, \
+                   2:ang.azel2thetaphi, \
+                   3:id, \
+                   4:ang.azel2elovaz, \
+                   5:ang.azel2azovel}
+        return convert[self.grid_type()](az, el)
+    # end of function azel2xy
+    
+    def ll_grid(self, set: int = 0):
+        """ Return (longitude, latitude) grid converted from (az, el) grid.
+        set is the data set to be used
+        """
+        az, el = self.azel_grid(set)
+        if self._offset:
+            az_offset = self._azimuth_offset
+            el_offset = self._elevation_offset
+        else:
+            az_offset = 0
+            el_offset = 0
+            
+        x = self._satellite.altitude() * np.tan((az + az_offset) * cst.DEG2RAD)
+        y = self._satellite.altitude() * np.tan((el + el_offset) * cst.DEG2RAD)
+        self.proj = prj.Proj(init='epsg:4326 +proj=nsper' + \
+                             ' +h=' + str(self._satellite.altitude()) + \
+                             ' +a=6378137.00 +b=6378137.00' + \
+                             ' +lon_0=' + str(self._satellite.longitude()) + \
+                             ' +lat_0=' + str(self._satellite.latitude()) + \
+                             ' +x_0=0 +y_0=0 +units=meters +no_defs') 
+        return self.proj(x, y, inverse=True)
+    # end of function ll_grid    
+
+    def revert_x(self, set=0):
+        """Revert pattern along x axis.
+        """
+        self._E_mag_co[set] = self._E_mag_co[set][::-1,:]
+        self._E_phs_co[set] = self._E_phs_co[set][::-1,:]
+        if len(self._E_mag_cr):
+            self._E_mag_cr[set] = self._E_mag_cr[set][::-1,:]
+            self._E_phs_cr[set] = self._E_phs_cr[set][::-1,:]
+    # end of method revert_x
+
+    def revert_y(self, set: int = 0):
+        """Revert pattern along y axis.
+        """
+        self._E_mag_co[set] = self._E_mag_co[set][:, ::-1]
+        self._E_phs_co[set] = self._E_phs_co[set][:, ::-1]
+        if len(self._E_mag_cr):
+            self._E_mag_cr[set] = self._E_mag_cr[set][:, ::-1]
+            self._E_phs_cr[set] = self._E_phs_cr[set][:, ::-1]
+    # end of method revert_y
+
+    def azimuth(self, set: int = 0):
+        """Return Azimuth grid for data set of index set
+        """
+        return self._azimuth[set]
+    # end of function azimuth
+        
+    def elevation(self, set: int = 0):
+        """Return Elevation grid for data set of index set
+        """
+        return self._elevation[set]
+    # end of function elevation
+
+    def longitude(self, set: int = 0):
+        """Return longitude grid for data set of index set
+        """
+        return self._longitude[set]
+    # end of function longitude
+
+    def latitude(self, set: int = 0):
+        """Return latitude grid for data set of index set
+        """
+        return self._latitude[set]
+    # end of function latitude
+#==================================================================================================
+
+
+# plot or export to file methods
+#--------------------------------------------------------------------------------------------------
 
     def plot(self, map: Basemap, viewer, figure, axes, cbar, cbar_axes):
         """Draw pattern on the earth plot from the provided grd.
@@ -645,134 +775,14 @@ class AbstractPattern(ABC):
             
             utils.trace('out')
             return pcm_pattern
-
-            
         # endif
     # end of method plot
 
-# Mandatory functions and methods to be implemented
-#==============================================================================
-
-    @abstractmethod
-    def read_file(self, filename):
-        """Read antenna pattern data from file self._filename.
-        """
-        pass
-    # end of method read_file
-
-    @abstractmethod
-    def longitude(self):
-        """Return longitude matrix of the data grid points
-        """
-        pass
-    # end of function longitude
-
-    @abstractmethod
-    def latitude(self):
-        """Return latitude matrix of the data grid points
-        """
-        pass
-    # end of function latitude
-
-    @abstractmethod
-    def azimuth(self, set: int=0):
-        """Return azimuth matrix of the data grid points
-        """
-        pass
-    # end of function azimuth
-
-    @abstractmethod
-    def elevation(self, set: int=0):
-        """Return elevation matrix of the data grid points
-        """
-        pass
-    # end of function elevation
-
-    # @abstractmethod
-    # def plot(self, set: int=0):
-    #     """Plot itself in an EarthPlot Canvas.
-    #     """
-    #     pass
-    # end of function plot
-
-    @abstractmethod
-    def grid_type(self):
-        """Return file grid type is a standardised format.
-        1 - uv grid
-        2 - theta/phi
-        3 - Az and El
-        4 - Elevation over Azimuth
-        5 - Azimuth over Elevation
-        """
-        # Type of grd field grid
-        # 1: uv-gridse
-        # 4: Elevation over Azimuth
-        # 5: Elevation and Azimuth
-        # 6: Azimuth over Elevation
-        # 7: thetaphi grid 
-        #
-        # Type of pat field grid
-        # 1 - uv
-        # 2 - theta, phi
-        # 3 - az over el
-        # 4 - el over az
-        # 101 - x, y Plane rectangular grid used for array excitations
-        #       not supported
-        pass
-    # end function grid_type
-
-    def azel_grid(self, set: int = 0):
-        """This function convert grid format to azimuth elevation.
-        """
-        def id(x, y):
-            return x, y
-
-        convert = {1:ang.uv2azel, \
-                   2:ang.thetaphi2azel, \
-                   3:id, \
-                   4:ang.elovaz2azel, \
-                   5:ang.azovel2azel}
-
-        return convert[self.grid_type()](self._x[set], self._y[set])
-    # end of function azel_grid
-
-    def azel2xy(self, az, el):
-        """Convert (az, el) to native coordinates.
-        """
-        def id(x, y):
-            return x, y
-
-        convert = {1:ang.azel2uv, \
-                   2:ang.azel2thetaphi, \
-                   3:id, \
-                   4:ang.azel2elovaz, \
-                   5:ang.azel2azovel}
-        return convert[self.grid_type()](az, el)
-    
-    def ll_grid(self, set: int = 0):
-        """ Return (longitude, latitude) grid converted from (az, el) grid.
-        """
-        az, el = self.azel_grid(set)
-        if self._offset:
-            az_offset = self._azimuth_offset
-            el_offset = self._elevation_offset
-        else:
-            az_offset = 0
-            el_offset = 0
-            
-        x = self._satellite.altitude() * np.tan((az + az_offset) * cst.DEG2RAD)
-        y = self._satellite.altitude() * np.tan((el + el_offset) * cst.DEG2RAD)
-        self.proj = prj.Proj(init='epsg:4326 +proj=nsper' + \
-                             ' +h=' + str(self._satellite.altitude()) + \
-                             ' +a=6378137.00 +b=6378137.00' + \
-                             ' +lon_0=' + str(self._satellite.longitude()) + \
-                             ' +lat_0=' + str(self._satellite.latitude()) + \
-                             ' +x_0=0 +y_0=0 +units=meters +no_defs') 
-        return self.proj(x, y, inverse=True)
-    # end of function ll_grid    
-
     def export_to_file(self, filename: str, shrunk: bool = False, set: int = 0):
         """Export this pattern to .pat file.
+        filename is the target filename
+        shrunk is a boolean specifying if the output pattern should be shrunk
+        set is the index of the data set to use
         """
         utils.trace('in')
         # open file and read text data
@@ -840,29 +850,44 @@ class AbstractPattern(ABC):
         file.close()
         utils.trace('out')
     # end of function export_to_file
+#==================================================================================================
 
-
-    def revert_x(self, set=0):
-        """Revert pattern along x axis.
+# Mandatory functions and methods to be implemented
+#--------------------------------------------------------------------------------------------------
+    @abstractmethod
+    def read_file(self, filename):
+        """Read antenna pattern data from file filename.
         """
-        self._E_mag_co[set] = self._E_mag_co[set][::-1,:]
-        self._E_phs_co[set] = self._E_phs_co[set][::-1,:]
-        if len(self._E_mag_cr):
-            self._E_mag_cr[set] = self._E_mag_cr[set][::-1,:]
-            self._E_phs_cr[set] = self._E_phs_cr[set][::-1,:]
+        pass
+    # end of method read_file
 
-    def revert_y(self, set=0):
-        """Revert pattern along y axis.
+    @abstractmethod
+    def grid_type(self):
+        """Return file grid type is a standardised format.
+        1 - uv grid
+        2 - theta/phi
+        3 - Az and El
+        4 - Elevation over Azimuth
+        5 - Azimuth over Elevation
         """
-        self._E_mag_co[set] = self._E_mag_co[set][:, ::-1]
-        self._E_phs_co[set] = self._E_phs_co[set][:, ::-1]
-        if len(self._E_mag_cr):
-            self._E_mag_cr[set] = self._E_mag_cr[set][:, ::-1]
-            self._E_phs_cr[set] = self._E_phs_cr[set][:, ::-1]
-# end of class Pattern
+        # Type of grd field grid
+        # 1: uv-gridse
+        # 4: Elevation over Azimuth
+        # 5: Elevation and Azimuth
+        # 6: Azimuth over Elevation
+        # 7: thetaphi grid 
+        #
+        # Type of pat field grid
+        # 1 - uv
+        # 2 - theta, phi
+        # 3 - az over el
+        # 4 - el over az
+        # 101 - x, y Plane rectangular grid used for array excitations
+        #       not supported
+        pass
+    # end function grid_type
+#==================================================================================================
 
+# end of class AbstractPattern
 
-
-
-
-
+# end of module abstractpattern

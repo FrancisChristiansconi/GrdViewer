@@ -681,7 +681,6 @@ class AbstractPattern(ABC):
 
 # plot or export to file methods
 #--------------------------------------------------------------------------------------------------
-
     def plot(self, map: Basemap, viewer, figure, axes, cbar, cbar_axes):
         """Draw pattern on the earth plot from the provided grd.
         """
@@ -706,7 +705,7 @@ class AbstractPattern(ABC):
                     linewidths = self._conf['linewidths']
                 else:
                     linewidths = 0.2
-                
+
                 # if shrink pattern option is selected, use shrink_copol function
                 cs_pattern = map.contour(x, y,
                                         self._to_plot + self._conversion_factor, 
@@ -772,7 +771,6 @@ class AbstractPattern(ABC):
                 cbar = figure.colorbar(pcm_pattern, cax=cbar_axes)   
             cbar.ax.set_ylabel('Pattern slope (dB/deg)')
                 
-            
             utils.trace('out')
             return pcm_pattern
         # endif

@@ -1,37 +1,43 @@
 """This file contains definition of class PatternDialog. It's the GUI for Pattern (re)configuration.
 """
 
-
+# import standard modules
+#--------------------------------------------------------------------------------------------------
 # system module
 import sys
+#==================================================================================================
 
-# utils
-import utils
-
-# PyQt5 widgets import
-from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, QLineEdit, \
-                            QHBoxLayout, QVBoxLayout, QPushButton, QWidget, QFileDialog, QLabel, \
-                            QGridLayout, QCheckBox
+# import third party modules
+#--------------------------------------------------------------------------------------------------
+# import of PyQt5 for all GUI elements
+from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, \
+                            QLineEdit, QHBoxLayout, QVBoxLayout, QPushButton, QWidget, \
+                            QFileDialog, QLabel, QGridLayout, QCheckBox
 from PyQt5.QtGui import QColor, QPalette
-
 # import numpy
 import numpy as np
+#==================================================================================================
 
-from matplotlib.collections import QuadMesh
-
-# import pattern.py module 
-# from pattern import Pattern, Grd, Pat
-
+# import local modules
+#--------------------------------------------------------------------------------------------------
+# debug utility module
+import utils
 # import constant file
 import constant as cst
+#==================================================================================================
 
-
+# classe definition
+#--------------------------------------------------------------------------------------------------
 class PatternDialog(QDialog):
     """QDialog derived class which is used to configure display of a pattern file.
     """
 
-    # Constructor for PatternDialog class
     def __init__(self, filename: str=None, parent=None, control=None):
+        """Constructor for PatternDialog class.
+        filename: str is the path to the file containing data of antenna pattern
+        parent is the EarthPlot instance which will display the antenna pattern
+        control is the antenna pattern controler instance
+        """
         utils.trace()
         # Parent constructor
         super().__init__()
@@ -198,10 +204,12 @@ class PatternDialog(QDialog):
         # Set default field value if pattern object has been provided
         if self._pattern:
             self.configure(self._pattern)
-        
     # end of __init__
 
     def configure(self, pattern):
+        """This method configure the fields of the dialog with the pattern configuration values.
+        pattern is the antenna pattern object which provide the configuration for this GUI
+        """
         utils.trace('in')
         try:
             self.title_field.setText(pattern._conf['title'])
@@ -210,10 +218,10 @@ class PatternDialog(QDialog):
         self.lon_field.setText(str(pattern.satellite().longitude()))
         self.lat_field.setText(str(pattern.satellite().latitude()))
         self.alt_field.setText(str(pattern.satellite().altitude()))
-        self.isolevel_field.setText(self.get_isolevel(pattern))
+        self.isolevel_field.setText(self.get_isolevel())
         self.chk_revert_x.setChecked(pattern._revert_x)
         self.chk_revert_y.setChecked(pattern._revert_y)
-        self.chk_rotate.setChecked(pattern._rotate)
+        self.chk_rotate.setChecked(pattern._rotated)
         self.chkXPol.setChecked(pattern._use_second_pol)
         self.chkSlope.setChecked(pattern._display_slope)
         self.chkshrink.setChecked(pattern._shrink)
@@ -233,13 +241,17 @@ class PatternDialog(QDialog):
         
         self.refresh_isolevel()
         utils.trace('out')
-
+    # end of configure method
 
     def get_isolevel(self, pattern=None):
-        if pattern == None:
+        """Return string formatted isolevel list. Each value separated with comma.
+        pattern is the antenna pattern 
+        """
+        if self._pattern == None:
             return ",".join(str(x) for x in cst.DEFAULT_ISOLEVEL_DBI)
         else:
-            return ",".join(str(x) for x in pattern._isolevel)
+            return ",".join(str(x) for x in self._pattern.get_isolevel())
+    # end of function get_isolevel
 
     def get_cf(self):
         """Return numerical conversion factor from widget field text.
@@ -250,8 +262,12 @@ class PatternDialog(QDialog):
         except ValueError:
             cf_float = 0.0
         return cf_float
+    # end of function get_cf
 
     def refresh_isolevel(self):
+        """Refresh isolevel field regarding polarisation selected and
+        absolute isolevel stored in pattern configuration dictionary.
+        """
         if self._pattern:
             max_co = int(np.max(self._pattern.copol()))
             try:
@@ -263,14 +279,18 @@ class PatternDialog(QDialog):
             max_cr = 0
 
         cf = self.get_cf()
+        isolevel = np.array(self._pattern._isolevel) - np.max(self._pattern._isolevel)
         if self.chkXPol.checkState():
-            tmp_str = ",".join(str(x) for x in np.array(cst.DEFAULT_ISOLEVEL_DBI) + max_cr + cf)
+            tmp_str = ",".join(str(x) for x in isolevel + max_cr + cf)
         else:
-            tmp_str = ",".join(str(x) for x in np.array(cst.DEFAULT_ISOLEVEL_DBI) + max_co + cf)
+            tmp_str = ",".join(str(x) for x in isolevel + max_co + cf)
         
         self.isolevel_field.setText(tmp_str)
+    # end of method refresh_isolevel
 
     def set_pattern_conf(self, close=False):
+        utils.trace('in')
+
         # if no defined pattern attribute return 
         if not self._pattern:
             return
@@ -308,123 +328,11 @@ class PatternDialog(QDialog):
         
         if close:
             self.close()
+        utils.trace('out')
     # end of function set_pattern_conf
-
-    # def addpattern(self):
-    #     utils.trace('in')
-    #     self.close()
-
-    #     file_index = 1
-    #     file_key = self.filename + ' ' + str(file_index)
-    #     while (file_key in self.earth_plot._patterns) and file_index <= 50:
-    #         file_index = file_index + 1
-    #         file_key = self.filename + ' ' + str(file_index)
-    #     if file_index == 50:
-    #         print('Max repetition of same file reached. Index 50 will be overwritten')
-        
-    #     # add item in Grd menu
-    #     patternmenu = self.parent.menupattern.addMenu(file_key)
-    #     remove_pat_action = QAction('Remove', self.parent)
-    #     edit_pat_action = QAction('Edit', self.parent)
-    #     export_pat_action = QAction('Export', self.parent)
-    #     patternmenu.addAction(remove_pat_action)
-    #     patternmenu.addAction(edit_pat_action)
-    #     patternmenu.addAction(export_pat_action)
-    #     remove_pat_action.triggered.connect(self.make_remove_pattern(file_key, self.earth_plot._patterns, self.earth_plot))
-    #     edit_pat_action.triggered.connect(self.make_edit_pattern(file_key, self.earth_plot._patterns, self.parent))
-    #     export_pat_action.triggered.connect(self.make_export_pattern(file_key, self.earth_plot._patterns, self.parent))
-
-    #     if self.filename[-3:] == 'grd':
-    #         pattern = Grd(filename=self.filename, \
-    #                       revert_x=self.chk_revert_x.checkState(), \
-    #                       revert_y=self.chk_revert_y.checkState(), \
-    #                       use_second_pol=self.chkXPol.checkState(), \
-    #                       sat_alt=ALTGEO, \
-    #                       sat_lon=float(self.lon_field.text()), \
-    #                       display_slope=self.chkSlope.checkState(), \
-    #                       shrink=self.chkshrink.checkState(), \
-    #                       azshrink=float(self.azfield.text()), \
-    #                       elshrink=float(self.elfield.text()))
-    #     elif self.filename[-3:] == 'pat':
-    #         pattern = Pat(filename=self.filename, \
-    #                       revert_x=self.chk_revert_x.checkState(), \
-    #                       revert_y=self.chk_revert_y.checkState(), \
-    #                       use_second_pol=self.chkXPol.checkState(), \
-    #                       sat_alt=ALTGEO, \
-    #                       sat_lon=float(self.lon_field.text()), \
-    #                       display_slope=self.chkSlope.checkState(), \
-    #                       shrink=self.chkshrink.checkState(), \
-    #                       azshrink=float(self.azfield.text()), \
-    #                       elshrink=float(self.elfield.text()))
-
-    #     self.earth_plot._patterns[file_key] = {'pattern': pattern, 'menu': patternmenu, 'plot': pattern.plot()}
-    #     self.earth_plot.settitle(self.title_field.text())
-    #     pattern._isolevel = [float(s) for s in self.isolevel_field.text().split(',')]
-    #     self.earth_plot.draw_elements()
-    #     utils.trace('out')
-    # # end of function addpattern
     
-    def make_remove_pattern(self, file_key, patterns, eplot):
-        """Callback maker for remove pattern menu items.
-        """
-        utils.trace('in')
-        def remove_pattern():
-            utils.trace('in')
-            menu = patterns[file_key]['menu']
-            menu_action = menu.menuAction()
-            menu.parent().removeAction(menu_action)
-            del patterns[file_key]
-            self.clear_plot()
-            utils.trace('out')
-            # eplot.draw_elements()
-        utils.trace('out')
-        return remove_pattern
-    # end of function make_remove_pattern
-
-    def make_edit_pattern(self, file_key, patterns, dialog_parent):
-        """Callback maker for edit pattern menu items.
-        """
-        utils.trace('in')
-        filename = ' '.join(file_key.split(' ')[:-1])
-        def edit_pattern():
-            utils.trace('in')
-            dialbox = PatternDialog(filename, dialog_parent, patterns[file_key])
-            dialbox.exec_()
-            utils.trace('out')
-        utils.trace('ou')
-        return edit_pattern  
-    # end of function make_edit_pattern
-
-    def make_export_pattern(self, file_key, patterns, dialog_parent):
-        """Open QDialog box to select file//directory where to export the file.
-        """
-        utils.trace('in')
-        # get file path + file name
-        filepath = ' '.join(file_key.split(' ')[:-1])
-        # get directory
-        directory = self.earth_plot.rootdir
-        # recreate default filename with .pat extension
-        defaultfilename = '.'.join(os.path.basename(filepath).split('.')[:-1]) + '.pat'
-        def export_pattern():
-            utils.trace('in')
-            # Get filename for exporting file
-            filename, _ = QFileDialog.getSaveFileName(dialog_parent,
-                                                      'Select file',
-                                                      os.path.join(directory, defaultfilename), 
-                                                      'PAT (*.pat)')
-
-            # get pattern to export
-            if filename:
-                pattern = patterns[file_key]['pattern']
-                pattern.export_to_file(filename, shrunk = pattern._shrink)
-            
-            utils.trace('out')
-        utils.trace('out')
-        return export_pattern
-    # end of function make_export_pattern
-
     def chkshrinkstatechanged(self):
-        """Callback deactivating the shrink fields wheb shrink checkbox is unchecked.
+        """Callback deactivating the shrink fields when shrink checkbox is unchecked.
         """
         utils.trace()
         self.azfield.setEnabled(self.chkshrink.isChecked())
@@ -432,31 +340,14 @@ class PatternDialog(QDialog):
     # end of callback
 
     def chk_offset_state_changed(self):
+        """Callback deactivating the offset fields when checkbox is unchecked.
+        """
         utils.trace()
         self.az_offset_field.setEnabled(self.chk_offset.isChecked())
         self.el_offset_field.setEnabled(self.chk_offset.isChecked())
     # end of callback
 
-    def clear_plot(self):
-        """Clear the current plot
-        """
-        utils.trace('in')
-        if type(self._plot) is QuadMesh:
-            self._plot.remove()
-        else:
-            for c in self._plot[0].collections:
-                try:
-                    c.remove()
-                except ValueError:
-                    print(c)
-            if len(self._plot) > 1:
-                self._plot[1][0].remove()
-                self._plot[2].remove()
-                for t in self._plot[3]:
-                    t.remove()
-        utils.trace('out')
 # end of classe PatternDialog
-
 
 # Main execution
 if __name__ == '__main__':   

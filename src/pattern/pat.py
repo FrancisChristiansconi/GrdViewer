@@ -10,6 +10,8 @@ class Pat(AbstractPattern):
     """This class implement reading and processing of Satsoft .pat files.
     """
 
+# Mandatory abstract method to implement
+#--------------------------------------------------------------------------------------------------
     def read_file(self, filename):
         utils.trace('in')
         # open file and read text data
@@ -193,52 +195,7 @@ class Pat(AbstractPattern):
                E_phs_co, \
                E_mag_cr, \
                E_phs_cr
-
-    
-    # Directivity
-    ###################################################################
-        
-    def magnitude(self, iunit, c1, c2):
-        """Convert (C1, C2) to magnitude (dB) depending on IUNIT value
-        """            
-
-        def convert(c1, c2):
-            return  20 * np.log10(np.absolute(c1 + 1j * c2))
-        
-        def identity(c1, c2):
-            return c1
-        
-        converter = {0: convert, \
-                     1: identity}
-        
-        return converter[iunit](c1, c2)
-    # end of function magnitude
-
-    def phase(self, iunit, c1, c2):
-        """Convert (C1, C2) to phase (deg) depending on IUNIT value
-        """         
-
-        def convert(c1, c2):
-            return np.angle(c1 + 1j * c2) * cst.RAD2DEG
-        
-        def identity(c1, c2):
-            return c2
-
-        converter = {0: convert, \
-                     1: identity}
-
-        return converter[iunit](c1, c2)
-    # end of function phase
-    
-    # def getmax(self, k=0):
-    #     """Get max directivity value and coordinates.
-    #     """
-    #     max_value = np.max(self._E_mag_co[k])
-    #     max_index = np.argmax(self._E_mag_co[k])
-    #     max_longitude = self.longitude().flatten()[max_index]
-    #     max_latitude = self.latitude().flatten()[max_index]
-    #     return max_value, max_longitude, max_latitude
-    # # end of function getmax
+    # end of function read_file
 
     def grid_type(self):
         """Return file grid type is a standardised format.
@@ -261,33 +218,62 @@ class Pat(AbstractPattern):
                    4: 4, \
                    101: 101}
         return convert[self._grid]
+    # end of function grid_type
+#==================================================================================================
 
-    # Azimuth / Elevation
-    ###################################################################
-
-    def azimuth(self, k: int=0):
-        """This function provide azimuth grid for self, beam number k.
+# Electrical field processing
+#--------------------------------------------------------------------------------------------------        
+    def magnitude(self, iunit, component1, component2):
+        """Convert (C1, C2) to magnitude (dB) depending on IUNIT value
         """
-        return self._azimuth[k]
+        utils.trace('in')
+
+        def convert(component1, component2):
+            """Convert from real/imag electrical field values to magnitude.
+            """
+            return  20 * np.log10(np.absolute(component1 + 1j * component2))
+
+        def identity(component1, _):
+            """Return directly the magnitude which is the first component.
+            """
+            return component1
+
+        # create the processing dictionary
+        converter = {0: convert, \
+                     1: identity}
+
+        # convert/extract the magnitude
+        mag = converter[iunit](component1, component2)
+
+        utils.trace('out')
+        return mag
+    # end of function magnitude
+
+    def phase(self, iunit, component1, component2):
+        """Convert (C1, C2) to phase (deg) depending on IUNIT value
+        """         
+        utils.trace('in')
+
+        def convert(component1, component2):
+            """Convert from real/imag electrical field to phase (in degrees)
+            """
+            return np.angle(component1 + 1j * component2) * cst.RAD2DEG
         
-    def elevation(self, k: int=0):
-        """This function provide elevation grid for self, beam number k.
-        """
-        return self._elevation[k]
+        def identity(_, component2):
+            """Directly returns component2 which is the phase.
+            """
+            return component2
 
+        # create the processing dictionary
+        converter = {0: convert, \
+                     1: identity}
 
-    # Longitude/ Latitude
-    ###################################################################
+        # convert/extract the magnitude
+        phs = converter[iunit](component1, component2)
 
-    def longitude(self, k: int=0):
-        """Project grid on Earth viewed from observer point of view. Return longitude.
-        """
-        return self._longitude[k]
-    # end of function longitude
+        utils.trace('out')
+        return phs
+    # end of function phase
+#==================================================================================================
 
-    def latitude(self, k: int=0):
-        """Project grid on Earth viewed from observer point of view. Return latitude.
-        """
-        return self._latitude[k]
-    # end of function latitude
 # end of class Pat

@@ -166,23 +166,7 @@ class Grd(AbstractPattern):
         return convert[self._grid]
     # end function grid_type
 
-    # return Azimuth grid for this data set
-    def azimuth(self, k: int = 0):
-        return self._azimuth[k]
-        
-    # return Elevation grid for this data set
-    def elevation(self, k: int = 0):
-        return self._elevation[k]
 
-    def longitude(self, k: int = 0):
-        """Return longitude grid of the Grd instance
-        """
-        return self._longitude[k]
-
-    def latitude(self, k: int = 0):
-        """Return latitude grid of the Grd instance
-        """
-        return self._latitude[k]
             
     # return gradient of Co-polarisation pattern along Azimuth
     def azel_slope(self, signed=False, set=0):

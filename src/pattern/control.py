@@ -67,6 +67,7 @@ class PatternControler():
         self._pdialog = PatternDialog(filename=self._config['filename'],
                                       parent=self._earthplot,
                                       control=self)
+
         utils.trace('out')
     # end of constructor
 
@@ -133,11 +134,15 @@ class PatternControler():
         self._plot = self._pattern.plot(self._earthplot._earth_map, self._earthplot._viewer, \
                                         self._earthplot._figure, self._earthplot._axes, \
                                         self._earthplot._clrbar, self._earthplot._clrbar_axes)
-        if self._config['display_slope'] is True:
-            self._plot_type = 'surf'
-        else:
-            self._plot_type = 'contour'
-        self._earthplot.draw()
+        try:
+            if self._config['display_slope'] is True:
+                self._plot_type = 'surf'
+            else:
+                self._plot_type = 'contour'
+            self._earthplot.draw()
+        except KeyError:
+            # if KeyError it means that Cancel button has been pressed
+            print('control.plot: issue with display_slope attribute')
         utils.trace('out')
     # end of function plot
 

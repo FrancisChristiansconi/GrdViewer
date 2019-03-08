@@ -161,9 +161,9 @@ class GrdViewer(QMainWindow):
         # projection submenu and items
         menuprojection = self._menuview.addMenu('Projection')
         geo_action = QAction('Geo', self, checkable=True)
-        merc_action = QAction('Mercator', self, checkable=True)
+        cyl_action = QAction('Cylindrical', self, checkable=True)
         menuprojection.addAction(geo_action)
-        menuprojection.addAction(merc_action)
+        menuprojection.addAction(cyl_action)
         menuprojection.triggered[QAction].connect(self.toggleprojection)
         # map resolution submenu and items
         menuresolution = self._menuview.addMenu('Map resolution')
@@ -344,12 +344,12 @@ class GrdViewer(QMainWindow):
     # end of method 
 
     def toggleprojection(self, action):
-        """Toggle between Geo and Mercator projection.
+        """Toggle between Geo and Cylindrical projection.
         """
         if action.text() == 'Geo':
             self.earth_plot.projection('nsper')
-        elif action.text() == 'Mercator':
-            self.earth_plot.projection('merc')
+        elif action.text() == 'Cylindrical':
+            self.earth_plot.projection('cyl')
         self.earth_plot.draw_elements()
     # end of method toggleprojection
 

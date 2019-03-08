@@ -11,7 +11,7 @@ class Zoom(object):
     """
    
     def __init__(self, proj='nsper', nsper=(-9.0, -9.0, 9.0, 9.0), \
-                 merc=(-180.0, -85.0, 180.0, -85.0)):
+                 cyl=(-180.0, -85.0, 180.0, -85.0)):
         """Default constructor for Zoom objects.
         Works if zoom defined in AzEl of LL coordinates.
         """
@@ -20,10 +20,10 @@ class Zoom(object):
         self.min_elevation = nsper[1]  # deg Elevation
         self.max_azimuth = nsper[2]    # deg Azimuth
         self.max_elevation = nsper[3]  # deg Elevation
-        self.min_longitude = merc[0] # deg Longitude
-        self.min_latitude = merc[1]  # deg Latitude
-        self.max_longitude = merc[2] # deg Longitude
-        self.max_latitude = merc[3]  # deg Latitude
+        self.min_longitude = cyl[0] # deg Longitude
+        self.min_latitude = cyl[1]  # deg Latitude
+        self.max_longitude = cyl[2] # deg Longitude
+        self.max_latitude = cyl[3]  # deg Latitude
     # emd of constructor
 # End of class Zoom
 
@@ -73,7 +73,7 @@ class ZoomDialog(QDialog):
             self.min_y_field.setText(str(self._zoom.min_elevation))
             self.max_x_field.setText(str(self._zoom.max_azimuth))
             self.max_y_field.setText(str(self._zoom.max_elevation))
-        elif self.earth_plot.projection() == 'merc':
+        elif self.earth_plot.projection() == 'cyl':
             min_x_label.setText('min. Lon')
             min_y_label.setText('min. Lat')
             max_x_label.setText('max. Lon')
@@ -124,7 +124,7 @@ class ZoomDialog(QDialog):
             self._zoom.min_elevation = float(self.min_y_field.text())
             self._zoom.max_azimuth = float(self.max_x_field.text())
             self._zoom.max_elevation = float(self.max_y_field.text())
-        elif self.earth_plot.projection() == 'merc':
+        elif self.earth_plot.projection() == 'cyl':
             self._zoom.min_longitude = float(self.min_x_field.text())
             self._zoom.min_latitude = float(self.min_y_field.text())
             self._zoom.max_longitude = float(self.max_x_field.text())

@@ -153,15 +153,21 @@ class PatternControler():
         # if self._config['display_slope']:
         if self._plot_type == 'surf':
             self._plot.remove()
-        else:
+        elif self._plot_type == 'contour':
             for element in self._plot[0].collections:
                 try:
                     element.remove()
                 except ValueError:
                     print(element)
             if len(self._plot) > 1:
-                self._plot[1][0].remove()
-                self._plot[2].remove()
+                try:
+                    self._plot[1][0].remove()
+                except TypeError:
+                    print("None element cannot be removed")
+                try:
+                    self._plot[2].remove()
+                except AttributeError:
+                    print("None element have no attribute remove")
                 for element in self._plot[3]:
                     element.remove()
         utils.trace('out')

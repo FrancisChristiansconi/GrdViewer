@@ -94,6 +94,8 @@ class EarthPlot(FigureCanvas):
             self._resolution = config.get('DEFAULT', \
                                           'map resolution', \
                                           fallback=self._resolution)[0].lower()
+            self._projection = config.get('DEFAULT', 'projection', fallback='nsper')
+
 
             # get point of view coordinates if defined
             longitude = config.getfloat('VIEWER', 'longitude', fallback=0.0)
@@ -101,6 +103,7 @@ class EarthPlot(FigureCanvas):
             altitude = config.getfloat('VIEWER', 'altitude', fallback=cst.ALTGEO)
 
             # get Earth plot configuration
+            self._bluemarble = config.getboolean('DEFAULT', 'blue marble', fallback=False)
             self._coastlines = config.getfloat('DEFAULT', 'coast lines', fallback=0.1)
             self._countries = config.getfloat('DEFAULT', 'countries', fallback=0.1)
             self._parallels = config.getfloat('DEFAULT', 'parallels', fallback=0.1)
@@ -112,7 +115,7 @@ class EarthPlot(FigureCanvas):
 
             # get default directory
             self.rootdir = config.get('DEFAULT', 'root')
-            
+
             # Initialize zoom
             self._zoom = Zoom(self._projection)
             if 'GEO' in config:
@@ -124,15 +127,15 @@ class EarthPlot(FigureCanvas):
                     self._zoom.max_azimuth = config.getfloat('GEO', 'max azimuth')
                 if 'max elevation' in config['GEO']:
                     self._zoom.max_elevation = config.getfloat('GEO', 'max elevation')
-            if 'MERCATOR' in config:
-                if 'min longitude' in config['MERCATOR']:
-                    self._zoom.min_longitude = config.getfloat('MERCATOR', 'min longitude')
-                if 'min latitude' in config['MERCATOR']:
-                    self._zoom.min_latitude = config.getfloat('MERCATOR', 'min latitude')
-                if 'max longitude' in config['MERCATOR']:
-                    self._zoom.max_longitude = config.getfloat('MERCATOR', 'max longitude')
-                if 'max latitude' in config['MERCATOR']:
-                    self._zoom.max_latitude = config.getfloat('MERCATOR', 'max latitude')
+            if 'CYLINDRICAL' in config:
+                if 'min longitude' in config['CYLINDRICAL']:
+                    self._zoom.min_longitude = config.getfloat('CYLINDRICAL', 'min longitude')
+                if 'min latitude' in config['CYLINDRICAL']:
+                    self._zoom.min_latitude = config.getfloat('CYLINDRICAL', 'min latitude')
+                if 'max longitude' in config['CYLINDRICAL']:
+                    self._zoom.max_longitude = config.getfloat('CYLINDRICAL', 'max longitude')
+                if 'max latitude' in config['CYLINDRICAL']:
+                    self._zoom.max_latitude = config.getfloat('CYLINDRICAL', 'max latitude')
             pattern_index = 1
             pattern_section = 'PATTERN' + str(pattern_index)
             while pattern_section in config:
@@ -233,7 +236,7 @@ class EarthPlot(FigureCanvas):
             self._axes.set_yticks(self.el2y(elticks) +
                                   self._earth_map(self._viewer.longitude(), self._viewer.latitude())[1])
             self._axes.set_yticklabels(str(f) for f in elticks)
-        elif self._projection == 'merc':
+        elif self._projection == 'cyl':
             self._axes.set_xlabel('Longitude (deg)')
             self._axes.set_ylabel('Latitude (deg)')
             lonticks = np.arange(int(self._zoom.min_longitude / 10) * 10, self._zoom.max_longitude + 0.1, 20)
@@ -269,9 +272,7 @@ class EarthPlot(FigureCanvas):
     # Draw Earth and return Basemap handler
     def drawearth(self, proj='nsper', resolution='c'):
         utils.trace('in')
-        # if self._earth_map:
-            # ax = self._earth_map.ax
-        # else:
+        
         ax = self._axes
         # add Earth _earth_map
         # resolution :
@@ -282,7 +283,6 @@ class EarthPlot(FigureCanvas):
         # f: full
         if proj == 'nsper':
             self._earth_map = Basemap(projection='nsper', \
-                            # rsphere=(cst.EARTH_RAD_EQUATOR_M,cst.EARTH_RAD_POLE_M), \
                             llcrnrx=self.llcrnrx, \
                             llcrnry=self.llcrnry, \
                             urcrnrx=self.urcrnrx, \
@@ -292,19 +292,24 @@ class EarthPlot(FigureCanvas):
                             satellite_height=self._viewer.altitude(), \
                             resolution=resolution, \
                             ax=ax)
+            # display Blue Marble picture, projected and cropped 
+            if self._bluemarble:
+                self.croppedbluemarble()
 
-        elif proj=='merc':
+        elif proj=='cyl':
             self._earth_map = Basemap(projection=proj, \
-                            rsphere=(cst.EARTH_RAD_EQUATOR_M,cst.EARTH_RAD_POLE_M), \
                             llcrnrlat=self.llcrnrlat, \
                             urcrnrlat=self.urcrnrlat,\
                             llcrnrlon=self.llcrnrlon, \
                             urcrnrlon=self.urcrnrlon, \
-                            lat_ts=20, \
+                            lon_0=self._viewer.longitude(), \
+                            lat_0=self._viewer.latitude(), \
+                            lat_ts=self._viewer.latitude(), \
                             resolution=resolution, \
                             ax=ax) 
-            # self._earth_map.bluemarble()
-                               
+            if self._bluemarble:
+                self._earth_map.bluemarble(scale=0.5)
+
         # Earth map drawing options
         # 1. Drawing coast lines
         if self._coastlines_col:
@@ -481,10 +486,10 @@ class EarthPlot(FigureCanvas):
         """
         utils.trace('in') 
         if proj:
-            if proj=='nsper' or proj == 'merc':
+            if proj=='nsper' or proj == 'cyl':
                 self._projection = proj
             else:
-                raise ValueError("Projection is either 'nsper' or 'merc'.")
+                raise ValueError("Projection is either 'nsper' or 'cyl'.")
         utils.trace('out')
         return self._projection
     # end of function projection
@@ -625,7 +630,7 @@ class EarthPlot(FigureCanvas):
 
     def croppedbluemarble(self):
         # get blue marble data projected on the current projection
-        im = self._earth_map.bluemarble()
+        im = self._earth_map.bluemarble(alpha=0.9, scale=0.5)
         data = im.get_array()
 
         # get data array dimension
@@ -639,28 +644,50 @@ class EarthPlot(FigureCanvas):
         azmax = self._zoom.max_azimuth
         elmin = self._zoom.min_elevation
         elmax = self._zoom.max_elevation
-        new_nx = (azmax - azmin) / stepx
-        new_ny = (elmax - elmin) / stepy
-        new_data = np.zeros((new_nx, new_ny, 4))
+        new_nx = int((azmax - azmin) / stepx / 2) * 2 + 1
+        new_ny = int((elmax - elmin) / stepy / 2) * 2 + 1
+        new_data = np.zeros((new_ny, new_nx, 4))
 
         # compute first azimuth index of source array and destination array
         x0_source = 0
         x0_destination = 0
         if azmin > -ead/2:
             # crop in azimuth
-            x0_source = np.abs(azmin - ead/2) / stepx
+            x0_source = int(np.abs(azmin + ead/2) / stepx)
         else:
-            x0_destination = np.abs(azmin - ead/2) / stepx
+            x0_destination = int(np.abs(azmin + ead/2) / stepx)
+        # if destination array smaller than origin array, limit source array
+        if new_nx - x0_destination < nx - x0_source:
+            x_source = range(x0_source, x0_source + new_nx - x0_destination)
+        else:
+            x_source = range(x0_source, nx)
+        x_destination = range(x0_destination, x0_destination + len(x_source))
 
         # compute first elevation index of source array and destination array
         y0_source = 0
         y0_destination = 0
         if elmin > -ead/2:
             # crop in azimuth
-            y0_source = np.abs(elmin - ead/2) / stepy
+            y0_source = int(np.abs(elmin + ead/2) / stepy)
         else:
-            y0_destination = np.abs(elmin - ead/2) / stepy
-        
+            y0_destination = int(np.abs(elmin + ead/2) / stepy)        
+        # if destination array smaller than origin array, limit source array
+        if new_ny - y0_destination < ny - y0_source:
+            y_source = range(y0_source, y0_source + new_ny - y0_destination)
+        else:
+            y_source = range(y0_source, ny)
+        y_destination = range(y0_destination, y0_destination + len(y_source))
+
+        x0_src = x_source[0]
+        x1_src = x_source[-1]
+        y0_src = y_source[0]
+        y1_src = y_source[-1]
+        x0_des = x_destination[0]
+        x1_des = x_destination[-1]
+        y0_des = y_destination[0]
+        y1_des = y_destination[-1]
+        new_data[y0_des:y1_des, x0_des:x1_des] = data[y0_src:y1_src, x0_src:x1_src]
+        im.set_array(new_data)
     # end of method croppedbluemarble
 
 

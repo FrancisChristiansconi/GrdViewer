@@ -5,10 +5,15 @@ Created on Wed Oct 24 15:56:00 2018
 @author: cfrance
 """
 
-# import array/calculus utilities
-import numpy as np
+# Standard module import
+# import os function
+import os
 # import math basic library
 import math
+
+# Third party module import
+# import array/calculus utilities
+import numpy as np
 # import interpolation routine from scipy
 from scipy import interpolate as interp
 # import pyproj for coordinates conversion
@@ -21,39 +26,33 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import matplotlib.pyplot as plt
 # import Basemap of mpltoolkit
 from mpl_toolkits.basemap import Basemap
-# import os function
-import os
-
-
 # PyQt5 widgets import
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, QLineEdit, \
                             QHBoxLayout, QVBoxLayout, QPushButton, QWidget, QFileDialog, QLabel, \
                             QGridLayout, QCheckBox
 from PyQt5.QtGui import QColor, QPalette
-
 # abstract class toolbox
 from abc import ABC, abstractmethod
 
+# Local module import
 # debug
 import utils
-
-# local import
 from viewer import Viewer
 import angles as ang
-
 # import constant file
 import constant as cst
-
 # Edit dialog
 from .dialog import PatternDialog
 
-
+# Class definition
+#--------------------------------------------------------------------------------------------------
 class AbstractPattern(ABC):
     """Abstract class representing an antenna pattern. This class define all the 
     functions and methods mandatory for compatibility with the viewer features.
     """
+
 # Function and methods common to all 
-#==============================================================================
+#--------------------------------------------------------------------------------------------------
     def __init__(self, filename=None, conf=None, dialog=False, parent=None):
         """Constructor of abstract class Pattern do nothing.
         """
@@ -82,13 +81,13 @@ class AbstractPattern(ABC):
 
         # second component of crosspol
         self._E_phs_cr = []
-        
+
         # azimuth grid
         self._azimuth = []
 
         # elevation grid
         self._elevation = []
-        
+
         # longitude grid
         self._longitude = []
 
@@ -331,23 +330,22 @@ class AbstractPattern(ABC):
     def set_to_plot(self, cross=False):
         utils.trace('in')
 
+        # select to plot co or cross
+        if not cross:
+            self._to_plot = self.copol()
+        else:
+            self._to_plot = self.cross()
+            if self._to_plot is None:
+                print('set_to_plot: No crosspol data available. Stick to copol.')
+                self._to_plot = self.copol()
         # if shrink option
         if self._shrink:
+            # shrink_copol uses interpolate_copol function that uses _to_plot attribute
             self._to_plot = self.shrink_copol(self._azshrink, self._elshrink)
-        # if not, select co or cross to be plotted
-        else:    
-            if not cross:
-                self._to_plot = self.copol()
-            else:
-                self._to_plot = self.cross()
-                if self._to_plot is None:
-                    print('set_to_plot: No crosspol data available. Stick to copol.')
-                    self._to_plot = self.copol()
-
-
+   
         utils.trace('out')
 
-    def copol(self, set: int=0):
+    def copol(self, set: int = 0):
         """Return co-polarisation pattern. In dBi.
         """
         z = self._E_mag_co[set]
@@ -356,7 +354,7 @@ class AbstractPattern(ABC):
         return z
     # end of function copol
 
-    def cross(self, set: int=0):
+    def cross(self, set: int = 0):
         """Return cross-polarisation pattern. In dBi.
         """
         try:
@@ -369,7 +367,7 @@ class AbstractPattern(ABC):
             return None
     # end of function cross
 
-    def xpd(self, set: int=0):
+    def xpd(self, set: int = 0):
         """Return XPD pattern. In dB.
         """
         return self._E_mag_co[set] - self._E_mag_cr[set]
@@ -515,34 +513,26 @@ class AbstractPattern(ABC):
         az_vec = np.arange(-azshrink, azshrink + az_step, az_step)
         el_vec = np.arange(-elshrink, elshrink + el_step, el_step)
         az_grid, el_grid = np.meshgrid(az_vec, el_vec)
-        # exclude point out of the ellipse
-        for i in range(len(az_grid)):
-            for j in range(len(az_grid[i])):
-                if (az_grid[i][j]/azshrink)**2 + (el_grid[i][j]/elshrink)**2 > 1:
-                    az_grid[i][j] = np.nan
-                    el_grid[i][j] = np.nan
+        # exclude points out of the ellipse
+        out_of_ellipse = np.nonzero((az_grid / azshrink) ** 2 + (el_grid / elshrink) ** 2 > 1)
+        az_grid[out_of_ellipse] = np.nan
+        el_grid[out_of_ellipse] = np.nan
         # add points of the ellipse
-        # TODO improve this part. Ellipse is not very well defined
-        # x = np.arange(-azshrink, azshrink + az_step, az_step)
-        # y = np.arange(-elshrink, elshrink + el_step, el_step)
-        # y_prime = np.concatenate((elshrink * np.sqrt(1 - x**2 / azshrink**2), -elshrink * np.sqrt(1 - x**2 / azshrink**2)))
-        # x_prime = np.concatenate((azshrink * np.sqrt(1 - y**2 / elshrink**2), -azshrink * np.sqrt(1 - y**2 / elshrink**2)))
-        # az_depointing = np.concatenate(([f for f in az_grid.flatten() if not np.isnan(f)], x, x, x_prime))
-        # el_depointing = np.concatenate(([f for f in el_grid.flatten() if not np.isnan(f)], y_prime, y, y))
-        
         # approximation of ellipse circumference with Ramanujan 1
-        a = azshrink * 2
-        b = elshrink * 2
+        a = azshrink
+        b = elshrink
         h = ((a - b) / (a + b)) ** 2
         l = np.pi * (a + b) * (3 - np.sqrt(4 - h))
-        nb_step = l / min(az_step, el_step)
-        theta = np.arange(0, 2*np.pi, nb_step)
+        nb_step = int(l / (2 * min(az_step, el_step))) * 2
+        theta = np.linspace(0, 2 * np.pi, nb_step)
         x_ellipse = azshrink * np.cos(theta)
         y_ellipse = elshrink * np.sin(theta)
 
         # concatenate ellipse filling grid and circumference points
-        az_depointing = np.concatenate(([f for f in az_grid.flatten() if not np.isnan(f)], x_ellipse))
-        el_depointing = np.concatenate(([f for f in el_grid.flatten() if not np.isnan(f)], y_ellipse))
+        az_depointing = np.concatenate(([f for f in az_grid.flatten() if not np.isnan(f)],
+                                        x_ellipse))
+        el_depointing = np.concatenate(([f for f in el_grid.flatten() if not np.isnan(f)],
+                                        y_ellipse))
 
         # interpolate copol into a step accurate grid
         if not len(az_co):
@@ -557,16 +547,12 @@ class AbstractPattern(ABC):
         _, spline = self.interpolate_copol(az_co[0], el_co[0], set)
 
         def depoint(az_co, el_co):
-            depointed_copol, _ = self.interpolate_copol(az_co + az_depointing, el_co + el_depointing, set, spline)
+            depointed_copol, _ = self.interpolate_copol(az_co + az_depointing,
+                                                        el_co + el_depointing,
+                                                        set, spline)
             depointed_copol = depointed_copol[~np.isnan(depointed_copol)]
             return np.min(depointed_copol)
 
-        # for i in range(len(az_co)):
-        #     depointed_copol = self.interpolate_copol(az_co[i] + az_depointing, el_co[i] + el_depointing, set, reuse)
-        #     # filter NaN value
-        #     depointed_copol = depointed_copol[~np.isnan(depointed_copol)]
-        #     co.append(np.min(depointed_copol))
-        #     reuse = True
         co = np.vectorize(depoint)(az_co, el_co)
         co = np.reshape(co, self.azimuth().shape)
 
@@ -708,7 +694,7 @@ class AbstractPattern(ABC):
 
                 # if shrink pattern option is selected, use shrink_copol function
                 cs_pattern = map.contour(x, y,
-                                        self._to_plot + self._conversion_factor, 
+                                        self._to_plot + self._conversion_factor,
                                          self._isolevel, 
                                          linestyles=linestyles,
                                          linewidths=linewidths)

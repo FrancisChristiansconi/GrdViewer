@@ -5,4 +5,5 @@
 ./src/pattern/__pycache__
 
 # files
-./src/*.pyc
+./src/__pycache__/*.pyc
+./src/pattern/__pycache__/*.pyc

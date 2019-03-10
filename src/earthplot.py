@@ -175,27 +175,30 @@ class EarthPlot(FigureCanvas):
         self.draw_elements()
 
         self.mpl_connect('motion_notify_event', self.setmouseposition)
+        self.mpl_connect('button_press_event', self.set_viewer_from_click)
 
         utils.trace('out')
     # End of EarthPlot constructor
 
     def setmouseposition(self,event):
-        mouse_x = event.x
-        mouse_y = event.y
-        origin_x = event.canvas.figure.axes[0].bbox.bounds[0]
-        origin_y = event.canvas.figure.axes[0].bbox.bounds[1]
-        pixel_width = event.canvas.figure.axes[0].bbox.bounds[2]
-        pixel_height = event.canvas.figure.axes[0].bbox.bounds[3]
-        azimuth_width = self._zoom.max_azimuth - self._zoom.min_azimuth
-        elevation_height = self._zoom.max_elevation - self._zoom.min_elevation
-        rel_x = (mouse_x - origin_x) / pixel_width
-        rel_y = (mouse_y - origin_y) / pixel_height
-        mouse_azimuth = rel_x * azimuth_width + self._zoom.min_azimuth
-        mouse_elevation = rel_y * elevation_height + self._zoom.min_elevation
-        mouse_azimuth = min(mouse_azimuth, self._zoom.max_azimuth)
-        mouse_azimuth = max(mouse_azimuth, self._zoom.min_azimuth)
-        mouse_elevation = min(mouse_elevation, self._zoom.max_elevation)
-        mouse_elevation = max(mouse_elevation, self._zoom.min_elevation)
+        x = event.x
+        y = event.y
+        bbox = event.canvas.figure.axes[0].bbox
+        lon, lat = self.get_mouse_ll(x, y, bbox)
+        if lon > 180 or lon < -180:
+            lon = np.nan
+        if lat > 90 or lat < -90:
+            lat = np.nan
+        app = self.parent().parent()
+        app.setmousepos(lon, lat)
+
+    def get_mouse_ll(self, x, y, bbox):
+        origin_x = bbox.bounds[0]
+        origin_y = bbox.bounds[1]
+        pixel_width = bbox.bounds[2]
+        pixel_height = bbox.bounds[3]
+        rel_x = (x - origin_x) / pixel_width
+        rel_y = (y - origin_y) / pixel_height
         map_width = self._earth_map.urcrnrx - self._earth_map.llcrnrx
         map_height = self._earth_map.urcrnry - self._earth_map.llcrnry
         map_x = self._earth_map.llcrnrx + rel_x * map_width
@@ -205,8 +208,37 @@ class EarthPlot(FigureCanvas):
             lon = np.nan
         if lat > 90 or lat < -90:
             lat = np.nan
+        return lon, lat
+    
+    def get_mouse_azel(self, x, y, bbox):
+        origin_x = bbox.bounds[0]
+        origin_y = bbox.bounds[1]
+        pixel_width = bbox.bounds[2]
+        pixel_height = bbox.bounds[3]
+        rel_x = (x - origin_x) / pixel_width
+        rel_y = (y - origin_y) / pixel_height
+        azimuth_width = self._zoom.max_azimuth - self._zoom.min_azimuth
+        elevation_height = self._zoom.max_elevation - self._zoom.min_elevation
+        azimuth = rel_x * azimuth_width + self._zoom.min_azimuth
+        elevation = rel_y * elevation_height + self._zoom.min_elevation
+        azimuth = min(azimuth, self._zoom.max_azimuth)
+        azimuth = max(azimuth, self._zoom.min_azimuth)
+        elevation = min(elevation, self._zoom.max_elevation)
+        elevation = max(elevation, self._zoom.min_elevation)
+        return azimuth, elevation
+
+    def set_viewer_from_click(self, event):
+        x = event.x
+        y = event.y
+        bbox = event.canvas.figure.axes[0].bbox
+        lon, lat = self.get_mouse_ll(x, y, bbox)
+        self._viewer.longitude(lon)
+        self._viewer.latitude(lat)
+        self.draw_elements()
         app = self.parent().parent()
-        app.setmousepos(lon, lat)
+        app.setviewerpos(self._viewer.longitude(),
+                         self._viewer.latitude(),
+                         self._viewer.altitude())
 
     # Redefine draw function
     def draw_elements(self):

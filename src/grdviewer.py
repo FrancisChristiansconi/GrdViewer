@@ -114,18 +114,16 @@ class GrdViewer(QMainWindow):
         vbox.addWidget(self._menubar)
         vbox.addWidget(self.earth_plot)
 
+        # status bar
         hbox = QHBoxLayout(None)
-        self._lon_label = QLabel('Longitude (deg)', parent=self)
-        self._lat_label = QLabel('Latitude (deg)',  parent=self)
-        self._alt_label = QLabel('Altitude (m)',    parent=self)
-        self._lon_label.setText('Viewer: ' + str(self.earth_plot.viewer().longitude()) + 'deg. E ')
-        self._lat_label.setText(str(self.earth_plot.viewer().latitude()) + 'deg. N ')
-        self._alt_label.setText(str(self.earth_plot.viewer().altitude()) + 'm.')
-        hbox.addWidget(self._lon_label)
-        hbox.addWidget(self._lat_label)
-        hbox.addWidget(self._alt_label)
+        self._viewer_label = QLabel('', parent=self)
+        self.setviewerpos(self.earth_plot.viewer().longitude(),
+                          self.earth_plot.viewer().latitude(),
+                          self.earth_plot.viewer().altitude())
+        hbox.addWidget(self._viewer_label)
         hbox.addStretch(1)
-        self._mouse_pos_label = QLabel('x 0 y 0', parent=self)
+        self._mouse_pos_label = QLabel('', parent=self)
+        self.setmousepos(0, 0)
         hbox.addWidget(self._mouse_pos_label)
         vbox.addLayout(hbox)
 
@@ -137,8 +135,12 @@ class GrdViewer(QMainWindow):
     # end of constructor
 
     def setmousepos(self, x, y):
-        mouse_label_text = 'Mouse: lon. {0:0.2f}deg. N  lat. {1:0.2f}deg. E'.format(x, y)
+        mouse_label_text = 'Mouse: {0:0.2f}deg. E  {1:0.2f}deg. N'.format(x, y)
         self._mouse_pos_label.setText(mouse_label_text)
+
+    def setviewerpos(self, lon, lat, alt):
+        viewer_label_text = 'Viewer: {0:0.2f}deg. E {1:0.2f}deg. N  {2:0.2f}m.'.format(lon, lat, alt)
+        self._viewer_label.setText(viewer_label_text)
 
     # Create menu bar and menus
     def createmenu(self):
@@ -300,9 +302,9 @@ class GrdViewer(QMainWindow):
         dialbox.exec_()
         
         # refresh satellite position display
-        self._lon_label.setText(str(self.earth_plot.viewer().longitude()) + 'deg. E')
-        self._lat_label.setText(str(self.earth_plot.viewer().latitude()) + 'deg. N')
-        self._alt_label.setText(str(self.earth_plot.viewer().altitude()) + 'm.')
+        self.setviewerpos(self.earth_plot.viewer().longitude(),
+                          self.earth_plot.viewer().latitude(),
+                          self.earth_plot.viewer().altitude())
     # end of method viewer_dialog
     
     def load_pattern(self):

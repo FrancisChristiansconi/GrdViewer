@@ -118,7 +118,7 @@ class GrdViewer(QMainWindow):
         self._lon_label = QLabel('Longitude (deg)', parent=self)
         self._lat_label = QLabel('Latitude (deg)',  parent=self)
         self._alt_label = QLabel('Altitude (m)',    parent=self)
-        self._lon_label.setText(str(self.earth_plot.viewer().longitude()) + 'deg. E ')
+        self._lon_label.setText('Viewer: ' + str(self.earth_plot.viewer().longitude()) + 'deg. E ')
         self._lat_label.setText(str(self.earth_plot.viewer().latitude()) + 'deg. N ')
         self._alt_label.setText(str(self.earth_plot.viewer().altitude()) + 'm.')
         hbox.addWidget(self._lon_label)
@@ -137,7 +137,7 @@ class GrdViewer(QMainWindow):
     # end of constructor
 
     def setmousepos(self, x, y):
-        mouse_label_text = 'az. {0:0.1f} el. {1:0.1f}'.format(x, y)
+        mouse_label_text = 'Mouse: lon. {0:0.2f}deg. N  lat. {1:0.2f}deg. E'.format(x, y)
         self._mouse_pos_label.setText(mouse_label_text)
 
     # Create menu bar and menus

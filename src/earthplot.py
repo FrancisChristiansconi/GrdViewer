@@ -114,28 +114,28 @@ class EarthPlot(FigureCanvas):
             self._viewer = Viewer(lon=longitude, lat=latitude, alt=altitude)
 
             # get default directory
-            self.rootdir = config.get('DEFAULT', 'root')
+            self.rootdir = config.get('DEFAULT', 'root', fallback='C:\\')
 
             # Initialize zoom
             self._zoom = Zoom(self._projection)
             if 'GEO' in config:
                 if 'min azimuth' in config['GEO']:
-                    self._zoom.min_azimuth = config.getfloat('GEO', 'min azimuth')
+                    self._zoom.min_azimuth = config.getfloat('GEO', 'min azimuth', fallback=-9)
                 if 'min elevation' in config['GEO']:
-                    self._zoom.min_elevation = config.getfloat('GEO', 'min elevation')
+                    self._zoom.min_elevation = config.getfloat('GEO', 'min elevation', fallbck=-9)
                 if 'max azimuth' in config['GEO']:
-                    self._zoom.max_azimuth = config.getfloat('GEO', 'max azimuth')
+                    self._zoom.max_azimuth = config.getfloat('GEO', 'max azimuth', fallback=9)
                 if 'max elevation' in config['GEO']:
-                    self._zoom.max_elevation = config.getfloat('GEO', 'max elevation')
+                    self._zoom.max_elevation = config.getfloat('GEO', 'max elevation', fallback=9)
             if 'CYLINDRICAL' in config:
                 if 'min longitude' in config['CYLINDRICAL']:
-                    self._zoom.min_longitude = config.getfloat('CYLINDRICAL', 'min longitude')
+                    self._zoom.min_longitude = config.getfloat('CYLINDRICAL', 'min longitude', fallback=-180)
                 if 'min latitude' in config['CYLINDRICAL']:
-                    self._zoom.min_latitude = config.getfloat('CYLINDRICAL', 'min latitude')
+                    self._zoom.min_latitude = config.getfloat('CYLINDRICAL', 'min latitude', fallback=-90)
                 if 'max longitude' in config['CYLINDRICAL']:
-                    self._zoom.max_longitude = config.getfloat('CYLINDRICAL', 'max longitude')
+                    self._zoom.max_longitude = config.getfloat('CYLINDRICAL', 'max longitude', fallback=180)
                 if 'max latitude' in config['CYLINDRICAL']:
-                    self._zoom.max_latitude = config.getfloat('CYLINDRICAL', 'max latitude')
+                    self._zoom.max_latitude = config.getfloat('CYLINDRICAL', 'max latitude', fallback=90)
             pattern_index = 1
             pattern_section = 'PATTERN' + str(pattern_index)
             while pattern_section in config:
@@ -188,14 +188,25 @@ class EarthPlot(FigureCanvas):
         pixel_height = event.canvas.figure.axes[0].bbox.bounds[3]
         azimuth_width = self._zoom.max_azimuth - self._zoom.min_azimuth
         elevation_height = self._zoom.max_elevation - self._zoom.min_elevation
-        mouse_azimuth = ((mouse_x - origin_x) / pixel_width) * azimuth_width + self._zoom.min_azimuth
-        mouse_elevation = ((mouse_y - origin_y) / pixel_height) * elevation_height + self._zoom.min_elevation
+        rel_x = (mouse_x - origin_x) / pixel_width
+        rel_y = (mouse_y - origin_y) / pixel_height
+        mouse_azimuth = rel_x * azimuth_width + self._zoom.min_azimuth
+        mouse_elevation = rel_y * elevation_height + self._zoom.min_elevation
         mouse_azimuth = min(mouse_azimuth, self._zoom.max_azimuth)
         mouse_azimuth = max(mouse_azimuth, self._zoom.min_azimuth)
         mouse_elevation = min(mouse_elevation, self._zoom.max_elevation)
         mouse_elevation = max(mouse_elevation, self._zoom.min_elevation)
+        map_width = self._earth_map.urcrnrx - self._earth_map.llcrnrx
+        map_height = self._earth_map.urcrnry - self._earth_map.llcrnry
+        map_x = self._earth_map.llcrnrx + rel_x * map_width
+        map_y = self._earth_map.llcrnry + rel_y * map_height
+        lon, lat = self._earth_map(map_x, map_y, inverse=True)
+        if lon > 180 or lon < -180:
+            lon = np.nan
+        if lat > 90 or lat < -90:
+            lat = np.nan
         app = self.parent().parent()
-        app.setmousepos(mouse_azimuth, mouse_elevation)
+        app.setmousepos(lon, lat)
 
     # Redefine draw function
     def draw_elements(self):
@@ -357,7 +368,7 @@ class EarthPlot(FigureCanvas):
         # 3. Drawing parallels
         if self._parallels_col:
             try:
-                # Parallels are a dictionary of 2D lines to be 
+                # Parallels are a dictionary of 2D lines to be
                 # removed one by one
                 for k in self._parallels_col:
                     self._parallels_col[k][0][0].remove()
@@ -369,10 +380,10 @@ class EarthPlot(FigureCanvas):
                 self._earth_map.drawparallels(
                     np.arange(-80., 81., 20.),
                     linewidth=self._parallels)
-        # 4. Drawing meridians        
+        # 4. Drawing meridians
         if self._meridians_col:
             try:
-                # Meridians are a dictionary of 2D lines to be 
+                # Meridians are a dictionary of 2D lines to be
                 # removed one by one
                 for k in self._meridians_col:
                     self._meridians_col[k][0][0].remove()

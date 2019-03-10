@@ -131,65 +131,14 @@ class GrdViewer(QMainWindow):
 
         # self.centralwidget.addLayout(vbox)
         self.setCentralWidget(self.centralwidget)
-        self.show() 
-
-        # mouse tracking
-        # self._mouseposition = (0, 0)
-        # self._dragstart = (0, 0)
-        # self._leftstate = ButtonState.up
-
-        # self.on_mouse_pressed = QtCore.pyqtSignal()
-        # self.on_mouse_released = QtCore.pyqtSignal()
-        # self.on_mouse_moved = QtCore.pyqtSignal()
-        # self.on_mouse_leave = QtCore.pyqtSignal()
-        # self.on_mouse_enter = QtCore.pyqtSignal()
-        
-        # self.setMouseTracking(True)
-        # self.centralwidget.setMouseTracking(True)
+        self.show()
 
         utils.trace('out')
     # end of constructor
 
-    # def mouseMoveEvent(self, event):
-    #     mouse_x = event.x()
-    #     mouse_y = event.y()
- 
-    #     self.setmousepos(mouse_x, mouse_y)
-
     def setmousepos(self, x, y):
-        mouse_label_text = 'x {0:0.1f} y {1:0.1f}'.format(x, y)
+        mouse_label_text = 'az. {0:0.1f} el. {1:0.1f}'.format(x, y)
         self._mouse_pos_label.setText(mouse_label_text)
-
-
-    # def mouse_press_event(self, e):
-    #     self._leftstate = ButtonState.press
-    #     mouse_pos_vector = self.mouseEventPosition(e)
-    #     self._dragstart = mouse_pos_vector
-    #     self._mouseposition = mouse_pos_vector
-    #     self.on_mouse_pressed.emit()
-
-    # def mouse_move_event(self, e):
-    #     if self._leftstate%2:
-    #         self._leftstate -= 1
-    #     self._mouseposition = self.mouse_event_position(e)
-    #     self.on_mouse_moved.emit()
-
-    # def mouse_release_event(self, e):
-    #     self._leftstate = ButtonState.release  
-    #     self._mouseposition = self.mouse_event_position(e)
-    #     self.on_mouse_released.emit()
-
-    # def mouse_leave_event(self, e):
-    #     if self._leftstate > 1:
-    #         #clear dragging  
-    #         self._position = self._dragstart
-    #     self.on_mouve_leave.emit()
-
-    # def mouse_enter_event(self, e):
-    #     if self._leftstate > 1:
-    #         #assume left mouse button as long released  
-    #         self._leftState = ButtonState.up  
-    #     self.on_mouse_enter.emit()
 
     # Create menu bar and menus
     def createmenu(self):

@@ -173,8 +173,29 @@ class EarthPlot(FigureCanvas):
         self.filename = 'plot.PNG'
 
         self.draw_elements()
+
+        self.mpl_connect('motion_notify_event', self.setmouseposition)
+
         utils.trace('out')
     # End of EarthPlot constructor
+
+    def setmouseposition(self,event):
+        mouse_x = event.x
+        mouse_y = event.y
+        origin_x = event.canvas.figure.axes[0].bbox.bounds[0]
+        origin_y = event.canvas.figure.axes[0].bbox.bounds[1]
+        pixel_width = event.canvas.figure.axes[0].bbox.bounds[2]
+        pixel_height = event.canvas.figure.axes[0].bbox.bounds[3]
+        azimuth_width = self._zoom.max_azimuth - self._zoom.min_azimuth
+        elevation_height = self._zoom.max_elevation - self._zoom.min_elevation
+        mouse_azimuth = ((mouse_x - origin_x) / pixel_width) * azimuth_width + self._zoom.min_azimuth
+        mouse_elevation = ((mouse_y - origin_y) / pixel_height) * elevation_height + self._zoom.min_elevation
+        mouse_azimuth = min(mouse_azimuth, self._zoom.max_azimuth)
+        mouse_azimuth = max(mouse_azimuth, self._zoom.min_azimuth)
+        mouse_elevation = min(mouse_elevation, self._zoom.max_elevation)
+        mouse_elevation = max(mouse_elevation, self._zoom.min_elevation)
+        app = self.parent().parent()
+        app.setmousepos(mouse_azimuth, mouse_elevation)
 
     # Redefine draw function
     def draw_elements(self):

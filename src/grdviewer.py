@@ -16,6 +16,8 @@ import configparser
 from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, qApp, \
                             QVBoxLayout, QHBoxLayout, QWidget, QFileDialog, \
                             QLabel
+from PyQt5 import QtCore
+from PyQt5.QtGui import QCursor
 
 # debug utilities
 import utils
@@ -48,6 +50,17 @@ import polygon
 # import constant file
 import constant as cst
 
+# '''
+# Enum pattern from
+# http://stackoverflow.com/a/1695250/1971060 
+# '''  
+# def enum(*sequential, **named):
+#     enums = dict(zip(sequential, range(len(sequential))), **named)
+#     reverse = dict((value, key) for key, value in enums.iteritems())
+#     enums['index'] = reverse
+#     return type('Enum', (), enums)
+    
+# ButtonState = enum('up', 'release', 'down', 'press')
 
 class GrdViewer(QMainWindow):
     """Class to generate a window with Earth display.
@@ -61,7 +74,7 @@ class GrdViewer(QMainWindow):
         super().__init__()
                 
         # give an name to the windows
-        self.title = 'Grd viewer'
+        self.title = 'Pattern viewer'
         self.setWindowTitle(self.title)
 
         # # window dimension
@@ -105,23 +118,79 @@ class GrdViewer(QMainWindow):
         self._lon_label = QLabel('Longitude (deg)', parent=self)
         self._lat_label = QLabel('Latitude (deg)',  parent=self)
         self._alt_label = QLabel('Altitude (m)',    parent=self)
-        self._lon_label.setText(str(self.earth_plot.viewer().longitude()) + 'deg. E')
-        self._lat_label.setText(str(self.earth_plot.viewer().latitude()) + 'deg. N')
+        self._lon_label.setText(str(self.earth_plot.viewer().longitude()) + 'deg. E ')
+        self._lat_label.setText(str(self.earth_plot.viewer().latitude()) + 'deg. N ')
         self._alt_label.setText(str(self.earth_plot.viewer().altitude()) + 'm.')
         hbox.addWidget(self._lon_label)
-        hbox.addStretch(1)
         hbox.addWidget(self._lat_label)
-        hbox.addStretch(1)
         hbox.addWidget(self._alt_label)
+        hbox.addStretch(1)
+        self._mouse_pos_label = QLabel('x 0 y 0', parent=self)
+        hbox.addWidget(self._mouse_pos_label)
         vbox.addLayout(hbox)
 
         # self.centralwidget.addLayout(vbox)
         self.setCentralWidget(self.centralwidget)
         self.show() 
 
+        # mouse tracking
+        # self._mouseposition = (0, 0)
+        # self._dragstart = (0, 0)
+        # self._leftstate = ButtonState.up
+
+        # self.on_mouse_pressed = QtCore.pyqtSignal()
+        # self.on_mouse_released = QtCore.pyqtSignal()
+        # self.on_mouse_moved = QtCore.pyqtSignal()
+        # self.on_mouse_leave = QtCore.pyqtSignal()
+        # self.on_mouse_enter = QtCore.pyqtSignal()
+        
+        # self.setMouseTracking(True)
+        # self.centralwidget.setMouseTracking(True)
+
         utils.trace('out')
     # end of constructor
-    
+
+    # def mouseMoveEvent(self, event):
+    #     mouse_x = event.x()
+    #     mouse_y = event.y()
+ 
+    #     self.setmousepos(mouse_x, mouse_y)
+
+    def setmousepos(self, x, y):
+        mouse_label_text = 'x {0:0.1f} y {1:0.1f}'.format(x, y)
+        self._mouse_pos_label.setText(mouse_label_text)
+
+
+    # def mouse_press_event(self, e):
+    #     self._leftstate = ButtonState.press
+    #     mouse_pos_vector = self.mouseEventPosition(e)
+    #     self._dragstart = mouse_pos_vector
+    #     self._mouseposition = mouse_pos_vector
+    #     self.on_mouse_pressed.emit()
+
+    # def mouse_move_event(self, e):
+    #     if self._leftstate%2:
+    #         self._leftstate -= 1
+    #     self._mouseposition = self.mouse_event_position(e)
+    #     self.on_mouse_moved.emit()
+
+    # def mouse_release_event(self, e):
+    #     self._leftstate = ButtonState.release  
+    #     self._mouseposition = self.mouse_event_position(e)
+    #     self.on_mouse_released.emit()
+
+    # def mouse_leave_event(self, e):
+    #     if self._leftstate > 1:
+    #         #clear dragging  
+    #         self._position = self._dragstart
+    #     self.on_mouve_leave.emit()
+
+    # def mouse_enter_event(self, e):
+    #     if self._leftstate > 1:
+    #         #assume left mouse button as long released  
+    #         self._leftState = ButtonState.up  
+    #     self.on_mouse_enter.emit()
+
     # Create menu bar and menus
     def createmenu(self):
         """Create application menu bar, sub menus and items

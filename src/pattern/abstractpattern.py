@@ -318,7 +318,6 @@ class AbstractPattern(ABC):
         if self._revert_y:
             self._to_plot = self._to_plot[:,::-1]
 
-
         try:
             self._isolevel = self._conf['isolevel']
         except KeyError:
@@ -446,10 +445,10 @@ class AbstractPattern(ABC):
                 z = self._to_plot
             if x[0] > x[1]:
                 x = x[::-1]
-                z = z[::-1,:]
+                z = z[::-1, :]
             if y[0] > y[1]:
                 y = y[::-1]
-                z = z[:,::-1]
+                z = z[:, ::-1]
             # remove NaN and inf
             z[np.where(np.isnan(z))] = -99
             z[np.where(np.isneginf(z))] = -99

@@ -122,7 +122,7 @@ class EarthPlot(FigureCanvas):
                 if 'min azimuth' in config['GEO']:
                     self._zoom.min_azimuth = config.getfloat('GEO', 'min azimuth', fallback=-9)
                 if 'min elevation' in config['GEO']:
-                    self._zoom.min_elevation = config.getfloat('GEO', 'min elevation', fallbck=-9)
+                    self._zoom.min_elevation = config.getfloat('GEO', 'min elevation', fallback=-9)
                 if 'max azimuth' in config['GEO']:
                     self._zoom.max_azimuth = config.getfloat('GEO', 'max azimuth', fallback=9)
                 if 'max elevation' in config['GEO']:
@@ -189,8 +189,16 @@ class EarthPlot(FigureCanvas):
             lon = np.nan
         if lat > 90 or lat < -90:
             lat = np.nan
+        
+        az, el = self.get_mouse_azel(x, y, bbox)
+        c = next(iter(self._patterns.values()))
+        p = c._pattern
+        g, _ = p.interpolate_copol(az, el)    
+        g += p._conversion_factor
+        if np.isnan(lon) or np.isnan(lat):
+            g = np.nan    
         app = self.parent().parent()
-        app.setmousepos(lon, lat)
+        app.setmousepos(lon, lat, g)
 
     def get_mouse_ll(self, x, y, bbox):
         origin_x = bbox.bounds[0]

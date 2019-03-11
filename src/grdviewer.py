@@ -134,8 +134,11 @@ class GrdViewer(QMainWindow):
         utils.trace('out')
     # end of constructor
 
-    def setmousepos(self, x, y):
-        mouse_label_text = 'Mouse: {0:0.2f}deg. E  {1:0.2f}deg. N'.format(x, y)
+    def setmousepos(self, x, y, z=None):
+        if z is None:
+            mouse_label_text = 'Mouse: {0:0.2f}deg. E  {1:0.2f}deg. N'.format(x, y)
+        else:
+            mouse_label_text = 'Mouse: {0:0.2f}deg. E  {1:0.2f}deg. N {2:0.2f}dB'.format(x, y, z)
         self._mouse_pos_label.setText(mouse_label_text)
 
     def setviewerpos(self, lon, lat, alt):

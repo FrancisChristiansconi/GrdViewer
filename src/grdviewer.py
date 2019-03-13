@@ -50,17 +50,17 @@ import polygon
 # import constant file
 import constant as cst
 
-# '''
-# Enum pattern from
-# http://stackoverflow.com/a/1695250/1971060 
-# '''  
-# def enum(*sequential, **named):
-#     enums = dict(zip(sequential, range(len(sequential))), **named)
-#     reverse = dict((value, key) for key, value in enums.iteritems())
-#     enums['index'] = reverse
-#     return type('Enum', (), enums)
-    
-# ButtonState = enum('up', 'release', 'down', 'press')
+def version():
+    """Returns version of the software as a string.
+    """
+    return cst.VERSION
+# end of function version
+
+def contact():
+    """Returns contact email of the software as a string.
+    """
+    return cst.CONTACT
+# end of function contact
 
 class GrdViewer(QMainWindow):
     """Class to generate a window with Earth display.
@@ -134,16 +134,26 @@ class GrdViewer(QMainWindow):
         utils.trace('out')
     # end of constructor
 
-    def setmousepos(self, x, y, z=None):
-        if z is None:
-            mouse_label_text = 'Mouse: {0:0.2f}deg. E  {1:0.2f}deg. N'.format(x, y)
+    def setmousepos(self, lon, lat, gain=None):
+        """Set mouse position in status bar.
+        """
+        if gain is None:
+            mouse_label_text = 'Mouse: {0:0.2f}deg. E  {1:0.2f}deg. N'.format(lon, lat)
         else:
-            mouse_label_text = 'Mouse: {0:0.2f}deg. E  {1:0.2f}deg. N {2:0.2f}dB'.format(x, y, z)
+            mouse_label_text = 'Mouse: {0:0.2f}deg. E  {1:0.2f}deg. N {2:0.2f}dB'.format(lon,
+                                                                                         lat,
+                                                                                         gain)
         self._mouse_pos_label.setText(mouse_label_text)
+    # end of method setmousepos
 
     def setviewerpos(self, lon, lat, alt):
-        viewer_label_text = 'Viewer: {0:0.2f}deg. E {1:0.2f}deg. N  {2:0.2f}m.'.format(lon, lat, alt)
+        """Set viewer position in status bar.
+        """
+        viewer_label_text = 'Viewer: {0:0.2f}deg. E {1:0.2f}deg. N  {2:0.2f}m.'.format(lon,
+                                                                                       lat,
+                                                                                       alt)
         self._viewer_label.setText(viewer_label_text)
+    # end of method setviewerpos
 
     # Create menu bar and menus
     def createmenu(self):
@@ -281,21 +291,15 @@ class GrdViewer(QMainWindow):
         # add Help menu
         self._menu_help = menubar.addMenu('Help')
         # Version
-        version_action = QAction('Version: ' + self.version(), self)
+        version_action = QAction('Version: ' + version(), self)
         # Contact
-        contact_action = QAction(' Contact: ' + cst.CONTACT, self)
+        contact_action = QAction('Contact: ' + contact(), self)
         self._menu_help.addAction(version_action)
         self._menu_help.addAction(contact_action)
 
         # return statement
         return menubar
     # end of method createmenu
-
-    def version(self):
-        """Returns version of the software as a string.
-        """
-        return cst.VERSION
-    # end of function version
 
     def viewer_dialog(self):
         """This method pops up the viewer setting dialog widget.

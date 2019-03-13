@@ -193,7 +193,13 @@ class EarthPlot(FigureCanvas):
         az, el = self.get_mouse_azel(x, y, bbox)
         c = next(iter(self._patterns.values()))
         p = c._pattern
-        g, _ = p.interpolate_copol(az, el)    
+        if p._offset:
+            az_offset = p._azimuth_offset
+            el_offset = p._elevation_offset
+        else:
+            az_offset = 0
+            el_offset = 0
+        g, _ = p.interpolate_copol(az - az_offset, el - el_offset)    
         g += p._conversion_factor
         if np.isnan(lon) or np.isnan(lat):
             g = np.nan    
@@ -236,17 +242,19 @@ class EarthPlot(FigureCanvas):
         return azimuth, elevation
 
     def set_viewer_from_click(self, event):
-        x = event.x
-        y = event.y
-        bbox = event.canvas.figure.axes[0].bbox
-        lon, lat = self.get_mouse_ll(x, y, bbox)
-        self._viewer.longitude(lon)
-        self._viewer.latitude(lat)
-        self.draw_elements()
-        app = self.parent().parent()
-        app.setviewerpos(self._viewer.longitude(),
-                         self._viewer.latitude(),
-                         self._viewer.altitude())
+        # react only in case on right-click
+        if event.button == 3:
+            x = event.x
+            y = event.y
+            bbox = event.canvas.figure.axes[0].bbox
+            lon, lat = self.get_mouse_ll(x, y, bbox)
+            self._viewer.longitude(lon)
+            self._viewer.latitude(lat)
+            self.draw_elements()
+            app = self.parent().parent()
+            app.setviewerpos(self._viewer.longitude(),
+                            self._viewer.latitude(),
+                            self._viewer.altitude())
 
     # Redefine draw function
     def draw_elements(self):

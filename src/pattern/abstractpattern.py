@@ -208,7 +208,7 @@ class AbstractPattern(ABC):
             self._display_slope = self._conf['display_slope']
         except:
             self._display_slope = False
-        
+
         # float[]: range of slope displayed
         try:
             self._slope_range = self._conf['slopes']
@@ -308,7 +308,6 @@ class AbstractPattern(ABC):
         self.reshapedata()
 
         self.generate_grid()
-
        
         self.set_to_plot(self._use_second_pol)
 
@@ -621,8 +620,8 @@ class AbstractPattern(ABC):
     def revert_x(self, set=0):
         """Revert pattern along x axis.
         """
-        self._E_mag_co[set] = self._E_mag_co[set][::-1,:]
-        self._E_phs_co[set] = self._E_phs_co[set][::-1,:]
+        self._E_mag_co[set] = self._E_mag_co[set][::-1, :]
+        self._E_phs_co[set] = self._E_phs_co[set][::-1, :]
         if len(self._E_mag_cr):
             self._E_mag_cr[set] = self._E_mag_cr[set][::-1,:]
             self._E_phs_cr[set] = self._E_phs_cr[set][::-1,:]
@@ -693,7 +692,7 @@ class AbstractPattern(ABC):
 
                 # if shrink pattern option is selected, use shrink_copol function
                 cs_pattern = map.contour(x, y,
-                                        self._to_plot + self._conversion_factor,
+                                         self._to_plot + self._conversion_factor,
                                          self._isolevel, 
                                          linestyles=linestyles,
                                          linewidths=linewidths)

@@ -189,7 +189,7 @@ class EarthPlot(FigureCanvas):
             lon = np.nan
         if lat > 90 or lat < -90:
             lat = np.nan
-        
+
         az, el = self.get_mouse_azel(x, y, bbox)
         c = next(iter(self._patterns.values()))
         p = c._pattern

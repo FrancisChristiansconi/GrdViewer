@@ -143,11 +143,11 @@ class GrdViewer(QMainWindow):
         else:
         # else display longitude latitude an if available antenna gain
             if gain is None:
-                mouse_label_text = 'Mouse: {0:0.2f}deg. E  {1:0.2f}deg. N'.format(lon, lat)
+                mouse_label_text = '{0:0.2f}deg. E  {1:0.2f}deg. N'.format(lon, lat)
             else:
-                mouse_label_text = 'Mouse: {0:0.2f}deg. E  {1:0.2f}deg. N {2:0.2f}dB'.format(lon,
-                                                                                             lat,
-                                                                                             gain)
+                mouse_label_text = '{0:0.2f}deg. E  {1:0.2f}deg. N {2:0.2f}dB'.format(lon,
+                                                                                      lat,
+                                                                                      gain)
         self._mouse_pos_label.setText(mouse_label_text)
     # end of method setmousepos
 
@@ -221,6 +221,11 @@ class GrdViewer(QMainWindow):
         menuresolution.addAction(res_high_action)
         menuresolution.addAction(res_full_action)
         menuresolution.triggered[QAction].connect(self.set_earth_resolution)
+
+        # add/remove Blue Marble
+        bluemarble_action = QAction('Blue Marble', self)
+        self._menuview.addAction(bluemarble_action)
+        bluemarble_action.triggered.connect(self.toggle_bluemarble)
 
         # configure Earth lines
         # 1. Coast lines
@@ -384,6 +389,19 @@ class GrdViewer(QMainWindow):
             self.earth_plot.projection('cyl')
         self.earth_plot.draw_elements()
     # end of method toggleprojection
+
+    def toggle_bluemarble(self):
+        self.earth_plot._bluemarble = not self.earth_plot._bluemarble
+        projection = self.earth_plot._projection
+        resolution = self.earth_plot._resolution
+        self.earth_plot.drawearth(proj=projection,
+                                  resolution=resolution)
+        bluemarble_action = [self._menuview.actions()[i] \
+                             for i in range(len(self._menuview.actions())) \
+                             if self._menuview.actions()[i].text() == 'Blue Marble']
+        bluemarble_action[0].setChecked(self.earth_plot._bluemarble) 
+        self.earth_plot.draw()
+        # end of method toggle_bluemarble
 
     def clearplot(self):
         """Clear the Earth map plot 

@@ -104,10 +104,10 @@ class EarthPlot(FigureCanvas):
 
             # get Earth plot configuration
             self._bluemarble = config.getboolean('DEFAULT', 'blue marble', fallback=False)
-            self._coastlines = config.getfloat('DEFAULT', 'coast lines', fallback=0.1)
-            self._countries = config.getfloat('DEFAULT', 'countries', fallback=0.1)
-            self._parallels = config.getfloat('DEFAULT', 'parallels', fallback=0.1)
-            self._meridians = config.getfloat('DEFAULT', 'meridians', fallback=0.1)
+            self._coastlines = config.get('DEFAULT', 'coast lines', fallback=0.1)
+            self._countries = config.get('DEFAULT', 'countries', fallback=0.1)
+            self._parallels = config.get('DEFAULT', 'parallels', fallback=0.1)
+            self._meridians = config.get('DEFAULT', 'meridians', fallback=0.1)
 
             # initialize angle of view
             # Satellite Longitude, latitude and altitude
@@ -395,7 +395,6 @@ class EarthPlot(FigureCanvas):
         utils.trace('out')
     # end of function draw_axis
 
-
     def settitle(self, title: str):
         """Set Earth plot title.
         """
@@ -460,10 +459,10 @@ class EarthPlot(FigureCanvas):
                 self._coastlines_col.remove()
             except ValueError:
                 print('drawearth: issue removing coastlines.')
-        if self._coastlines:
+        if self._coastlines != 'no line':
             self._coastlines_col = \
                 self._earth_map.drawcoastlines(
-                    linewidth=self._coastlines)
+                    linewidth=cst.BOLDNESS[self._coastlines])
         # 2. Drawing countries borders
         if self._countries_col:
             try:
@@ -471,10 +470,10 @@ class EarthPlot(FigureCanvas):
                 self._countries_col.remove()
             except ValueError:
                 print('drawearth: issue removing borders.')
-        if self._countries:
+        if self._countries != 'no line':
             self._countries_col = \
                 self._earth_map.drawcountries(
-                    linewidth=self._countries)
+                    linewidth=cst.BOLDNESS[self._countries])
         # 3. Drawing parallels
         if self._parallels_col:
             try:
@@ -485,11 +484,11 @@ class EarthPlot(FigureCanvas):
                 self._parallels_col.clear()
             except ValueError:
                 print('drawearth: issue removing parallels.')
-        if self._parallels:
+        if self._parallels != 'no line':
             self._parallels_col = \
                 self._earth_map.drawparallels(
                     np.arange(-80., 81., 20.),
-                    linewidth=self._parallels)
+                    linewidth=cst.BOLDNESS[self._parallels])
         # 4. Drawing meridians
         if self._meridians_col:
             try:
@@ -500,11 +499,11 @@ class EarthPlot(FigureCanvas):
                 self._meridians_col.clear()
             except ValueError:
                 print('drawearth: issue removing meridians.')
-        if self._meridians:
+        if self._meridians != 'no line':
             self._meridians_col = \
                 self._earth_map.drawmeridians(
                     np.arange(-180., 181., 20.),
-                    linewidth=self._meridians)
+                    linewidth=cst.BOLDNESS[self._meridians])
         # Unconditional drawing of Earth boundary
         self._earth_map.drawmapboundary(linewidth=0.2)
     

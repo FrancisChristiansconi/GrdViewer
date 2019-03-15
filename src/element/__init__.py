@@ -3,5 +3,4 @@
 __all__ = ['pattern',
            'elevation',
            'polygon',
-           'station',
-           'control']
+           'station']

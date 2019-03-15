@@ -90,23 +90,26 @@ class ZoomDialog(QDialog):
         # Line 1
         gridbox.addWidget(min_x_label, 1, 1)
         gridbox.addWidget(self.min_x_field, 1, 2)
-        gridbox.addWidget(min_y_label, 1, 3)
-        gridbox.addWidget(self.min_y_field, 1, 4)
+        gridbox.addWidget(max_x_label, 1, 3)
+        gridbox.addWidget(self.max_x_field, 1, 4)
         # Line 2
-        gridbox.addWidget(max_x_label, 2, 1)
-        gridbox.addWidget(self.max_x_field, 2, 2)
+        gridbox.addWidget(min_y_label, 2, 1)
+        gridbox.addWidget(self.min_y_field, 2, 2)
         gridbox.addWidget(max_y_label, 2, 3)
         gridbox.addWidget(self.max_y_field, 2, 4)
         
         # Add Ok/Cancel buttons
+        resetbutton = QPushButton('Reset',self)
         okbutton = QPushButton('OK',self)
         cancelbutton = QPushButton('Cancel',self)
 
         # line 3
+        gridbox.addWidget(resetbutton, 3, 2)
         gridbox.addWidget(okbutton, 3, 3)
         gridbox.addWidget(cancelbutton, 3, 4)
 
         # connect buttons to actions
+        resetbutton.clicked.connect(self.reset)
         okbutton.clicked.connect(self.updatezoom)
         cancelbutton.clicked.connect(self.close)
         
@@ -114,6 +117,23 @@ class ZoomDialog(QDialog):
         self.setModal(True)
         self.show()
     # end of constructor
+
+    def reset(self):
+        """This method reset the earth plot zoom to complete Earth 
+        depending on the projection.
+        """
+        if self.earth_plot.projection() == 'nsper':
+            self.min_x_field.setText(str(-9))
+            self.max_x_field.setText(str(9))
+            self.min_y_field.setText(str(-9))
+            self.max_y_field.setText(str(9))
+        elif self.earth_plot.projection() == 'cyl':
+            self.min_x_field.setText(str(-180))
+            self.max_x_field.setText(str(180))
+            self.min_y_field.setText(str(-90))
+            self.max_y_field.setText(str(90))
+        self.updatezoom()
+    # end of method reset
 
     def updatezoom(self):
         """This method update the earth plot zoom depending on

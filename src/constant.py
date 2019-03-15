@@ -29,3 +29,9 @@ RAD2DEG = 180.0 / np.pi
 
 # Default elevation contour
 DEFAULT_ELEVATION = 10
+
+# boldness of drawing
+BOLDNESS = {'no line': 0,
+            'light': 0.1,
+            'medium': 0.3,
+            'heavy':0.5}

@@ -180,49 +180,62 @@ class EarthPlot(FigureCanvas):
         utils.trace('out')
     # End of EarthPlot constructor
 
-    def setmouseposition(self,event):
+    def setmouseposition(self, event):
+        """Set mouse longitude and latitude plus directivity in the status bar.
+        """
+        # get coordinates of the mouse motion event
         x = event.x
         y = event.y
         bbox = event.canvas.figure.axes[0].bbox
-        lon, lat = self.get_mouse_ll(x, y, bbox)
-        if lon > 180 or lon < -180:
-            lon = np.nan
-        if lat > 90 or lat < -90:
-            lat = np.nan
-
-        az, el = self.get_mouse_azel(x, y, bbox)
-        c = next(iter(self._patterns.values()))
-        p = c._pattern
-        if p._offset:
-            az_offset = p._azimuth_offset
-            el_offset = p._elevation_offset
+        # compute longitude and latitude from the bbox of the event
+        mouselon, mouselat = self.get_mouse_ll(x, y, bbox)
+        if mouselon > 180 or mouselon < -180:
+            mouselon = np.nan
+        if mouselat > 90 or mouselat < -90:
+            mouselat = np.nan
+        # compute mouse azimuth and elevation for directivity computation
+        mouseaz, mouseel = self.get_mouse_azel(x, y, bbox)
+        controler = next(iter(self._patterns.values()))
+        pattern = controler.get_pattern()
+        if pattern.get_conf()['offset']:
+            az_offset = pattern.get_conf()['azoffset']
+            el_offset = pattern.get_conf()['eloffset']
         else:
             az_offset = 0
             el_offset = 0
-        g, _ = p.interpolate_copol(az - az_offset, el - el_offset)    
-        g += p._conversion_factor
-        if np.isnan(lon) or np.isnan(lat):
-            g = np.nan    
+        g, _ = pattern.interpolate_copol(mouseaz - az_offset, mouseel - el_offset)    
+        g += pattern.get_conf()['cf']
+        if np.isnan(mouselon) or np.isnan(mouselat):
+            g = np.nan
+        # set status bar text
         app = self.parent().parent()
-        app.setmousepos(lon, lat, g)
+        app.setmousepos(mouselon, mouselat, g)
 
     def get_mouse_ll(self, x, y, bbox):
+        """This function compute longitude and latitude of the mouse given
+        the mouse motion event data.
+        """
+        # get relative x and y inside the box
         origin_x = bbox.bounds[0]
         origin_y = bbox.bounds[1]
         pixel_width = bbox.bounds[2]
         pixel_height = bbox.bounds[3]
         rel_x = (x - origin_x) / pixel_width
         rel_y = (y - origin_y) / pixel_height
+        # get dimensions of the basemap plot and position of the mouse
         map_width = self._earth_map.urcrnrx - self._earth_map.llcrnrx
         map_height = self._earth_map.urcrnry - self._earth_map.llcrnry
         map_x = self._earth_map.llcrnrx + rel_x * map_width
         map_y = self._earth_map.llcrnry + rel_y * map_height
+        # convert to longitue and latitude
         lon, lat = self._earth_map(map_x, map_y, inverse=True)
+        # eliminate out of the Earth cases
         if lon > 180 or lon < -180:
             lon = np.nan
         if lat > 90 or lat < -90:
             lat = np.nan
         return lon, lat
+    # end of function get_mouse_ll
     
     def get_mouse_azel(self, x, y, bbox):
         origin_x = bbox.bounds[0]

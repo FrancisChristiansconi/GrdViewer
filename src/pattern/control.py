@@ -222,4 +222,10 @@ class PatternControler():
         return self._config
     # end of function get_config
 
+    def get_pattern(self):
+        """Return _pattern attribute of the controller.
+        """
+        return self._pattern
+    # end of function get_pattern
+
 # end of module control

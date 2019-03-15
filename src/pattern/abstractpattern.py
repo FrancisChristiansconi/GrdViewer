@@ -147,8 +147,6 @@ class AbstractPattern(ABC):
         self.configure(conf=conf)
 
         utils.trace('out')
-
-
     # end of constructor
 
     def reshapedata(self):
@@ -308,7 +306,7 @@ class AbstractPattern(ABC):
         self.reshapedata()
 
         self.generate_grid()
-       
+
         self.set_to_plot(self._use_second_pol)
 
         # revevrse x and y axis if requested
@@ -324,6 +322,13 @@ class AbstractPattern(ABC):
             self._isolevel = np.array(cst.DEFAULT_ISOLEVEL_DBI) + int(max_directivity + self._conversion_factor)
 
     # end of function configure
+
+    def get_conf(self):
+        """Return _conf dictionary.
+        """
+        return self._conf
+    # end of function get_conf
+
 
     def set_to_plot(self, cross=False):
         utils.trace('in')

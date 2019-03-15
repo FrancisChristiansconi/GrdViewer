@@ -6,12 +6,15 @@ from PyQt5.QtWidgets import QDialog, QLineEdit, QVBoxLayout, QHBoxLayout, \
                             QPushButton, QLabel
 import PyQt5.QtCore as QtCore
 
+# import constant file
+import constant as cst
 
-class ViewerPos(object):
-    """ViewerPos represents position of observer of the projection.
+
+class Viewer(object):
+    """Viewer represents position of observer of the projection.
     """
 
-    # Default constructor for ViewerPos
+    # Default constructor for Viewer
     def __init__(self, lon=0.0, lat=0.0, alt=35786000.0):
         self._longitude_deg = lon
         self._latitude_deg = lat
@@ -53,7 +56,7 @@ class ViewerPos(object):
             self._altitude_m  =alt
     # end of set function
 
-# end of class ViewerPos
+# end of class Viewer
 
 
 class ViewerPosDialog(QDialog):
@@ -61,7 +64,7 @@ class ViewerPosDialog(QDialog):
     passed to the constructor.
     """
 
-    def __init__(self, viewerpos: ViewerPos, parent=None):
+    def __init__(self, Viewer: Viewer, parent=None):
         """Default constructor of the class.
         """
         
@@ -71,17 +74,17 @@ class ViewerPosDialog(QDialog):
         # Store parent ref
         self.parent=parent
 
-        # store reference to ViewerPos object
-        self._viewerpos = viewerpos
+        # store reference to Viewer object
+        self._viewerpos = Viewer
 
          # Add Title to the widget
         self.setWindowTitle('Viewer position')
         self.setMinimumSize(100, 50)
 
         # Add field, label and alignment
-        self._lon_field = QLineEdit(str(viewerpos.longitude()), parent=self)
-        self._lat_field = QLineEdit(str(viewerpos.latitude()), parent=self)
-        self._alt_field = QLineEdit(str(viewerpos.altitude()),   parent=self)
+        self._lon_field = QLineEdit(str(Viewer.longitude()), parent=self)
+        self._lat_field = QLineEdit(str(Viewer.latitude()), parent=self)
+        self._alt_field = QLineEdit(str(Viewer.altitude()),   parent=self)
         self._lon_label = QLabel('Longitude (deg)', parent=self)
         self._lat_label = QLabel('Latitude (deg)',  parent=self)
         self._alt_label = QLabel('Altitude (m)',    parent=self)
@@ -139,12 +142,16 @@ class ViewerPosDialog(QDialog):
 
 
 
-    # Update viewerpos fields with dialog box fields values 
+    # Update Viewer fields with dialog box fields values 
     def update_viewerpos(self):
+        if self._alt_field.text().upper() == 'GEO':
+            alt = cst.ALTGEO
+        else:
+            alt = float(self._alt_field.text())
         self._viewerpos.set(float(self._lon_field.text()), \
                             float(self._lat_field.text()), \
-                            float(self._alt_field.text()))
-        self.parent.draw()
+                            alt)
+        self.parent.draw_elements()
         self.close()
 
 # End of class ViewerPosDialog

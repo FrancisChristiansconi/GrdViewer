@@ -172,7 +172,7 @@ class EarthPlot(FigureCanvas):
                     conf['eloffset'] = config.getfloat(pattern_section, 'elevation offset', fallback=0.0)
                     conf['cf'] = config.getfloat(pattern_section, 'conversion factor', fallback=0.0)
                     conf['linestyles'] = config.get(pattern_section, 'linestyles', fallback='solid')
-                    conf['linewidths'] = config.getfloat(pattern_section, 'linewidths', fallback=0.2)
+                    conf['linewidths'] = cst.BOLDNESS[config.get(pattern_section, 'linewidths', fallback='medium')]
                     pattern = self.load_pattern(conf=conf)
                     self.settitle(conf['title'])
                     pattern.isolevel = [float(s) for s in conf['level'].split(',')]
@@ -181,6 +181,9 @@ class EarthPlot(FigureCanvas):
                     pattern_index += 1
                     pattern_section = 'PATTERN' + str(pattern_index)
         
+        # initialise reference to Blue Marble
+        self._bluemarble_imshow = None
+
         # default file name to save figure
         self.filename = 'plot.PNG'
 
@@ -422,6 +425,9 @@ class EarthPlot(FigureCanvas):
         # i: intermediate
         # h: high
         # f: full
+        if self._bluemarble_imshow is not None:
+            self._bluemarble_imshow.remove()
+
         if proj == 'nsper':
             self._earth_map = Basemap(projection='nsper', \
                             llcrnrx=self.llcrnrx, \
@@ -435,7 +441,9 @@ class EarthPlot(FigureCanvas):
                             ax=ax)
             # display Blue Marble picture, projected and cropped 
             if self._bluemarble:
-                self.croppedbluemarble()
+                self._bluemarble_imshow = self.croppedbluemarble()
+            else:
+                self._bluemarble_imshow = None
 
         elif proj=='cyl':
             self._earth_map = Basemap(projection=proj, \
@@ -449,7 +457,9 @@ class EarthPlot(FigureCanvas):
                             resolution=resolution, \
                             ax=ax) 
             if self._bluemarble:
-                self._earth_map.bluemarble(scale=0.5)
+                self._bluemarble_imshow = self._earth_map.bluemarble(scale=0.5)
+            else:
+                self._bluemarble_imshow = None
 
         # Earth map drawing options
         # 1. Drawing coast lines
@@ -616,7 +626,7 @@ class EarthPlot(FigureCanvas):
         else:
             return 0
     # end of function get_width
-    
+
     def get_height(self):
         if self._projection == 'nsper':
             return self.urcrnry - self.llcrnry
@@ -794,7 +804,7 @@ class EarthPlot(FigureCanvas):
 
         # get data array dimension
         nx, ny, _ = data.shape
-        ead = self.earth_angular_diameter()         
+        ead = self.earth_angular_diameter()
         stepx = ead / (nx - 1)
         stepy = ead / (ny - 1)
 
@@ -847,6 +857,7 @@ class EarthPlot(FigureCanvas):
         y1_des = y_destination[-1]
         new_data[y0_des:y1_des, x0_des:x1_des] = data[y0_src:y1_src, x0_src:x1_src]
         im.set_array(new_data)
+        return im
     # end of method croppedbluemarble
 
 

@@ -391,6 +391,8 @@ class GrdViewer(QMainWindow):
     # end of method toggleprojection
 
     def toggle_bluemarble(self):
+        """Toggle display of Earth picture Blue Marble.
+        """
         self.earth_plot._bluemarble = not self.earth_plot._bluemarble
         projection = self.earth_plot._projection
         resolution = self.earth_plot._resolution
@@ -399,7 +401,8 @@ class GrdViewer(QMainWindow):
         bluemarble_action = [self._menuview.actions()[i] \
                              for i in range(len(self._menuview.actions())) \
                              if self._menuview.actions()[i].text() == 'Blue Marble']
-        bluemarble_action[0].setChecked(self.earth_plot._bluemarble) 
+        bluemarble_action[0].setChecked(self.earth_plot._bluemarble)
+        self.earth_plot.draw_axis()
         self.earth_plot.draw()
         # end of method toggle_bluemarble
 

@@ -63,6 +63,7 @@ class EarthPlot(FigureCanvas):
 
         FigureCanvas.__init__(self, self._figure)
         self.setParent(self._centralwidget)
+        self._app = self.parent().parent()
         FigureCanvas.setSizePolicy(self, \
                                    QSizePolicy.Expanding, \
                                    QSizePolicy.Expanding)
@@ -104,6 +105,7 @@ class EarthPlot(FigureCanvas):
 
             # get Earth plot configuration
             self._bluemarble = config.getboolean('DEFAULT', 'blue marble', fallback=False)
+            self._app.getmenuitem(menu='View>Coast lines', item='no line', menubar=True)
             self._coastlines = config.get('DEFAULT', 'coast lines', fallback=0.1)
             self._countries = config.get('DEFAULT', 'countries', fallback=0.1)
             self._parallels = config.get('DEFAULT', 'parallels', fallback=0.1)

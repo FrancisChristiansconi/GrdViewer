@@ -502,6 +502,28 @@ class GrdViewer(QMainWindow):
         return self.centralwidget
     # end of get_centralwidget
 
+    def getmenuitem(self, menu: str, item: str, menubar: bool=False):
+        """Return menu item from menu name and item name.
+        """
+        # recursive browsing of menu
+        splitted_menu = menu.split(sep='>', maxsplit=1) 
+
+        if menubar:
+            menu_list = self._menubar.actions()
+
+        target_menu = [menu_list[i] for i in range(len(menu_list)) \
+                       if menu_list[i].text() == splitted_menu[0]][0]
+        # if len(splitted_menu[1].split(sep='>', maxsplit=1)) > 1:
+        #     return self.getmenuitem(splitted_menu[1], item)
+        # else:
+        #     item_list = target_menu.actions()
+        #     target_item = [item_list[i] for i in range(len(item_list)) \
+        #                    if item_list[i].text() == item][0]
+        #     return target_item
+
+        #TODO use QAction.menu() and QMenu.menuAction()
+
+
 # End of Class GrdViewer   
 
 

@@ -3,53 +3,53 @@ the main window and call the constructor to earthplot object where
 all the work is done.
 """
 
+# import standard modules
+#==================================================================================================
 # import os
 import os
-
 # system module
 import sys
 
+# import third party modules
+#==================================================================================================
 # import configparser module to manage ini files
 import configparser
-
 # import PyQt5 and link with matplotlib
 from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, qApp, \
                             QVBoxLayout, QHBoxLayout, QWidget, QFileDialog, \
                             QLabel
+# import QtCore and QCursor to handle mouse movement, position and event
 from PyQt5 import QtCore
 from PyQt5.QtGui import QCursor
+# numerical help
+import numpy as np
 
+# import local modules
+#==================================================================================================
 # debug utilities
 import utils
-
-# traceback
-import utils
-
-# local modules
+# Earthplot objects
 import earthplot as plc
-
-# customised Dialog
-from pattern.dialog import PatternDialog
-from elevation import ElevDialog
-
+# Antenna pattern configuration dialog
+from element.pattern.dialog import PatternDialog
+# elevation curves dialog
+from element.elevation import ElevDialog
 # import from viewer module
 from viewer import Viewer
 from viewer import ViewerPosDialog
-
 # import from zoom module
 from zoom import Zoom
 from zoom import ZoomDialog
-
 # imports from station module
-import station as stn
-from station import StationDialog
-
+import element.station as stn
+from element.station import StationDialog
 # import polygon module
-import polygon
-
+import element.polygon
 # import constant file
 import constant as cst
 
+# static functions
+#==================================================================================================
 def version():
     """Returns version of the software as a string.
     """
@@ -137,12 +137,17 @@ class GrdViewer(QMainWindow):
     def setmousepos(self, lon, lat, gain=None):
         """Set mouse position in status bar.
         """
-        if gain is None:
-            mouse_label_text = 'Mouse: {0:0.2f}deg. E  {1:0.2f}deg. N'.format(lon, lat)
+        # if the mouse is out of Earth do not display anything
+        if np.isnan(lon) or np.isnan(lat):
+            mouse_label_text = ''
         else:
-            mouse_label_text = 'Mouse: {0:0.2f}deg. E  {1:0.2f}deg. N {2:0.2f}dB'.format(lon,
-                                                                                         lat,
-                                                                                         gain)
+        # else display longitude latitude an if available antenna gain
+            if gain is None:
+                mouse_label_text = 'Mouse: {0:0.2f}deg. E  {1:0.2f}deg. N'.format(lon, lat)
+            else:
+                mouse_label_text = 'Mouse: {0:0.2f}deg. E  {1:0.2f}deg. N {2:0.2f}dB'.format(lon,
+                                                                                             lat,
+                                                                                             gain)
         self._mouse_pos_label.setText(mouse_label_text)
     # end of method setmousepos
 

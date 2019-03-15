@@ -2,6 +2,7 @@
 """
 
 # Import third party modules
+import sys
 
 # PyQt5 widgets import
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, QLineEdit, \
@@ -16,10 +17,11 @@ class LineDialog(QDialog):
     """This class implement a dialog widget to deal with line configuration.
     """
 
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         """Constructor of the class LineDialog.
         parent is to line object to be configured using this dialog box
         """
+        super().__init__(parent)
 
         # parent is the object or list of object to modify
         self._parent = parent
@@ -37,12 +39,12 @@ class LineDialog(QDialog):
         """
         return self._parent
     # end of function parent
-        
+
 
 # end of class LineDialog
 
 # Main execution
-if __name__ == '__main__':   
+if __name__ == '__main__':
     # Create main window
     MAIN_WINDOW = QApplication(sys.argv)
     APP = LineDialog()

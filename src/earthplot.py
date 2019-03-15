@@ -26,8 +26,8 @@ import numpy as np
 
 # local module
 import utils
-from pattern.control import PatternControler
-from pattern.dialog import PatternDialog
+from element.pattern.control import PatternControler
+from element.pattern.dialog import PatternDialog
 from viewer import Viewer
 from zoom import Zoom
 import angles
@@ -142,17 +142,29 @@ class EarthPlot(FigureCanvas):
                 if 'file' in config[pattern_section]:
                     conf = {}
                     conf['filename'] = config.get(pattern_section, 'file')
-                    conf['sat_lon'] = config.getfloat(pattern_section, 'longitude', fallback=0.0)
-                    conf['sat_lat'] = config.getfloat(pattern_section, 'latitude', fallback=0.0)
-                    conf['sat_alt'] = config.getfloat(pattern_section, 'altitude', fallback=cst.ALTGEO)
-                    conf['title'] = config.get(pattern_section, 'title', fallback='Default title')
-                    conf['level'] = config.get(pattern_section, 'level', fallback='25, 30, 35, 38, 40')
-                    conf['revert_x'] = config.getboolean(pattern_section, 'revert x-axis', fallback=False)
-                    conf['revert_y'] = config.getboolean(pattern_section, 'revert y-axis', fallback=False)
-                    conf['rotate'] = config.getboolean(pattern_section, 'rotate', fallback=False)
-                    conf['use_second_pol'] = config.getboolean(pattern_section, 'second polarisation', fallback=False)
-                    conf['display_slope'] = config.getboolean(pattern_section, 'slope', fallback=False)
-                    conf['shrink'] = config.getboolean(pattern_section, 'shrink', fallback=False)
+                    conf['sat_lon'] = config.getfloat(pattern_section,
+                                                      'longitude', fallback=0.0)
+                    conf['sat_lat'] = config.getfloat(pattern_section,
+                                                      'latitude', fallback=0.0)
+                    conf['sat_alt'] = config.getfloat(pattern_section,
+                                                      'altitude', fallback=cst.ALTGEO)
+                    conf['title'] = config.get(pattern_section,
+                                               'title', fallback='Default title')
+                    conf['level'] = config.get(pattern_section,
+                                               'level', fallback='25, 30, 35, 38, 40')
+                    conf['revert_x'] = config.getboolean(pattern_section,
+                                                         'revert x-axis', fallback=False)
+                    conf['revert_y'] = config.getboolean(pattern_section,
+                                                         'revert y-axis', fallback=False)
+                    conf['rotate'] = config.getboolean(pattern_section,
+                                                       'rotate', fallback=False)
+                    conf['use_second_pol'] = config.getboolean(pattern_section,
+                                                               'second polarisation',
+                                                               fallback=False)
+                    conf['display_slope'] = config.getboolean(pattern_section,
+                                                              'slope', fallback=False)
+                    conf['shrink'] = config.getboolean(pattern_section,
+                                                       'shrink', fallback=False)
                     conf['azshrink'] = config.getfloat(pattern_section, 'azimuth shrink', fallback=0.0)
                     conf['elshrink'] = config.getfloat(pattern_section, 'elevation shrink', fallback=0.0)
                     conf['offset'] = config.getboolean(pattern_section, 'offset', fallback=False)
@@ -205,11 +217,18 @@ class EarthPlot(FigureCanvas):
             el_offset = 0
         g, _ = pattern.interpolate_copol(mouseaz - az_offset, mouseel - el_offset)    
         g += pattern.get_conf()['cf']
+        if mouseaz > self._zoom.max_azimuth or \
+           mouseaz < self._zoom.min_azimuth or \
+           mouseel > self._zoom.max_elevation or \
+           mouseel < self._zoom.min_elevation:
+            mouselon = np.nan
+            mouselat = np.nan     
         if np.isnan(mouselon) or np.isnan(mouselat):
-            g = np.nan
+            g = np.nan        
         # set status bar text
         app = self.parent().parent()
         app.setmousepos(mouselon, mouselat, g)
+    # end of method setmouseposition
 
     def get_mouse_ll(self, xmouse, ymouse, bbox):
         """This function compute longitude and latitude of the mouse given
@@ -295,13 +314,13 @@ class EarthPlot(FigureCanvas):
         self.draw_elements()
         app = self.parent().parent()
         app.setviewerpos(self._viewer.longitude(),
-                            self._viewer.latitude(),
-                            self._viewer.altitude())
+                         self._viewer.latitude(),
+                         self._viewer.altitude())
     # end of method set_viewer_from_click
 
-
-    # Redefine draw function
     def draw_elements(self):
+        """This method redraw all elements of the earth plot
+        """
         utils.trace('in')
         # clear display and reset it
         self._axes.clear()
@@ -323,7 +342,6 @@ class EarthPlot(FigureCanvas):
             for i in range(len(self._figure.axes)):
                 if i:
                     self._figure.delaxes(self._figure.axes[i])
-
         
         # draw all Elevation contour
         if self._elev:
@@ -591,6 +609,24 @@ class EarthPlot(FigureCanvas):
         self.cntrlat   = (self.llcrnrlat + self.urcrnrlat) / 2
     # end of method updatezoom
 
+    def get_width(self):
+        if self._projection == 'nsper':
+            return self.urcrnrx - self.llcrnrx
+        elif self._projection == 'cyl':
+            return self.urcrnrlon - self.llcrnrlon
+        else:
+            return 0
+    # end of function get_width
+    
+    def get_height(self):
+        if self._projection == 'nsper':
+            return self.urcrnry - self.llcrnry
+        elif self._projection == 'cyl':
+            return self.urcrnrlat - self.llcrnrlat
+        else:
+            return 0
+    # end of function get_width
+    
     # convert Azimuth to _earth_map.x
     def az2x(self, az):
         return np.tan(az * cst.DEG2RAD) * self._viewer.altitude()

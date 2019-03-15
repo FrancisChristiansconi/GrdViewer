@@ -5,7 +5,7 @@ import os
 import glob
 
 # import patterns classes
-import pattern
+import element.pattern
 
 # input directory
 input_dir = 'P:\\Antenna_models\\SES6\\Andes\\grd_files_predictions'

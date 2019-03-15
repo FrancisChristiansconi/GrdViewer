@@ -175,7 +175,7 @@ class EarthPlot(FigureCanvas):
         self.draw_elements()
 
         self.mpl_connect('motion_notify_event', self.setmouseposition)
-        self.mpl_connect('button_press_event', self.set_viewer_from_click)
+        self.mpl_connect('button_press_event', self.mouse_click)
 
         utils.trace('out')
     # End of EarthPlot constructor
@@ -211,7 +211,7 @@ class EarthPlot(FigureCanvas):
         app = self.parent().parent()
         app.setmousepos(mouselon, mouselat, g)
 
-    def get_mouse_ll(self, x, y, bbox):
+    def get_mouse_ll(self, xmouse, ymouse, bbox):
         """This function compute longitude and latitude of the mouse given
         the mouse motion event data.
         """
@@ -220,8 +220,8 @@ class EarthPlot(FigureCanvas):
         origin_y = bbox.bounds[1]
         pixel_width = bbox.bounds[2]
         pixel_height = bbox.bounds[3]
-        rel_x = (x - origin_x) / pixel_width
-        rel_y = (y - origin_y) / pixel_height
+        rel_x = (xmouse - origin_x) / pixel_width
+        rel_y = (ymouse - origin_y) / pixel_height
         # get dimensions of the basemap plot and position of the mouse
         map_width = self._earth_map.urcrnrx - self._earth_map.llcrnrx
         map_height = self._earth_map.urcrnry - self._earth_map.llcrnry
@@ -237,15 +237,21 @@ class EarthPlot(FigureCanvas):
         return lon, lat
     # end of function get_mouse_ll
     
-    def get_mouse_azel(self, x, y, bbox):
+    def get_mouse_azel(self, xmouse, ymouse, bbox):
+        """This function compute azimuth and elevation of the mouse given
+        the mouse motion event data.
+        """
+        # get relative x and y inside the box
         origin_x = bbox.bounds[0]
         origin_y = bbox.bounds[1]
         pixel_width = bbox.bounds[2]
         pixel_height = bbox.bounds[3]
-        rel_x = (x - origin_x) / pixel_width
-        rel_y = (y - origin_y) / pixel_height
+        rel_x = (xmouse - origin_x) / pixel_width
+        rel_y = (ymouse - origin_y) / pixel_height
+        # get azel dimensions of the box
         azimuth_width = self._zoom.max_azimuth - self._zoom.min_azimuth
         elevation_height = self._zoom.max_elevation - self._zoom.min_elevation
+        # compute mouse azel
         azimuth = rel_x * azimuth_width + self._zoom.min_azimuth
         elevation = rel_y * elevation_height + self._zoom.min_elevation
         azimuth = min(azimuth, self._zoom.max_azimuth)
@@ -253,21 +259,46 @@ class EarthPlot(FigureCanvas):
         elevation = min(elevation, self._zoom.max_elevation)
         elevation = max(elevation, self._zoom.min_elevation)
         return azimuth, elevation
+    # end of function get_mouse_azel
+
+    def mouse_click(self, event):
+        """Process mouse click event. At the moment, only right right click
+        is affected to an action.
+        Buttons Ids:
+        1: left-click
+        2: wheel-click
+        3: right-click
+        """        
+        # affectation of action to button id
+        action = {1: self.donothing,
+                  2: self.donothing,
+                  3: self.set_viewer_from_click}
+        # execution of action
+        action[event.button](event)
+    # end of method mouse_click
+
+    def donothing(self, _):
+        """This method do nothing. See usecase in mouse_click method.
+        """
+        pass
+    # end of method donothing
 
     def set_viewer_from_click(self, event):
-        # react only in case on right-click
-        if event.button == 3:
-            x = event.x
-            y = event.y
-            bbox = event.canvas.figure.axes[0].bbox
-            lon, lat = self.get_mouse_ll(x, y, bbox)
-            self._viewer.longitude(lon)
-            self._viewer.latitude(lat)
-            self.draw_elements()
-            app = self.parent().parent()
-            app.setviewerpos(self._viewer.longitude(),
+        """Set viewer position by right clicking on the map.
+        """
+        x = event.x
+        y = event.y
+        bbox = event.canvas.figure.axes[0].bbox
+        lon, lat = self.get_mouse_ll(x, y, bbox)
+        self._viewer.longitude(lon)
+        self._viewer.latitude(lat)
+        self.draw_elements()
+        app = self.parent().parent()
+        app.setviewerpos(self._viewer.longitude(),
                             self._viewer.latitude(),
                             self._viewer.altitude())
+    # end of method set_viewer_from_click
+
 
     # Redefine draw function
     def draw_elements(self):

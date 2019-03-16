@@ -212,25 +212,28 @@ class EarthPlot(FigureCanvas):
         if mouselat > 90 or mouselat < -90:
             mouselat = np.nan
         # compute mouse azimuth and elevation for directivity computation
-        mouseaz, mouseel = self.get_mouse_azel(x, y, bbox)
-        controler = next(iter(self._patterns.values()))
-        pattern = controler.get_pattern()
-        if pattern.get_conf()['offset']:
-            az_offset = pattern.get_conf()['azoffset']
-            el_offset = pattern.get_conf()['eloffset']
+        if len(self._patterns) > 0:
+            mouseaz, mouseel = self.get_mouse_azel(x, y, bbox)
+            controler = next(iter(self._patterns.values()))
+            pattern = controler.get_pattern()
+            if pattern.get_conf()['offset']:
+                az_offset = pattern.get_conf()['azoffset']
+                el_offset = pattern.get_conf()['eloffset']
+            else:
+                az_offset = 0
+                el_offset = 0
+            g, _ = pattern.interpolate_copol(mouseaz - az_offset, mouseel - el_offset)    
+            g += pattern.get_conf()['cf']
+            if mouseaz > self._zoom.max_azimuth or \
+            mouseaz < self._zoom.min_azimuth or \
+            mouseel > self._zoom.max_elevation or \
+            mouseel < self._zoom.min_elevation:
+                mouselon = np.nan
+                mouselat = np.nan     
+            if np.isnan(mouselon) or np.isnan(mouselat):
+                g = np.nan        
         else:
-            az_offset = 0
-            el_offset = 0
-        g, _ = pattern.interpolate_copol(mouseaz - az_offset, mouseel - el_offset)    
-        g += pattern.get_conf()['cf']
-        if mouseaz > self._zoom.max_azimuth or \
-           mouseaz < self._zoom.min_azimuth or \
-           mouseel > self._zoom.max_elevation or \
-           mouseel < self._zoom.min_elevation:
-            mouselon = np.nan
-            mouselat = np.nan     
-        if np.isnan(mouselon) or np.isnan(mouselat):
-            g = np.nan        
+            g = None
         # set status bar text
         app = self.parent().parent()
         app.setmousepos(mouselon, mouselat, g)

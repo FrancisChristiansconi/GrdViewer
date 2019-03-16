@@ -7,7 +7,7 @@ import sys
 # PyQt5 widgets import
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, QLineEdit, \
                             QHBoxLayout, QVBoxLayout, QPushButton, QWidget, QFileDialog, QLabel, \
-                            QGridLayout, QCheckBox
+                            QGridLayout, QCheckBox, QComboBox
 from PyQt5.QtGui import QColor, QPalette
 
 # Import local modules
@@ -29,7 +29,20 @@ class LineDialog(QDialog):
         # dictionary containing the configuration of the object to be configured  
         self._config = {}
 
+        self.initgui()
+
+        self.show()
     # end of constructor
+
+    def initgui(self):
+        """Initialise GUI.
+        """
+        layout = QHBoxLayout(self)
+        self.combolinesstyle = QComboBox(self)
+        self.combolinesstyle.addItems(['solid', 'dashed', 'dashdot', 'dotted', '(offset, on-off-dash-seq)', '-', '--', '-.', ':'])
+        layout.addWidget(self.combolinesstyle)
+
+    # end fo method initGUI
 
 
 # Getters and Setters

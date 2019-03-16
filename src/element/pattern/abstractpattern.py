@@ -766,13 +766,13 @@ class AbstractPattern(ABC):
 
             # add color bar
             if cbar:
-                cbar = figure.colorbar(pcm_pattern, cax=cbar_axes)     
+                cbar = figure.colorbar(pcm_pattern, cax=cbar_axes)
             else:
                 divider = make_axes_locatable(axes)
-                cbar_axes = divider.append_axes("right", size="5%", pad=0.05)  
-                cbar = figure.colorbar(pcm_pattern, cax=cbar_axes)   
+                cbar_axes = divider.append_axes("right", size="5%", pad=0.05)
+                cbar = figure.colorbar(pcm_pattern, cax=cbar_axes)
             cbar.ax.set_ylabel('Pattern slope (dB/deg)')
-                
+
             utils.trace('out')
             return pcm_pattern
         # endif
@@ -796,13 +796,13 @@ class AbstractPattern(ABC):
         # format of file
         ny, nx = self._x[set].shape
         file.write("  " + str(self._nb_sets) + ", "
-                        + "0" + ", "
-                        + "1" + ", " 
-                        + str(3) + ", "
-                        + str(nx) + ", "
-                        + str(ny) + ", "
-                        + "0" + ", "
-                        + "1" + "\n")
+                   + "0" + ", "
+                   + "1" + ", "
+                   + str(3) + ", "
+                   + str(nx) + ", "
+                   + str(ny) + ", "
+                   + "0" + ", "
+                   + "1" + "\n")
 
         # limits of grid
         xs = np.min(self.azimuth(set)) * cst.DEG2RAD

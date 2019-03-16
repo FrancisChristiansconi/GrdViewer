@@ -16,6 +16,7 @@ from matplotlib.figure import Figure
 from matplotlib import cm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from matplotlib.transforms import Bbox
+from matplotlib.patches import Rectangle
 
 # import PyQt5 and link with matplotlib
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, QFileDialog
@@ -168,14 +169,22 @@ class EarthPlot(FigureCanvas):
                                                               'slope', fallback=False)
                     conf['shrink'] = config.getboolean(pattern_section,
                                                        'shrink', fallback=False)
-                    conf['azshrink'] = config.getfloat(pattern_section, 'azimuth shrink', fallback=0.0)
-                    conf['elshrink'] = config.getfloat(pattern_section, 'elevation shrink', fallback=0.0)
-                    conf['offset'] = config.getboolean(pattern_section, 'offset', fallback=False)
-                    conf['azoffset'] = config.getfloat(pattern_section, 'azimuth offset', fallback=0.0)
-                    conf['eloffset'] = config.getfloat(pattern_section, 'elevation offset', fallback=0.0)
-                    conf['cf'] = config.getfloat(pattern_section, 'conversion factor', fallback=0.0)
-                    conf['linestyles'] = config.get(pattern_section, 'linestyles', fallback='solid')
-                    conf['linewidths'] = cst.BOLDNESS[config.get(pattern_section, 'linewidths', fallback='medium')]
+                    conf['azshrink'] = config.getfloat(pattern_section,
+                                                       'azimuth shrink', fallback=0.0)
+                    conf['elshrink'] = config.getfloat(pattern_section,
+                                                       'elevation shrink', fallback=0.0)
+                    conf['offset'] = config.getboolean(pattern_section,
+                                                       'offset', fallback=False)
+                    conf['azoffset'] = config.getfloat(pattern_section,
+                                                       'azimuth offset', fallback=0.0)
+                    conf['eloffset'] = config.getfloat(pattern_section,
+                                                       'elevation offset', fallback=0.0)
+                    conf['cf'] = config.getfloat(pattern_section,
+                                                 'conversion factor', fallback=0.0)
+                    conf['linestyles'] = config.get(pattern_section,
+                                                    'linestyles', fallback='solid')
+                    conf['linewidths'] = cst.BOLDNESS[config.get(pattern_section,
+                                                                 'linewidths', fallback='medium')]
                     pattern = self.load_pattern(conf=conf)
                     self.settitle(conf['title'])
                     pattern.isolevel = [float(s) for s in conf['level'].split(',')]
@@ -183,7 +192,7 @@ class EarthPlot(FigureCanvas):
                     # check for next pattern
                     pattern_index += 1
                     pattern_section = 'PATTERN' + str(pattern_index)
-        
+
         # initialise reference to Blue Marble
         self._bluemarble_imshow = None
 
@@ -192,28 +201,33 @@ class EarthPlot(FigureCanvas):
 
         self.draw_elements()
 
-        self.mpl_connect('motion_notify_event', self.setmouseposition)
-        self.mpl_connect('button_press_event', self.mouse_click)
+        # connect canvas to mouse event (enable zoom and recenter)
+        self.zoomposorigin = None
+        self.zoomposfinal = None
+        self.zoompatch = None
+        self.mpl_connect('motion_notify_event', self.mouse_move)
+        self.mpl_connect('button_press_event', self.mouse_press)
+        self.mpl_connect('button_release_event', self.mouse_release)
 
         utils.trace('out')
     # End of EarthPlot constructor
 
-    def setmouseposition(self, event):
+    def mouse_move(self, event):
         """Set mouse longitude and latitude plus directivity in the status bar.
         """
         # get coordinates of the mouse motion event
-        x = event.x
-        y = event.y
+        xevent = event.x
+        yevent = event.y
         bbox = event.canvas.figure.axes[0].bbox
         # compute longitude and latitude from the bbox of the event
-        mouselon, mouselat = self.get_mouse_ll(x, y, bbox)
+        mouselon, mouselat = self.get_mouse_ll(xevent, yevent, bbox)
         if mouselon > 180 or mouselon < -180:
             mouselon = np.nan
         if mouselat > 90 or mouselat < -90:
             mouselat = np.nan
         # compute mouse azimuth and elevation for directivity computation
+        mouseaz, mouseel = self.get_mouse_azel(xevent, yevent, bbox)
         if len(self._patterns) > 0:
-            mouseaz, mouseel = self.get_mouse_azel(x, y, bbox)
             controler = next(iter(self._patterns.values()))
             pattern = controler.get_pattern()
             if pattern.get_conf()['offset']:
@@ -222,25 +236,36 @@ class EarthPlot(FigureCanvas):
             else:
                 az_offset = 0
                 el_offset = 0
-            g, _ = pattern.interpolate_copol(mouseaz - az_offset, mouseel - el_offset)    
-            g += pattern.get_conf()['cf']
+            gain, _ = pattern.interpolate_copol(mouseaz - az_offset, mouseel - el_offset)
+            gain += pattern.get_conf()['cf']
             if mouseaz > self._zoom.max_azimuth or \
             mouseaz < self._zoom.min_azimuth or \
             mouseel > self._zoom.max_elevation or \
             mouseel < self._zoom.min_elevation:
                 mouselon = np.nan
-                mouselat = np.nan     
+                mouselat = np.nan
             if np.isnan(mouselon) or np.isnan(mouselat):
-                g = np.nan        
+                gain = np.nan
         else:
-            g = None
+            gain = None
         # set status bar text
         app = self.parent().parent()
-        app.setmousepos(mouselon, mouselat, g)
-    # end of method setmouseposition
+        app.setmousepos(mouselon, mouselat, gain)
 
-    def get_mouse_ll(self, xmouse, ymouse, bbox):
-        """This function compute longitude and latitude of the mouse given
+        # if start of zoom is defined set final position
+        if self.zoomposorigin is not None:
+            x, y = self. get_mouse_xy(xevent, yevent, bbox)
+            self.zoomposfinal = mouseaz, mouseel, mouselon, mouselat, x, y
+            # update and draw patch
+            self.zoompatch.set_x(min(x, self.zoomposorigin[4]))
+            self.zoompatch.set_y(min(y, self.zoomposorigin[5]))
+            self.zoompatch.set_width(abs(x - self.zoomposorigin[4]))
+            self.zoompatch.set_height(abs(y - self.zoomposorigin[5]))
+            self.draw()
+    # end of method mouse_move
+
+    def get_mouse_xy(self, xmouse, ymouse, bbox):
+        """This function compute x and y in basemap coordinates of the mouse given
         the mouse motion event data.
         """
         # get relative x and y inside the box
@@ -255,6 +280,15 @@ class EarthPlot(FigureCanvas):
         map_height = self._earth_map.urcrnry - self._earth_map.llcrnry
         map_x = self._earth_map.llcrnrx + rel_x * map_width
         map_y = self._earth_map.llcrnry + rel_y * map_height
+        return map_x, map_y
+    # end of function get_mouse_xy
+
+    def get_mouse_ll(self, xmouse, ymouse, bbox):
+        """This function compute longitude and latitude of the mouse given
+        the mouse motion event data.
+        """
+        # get relative x and y inside the box
+        map_x, map_y = self.get_mouse_xy(xmouse, ymouse, bbox)
         # convert to longitue and latitude
         lon, lat = self._earth_map(map_x, map_y, inverse=True)
         # eliminate out of the Earth cases
@@ -264,7 +298,7 @@ class EarthPlot(FigureCanvas):
             lat = np.nan
         return lon, lat
     # end of function get_mouse_ll
-    
+
     def get_mouse_azel(self, xmouse, ymouse, bbox):
         """This function compute azimuth and elevation of the mouse given
         the mouse motion event data.
@@ -289,43 +323,94 @@ class EarthPlot(FigureCanvas):
         return azimuth, elevation
     # end of function get_mouse_azel
 
-    def mouse_click(self, event):
-        """Process mouse click event. At the moment, only right right click
-        is affected to an action.
+    def mouse_press(self, event):
+        """Process mouse click event.
+        Buttons Ids:
+        1: left-click: start drag and zoom 
+        2: wheel-click
+        3: right-click: recenter plot
+        """        
+        # affectation of action to button id
+        action = {1: self.mouse_press_zoom,
+                  2: self.mouse_donothing,
+                  3: self.mouse_set_viewer}
+        # execution of action
+        action[event.button](event)
+    # end of method mouse_click
+
+    def mouse_release(self, event):
+        """Process mouse release event.
         Buttons Ids:
         1: left-click
         2: wheel-click
         3: right-click
         """        
         # affectation of action to button id
-        action = {1: self.donothing,
-                  2: self.donothing,
-                  3: self.set_viewer_from_click}
+        action = {1: self.mouse_release_zoom,
+                  2: self.mouse_donothing,
+                  3: self.mouse_donothing}
         # execution of action
         action[event.button](event)
     # end of method mouse_click
 
-    def donothing(self, _):
+    def mouse_donothing(self, _):
         """This method do nothing. See usecase in mouse_click method.
         """
         pass
-    # end of method donothing
+    # end of method mouse_donothing
 
-    def set_viewer_from_click(self, event):
+    def mouse_set_viewer(self, event):
         """Set viewer position by right clicking on the map.
         """
-        x = event.x
-        y = event.y
+        xevent = event.x
+        yevent = event.y
         bbox = event.canvas.figure.axes[0].bbox
-        lon, lat = self.get_mouse_ll(x, y, bbox)
-        self._viewer.longitude(lon)
-        self._viewer.latitude(lat)
+        lon, lat = self.get_mouse_ll(xevent, yevent, bbox)
+        self._viewer.longitude(round(lon, 1))
+        self._viewer.latitude(round(lat, 1))
         self.draw_elements()
         app = self.parent().parent()
         app.setviewerpos(self._viewer.longitude(),
                          self._viewer.latitude(),
                          self._viewer.altitude())
-    # end of method set_viewer_from_click
+    # end of method mouse_set_viewer
+
+    def mouse_press_zoom(self, event):
+        xevent = event.x
+        yevent = event.y
+        bbox = event.canvas.figure.axes[0].bbox
+        az, el = self.get_mouse_azel(xevent, yevent, bbox)
+        lon, lat = self.get_mouse_ll(xevent, yevent, bbox)
+        x, y = self.get_mouse_xy(xevent, yevent, bbox)
+        self.zoomposorigin = az, el, lon, lat, x, y
+        self.zoompatch = Rectangle(xy=(x, y), width=0, height=0,fill=False, linewidth=0.2)
+        self._axes.add_patch(self.zoompatch)
+    # end of method mouse_press_zoom
+    
+    def mouse_release_zoom(self, event):
+        """Process mouse release event.
+        """
+        # if original and final position are defined, zoom the plot
+        if self.zoomposorigin is not None and\
+           self.zoomposfinal is not None:
+            azorigin, elorigin, lonorigin, latorigin, _, _ = self.zoomposorigin
+            azfinal, elfinal, lonfinal, latfinal, _, _ = self.zoomposfinal        
+            if self._projection == 'nsper':
+                self._zoom.min_azimuth = round(min(azorigin, azfinal), 1)
+                self._zoom.min_elevation = round(min(elorigin, elfinal), 1)
+                self._zoom.max_azimuth = round(max(azorigin, azfinal), 1)
+                self._zoom.max_elevation = round(max(elorigin, elfinal), 1)
+            elif self._projection == 'cyl':
+                self._zoom.min_longitude = round(min(lonorigin, lonfinal), 1)
+                self._zoom.min_latitude = round(min(latorigin, latfinal), 1)
+                self._zoom.max_longitude = round(max(lonorigin, lonfinal), 1)
+                self._zoom.max_latitude = round(max(latorigin, latfinal), 1)
+            self.zoomposorigin = None
+            self.zoomposfinal = None
+            self.zoompatch.remove()
+            self.zoompatch = None
+            self.draw_elements()
+    # end of method mouse_release_event
 
     def draw_elements(self):
         """This method redraw all elements of the earth plot
@@ -381,24 +466,24 @@ class EarthPlot(FigureCanvas):
             azticks = np.arange(self._zoom.min_azimuth, self._zoom.max_azimuth + 0.1, 2)
             self._axes.set_xticks(self.az2x(azticks) +
                                   self._earth_map(self._viewer.longitude(), self._viewer.latitude())[0])
-            self._axes.set_xticklabels(str(f) for f in azticks)
+            self._axes.set_xticklabels('{0:0.1f}'.format(f) for f in azticks)
             # compute and add y-axis ticks
             elticks = np.arange(self._zoom.min_elevation, self._zoom.max_elevation + 0.1, 2)
             self._axes.set_yticks(self.el2y(elticks) +
                                   self._earth_map(self._viewer.longitude(), self._viewer.latitude())[1])
-            self._axes.set_yticklabels(str(f) for f in elticks)
+            self._axes.set_yticklabels('{0:0.1f}'.format(f) for f in elticks)
         elif self._projection == 'cyl':
             self._axes.set_xlabel('Longitude (deg)')
             self._axes.set_ylabel('Latitude (deg)')
             lonticks = np.arange(int(self._zoom.min_longitude / 10) * 10, self._zoom.max_longitude + 0.1, 20)
             lonticks_converted, _ = np.array(self._earth_map(lonticks, np.ones(lonticks.shape) * self._zoom.min_latitude))
             self._axes.set_xticks(lonticks_converted)
-            self._axes.set_xticklabels(str(f) for f in lonticks)
+            self._axes.set_xticklabels('{0:0.1f}'.format(f) for f in lonticks)
             # compute and add y-axis ticks
             latticks = np.arange(int(self._zoom.min_latitude / 10) * 10, self._zoom.max_latitude + 0.1, 20)
             _, latticks_converted = np.array(self._earth_map(np.ones(latticks.shape) * self._zoom.min_longitude, latticks))
             self._axes.set_yticks(latticks_converted)
-            self._axes.set_yticklabels(str(f) for f in latticks)
+            self._axes.set_yticklabels('{0:0.1f}'.format(f) for f in latticks)
         self._axes.tick_params(axis='both', width=0.2)
         self._axes.set_title(self._plot_title)
         utils.trace('out')

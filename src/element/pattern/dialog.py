@@ -291,7 +291,7 @@ class PatternDialog(QDialog):
     def set_pattern_conf(self, close=False):
         utils.trace('in')
 
-        # if no defined pattern attribute return 
+        # if no defined pattern attribute return
         if not self._pattern:
             return
 
@@ -313,6 +313,7 @@ class PatternDialog(QDialog):
             conf['azoffset'] = float(self.az_offset_field.text())
             conf['eloffset'] = float(self.el_offset_field.text())
         conf['isolevel'] = [float(s) for s in self.isolevel_field.text().split(',')]
+        conf['cf'] = float(self.cf_field.text())
 
         self._pattern.configure(conf=conf)
 

@@ -43,7 +43,7 @@ class EarthPlot(FigureCanvas):
 
     # EarthPlot constructor
     def __init__(self, parent=None, width=5, height=5, dpi=300, \
-                 proj='nsper', res='c', config=None):
+                 proj='nsper', res='crude', config=None):
         utils.trace('in')
 
         # Store Canvas properties
@@ -94,8 +94,15 @@ class EarthPlot(FigureCanvas):
             # set map resolution (take only first letter in lower case)
             self._resolution = config.get('DEFAULT', \
                                           'map resolution', \
-                                          fallback=self._resolution)[0].lower()
+                                          fallback=self._resolution).lower()
+            self._app.getmenuitem(item='View>Map resolution>' + self._resolution).setChecked(True)
+            self._resolution =  self._resolution[0]
             self._projection = config.get('DEFAULT', 'projection', fallback='nsper')
+            if self._projection == 'nsper':
+                self._app.getmenuitem(item='View>Projection>Geo').setChecked(True)
+            elif self._projection == 'cyl':
+                self._app.getmenuitem(item='View>Projection>Cylindrical').setChecked(True)
+
 
 
             # get point of view coordinates if defined
@@ -105,11 +112,15 @@ class EarthPlot(FigureCanvas):
 
             # get Earth plot configuration
             self._bluemarble = config.getboolean('DEFAULT', 'blue marble', fallback=False)
-            self._app.getmenuitem(menu='View>Coast lines', item='no line', menubar=True)
-            self._coastlines = config.get('DEFAULT', 'coast lines', fallback=0.1)
-            self._countries = config.get('DEFAULT', 'countries', fallback=0.1)
-            self._parallels = config.get('DEFAULT', 'parallels', fallback=0.1)
-            self._meridians = config.get('DEFAULT', 'meridians', fallback=0.1)
+            self._app.getmenuitem(item='View>Blue Marble').setChecked(self._bluemarble)
+            self._coastlines = config.get('DEFAULT', 'coast lines', fallback='light')
+            self._app.getmenuitem(item='View>Coast lines>' + self._coastlines).setChecked(True)
+            self._countries = config.get('DEFAULT', 'countries', fallback='light')
+            self._app.getmenuitem(item='View>Country borders>' + self._countries).setChecked(True)
+            self._parallels = config.get('DEFAULT', 'parallels', fallback='light')
+            self._app.getmenuitem(item='View>Parallels>' + self._parallels).setChecked(True)
+            self._meridians = config.get('DEFAULT', 'meridians', fallback='light')
+            self._app.getmenuitem(item='View>Meridians>' + self._meridians).setChecked(True)
 
             # initialize angle of view
             # Satellite Longitude, latitude and altitude
@@ -120,24 +131,14 @@ class EarthPlot(FigureCanvas):
 
             # Initialize zoom
             self._zoom = Zoom(self._projection)
-            if 'GEO' in config:
-                if 'min azimuth' in config['GEO']:
-                    self._zoom.min_azimuth = config.getfloat('GEO', 'min azimuth', fallback=-9)
-                if 'min elevation' in config['GEO']:
-                    self._zoom.min_elevation = config.getfloat('GEO', 'min elevation', fallback=-9)
-                if 'max azimuth' in config['GEO']:
-                    self._zoom.max_azimuth = config.getfloat('GEO', 'max azimuth', fallback=9)
-                if 'max elevation' in config['GEO']:
-                    self._zoom.max_elevation = config.getfloat('GEO', 'max elevation', fallback=9)
-            if 'CYLINDRICAL' in config:
-                if 'min longitude' in config['CYLINDRICAL']:
-                    self._zoom.min_longitude = config.getfloat('CYLINDRICAL', 'min longitude', fallback=-180)
-                if 'min latitude' in config['CYLINDRICAL']:
-                    self._zoom.min_latitude = config.getfloat('CYLINDRICAL', 'min latitude', fallback=-90)
-                if 'max longitude' in config['CYLINDRICAL']:
-                    self._zoom.max_longitude = config.getfloat('CYLINDRICAL', 'max longitude', fallback=180)
-                if 'max latitude' in config['CYLINDRICAL']:
-                    self._zoom.max_latitude = config.getfloat('CYLINDRICAL', 'max latitude', fallback=90)
+            self._zoom.min_azimuth = config.getfloat('GEO', 'min azimuth', fallback=-9)
+            self._zoom.min_elevation = config.getfloat('GEO', 'min elevation', fallback=-9)
+            self._zoom.max_azimuth = config.getfloat('GEO', 'max azimuth', fallback=9)
+            self._zoom.max_elevation = config.getfloat('GEO', 'max elevation', fallback=9)
+            self._zoom.min_longitude = config.getfloat('CYLINDRICAL', 'min longitude', fallback=-180)
+            self._zoom.min_latitude = config.getfloat('CYLINDRICAL', 'min latitude', fallback=-90)
+            self._zoom.max_longitude = config.getfloat('CYLINDRICAL', 'max longitude', fallback=180)
+            self._zoom.max_latitude = config.getfloat('CYLINDRICAL', 'max latitude', fallback=90)
             pattern_index = 1
             pattern_section = 'PATTERN' + str(pattern_index)
             while pattern_section in config:
@@ -715,7 +716,7 @@ class EarthPlot(FigureCanvas):
         return self._coastlines
     # end of function get_coastlines
     
-    def set_coastlines(self, c: float, refresh: bool = False):
+    def set_coastlines(self, c: str, refresh: bool = False):
         """Set private attribute _coastlines value.
         If refresh is True, redraw Earth.
         Return the value passed to the function.
@@ -736,7 +737,7 @@ class EarthPlot(FigureCanvas):
         return self._countries
     # end of function get_countries
 
-    def set_countries(self, c: float, refresh: bool = False):
+    def set_countries(self, c: str, refresh: bool = False):
         """Set private attribute _countries value.
         If refresh is True, redraw Earth.
         Return the value passed to the function.
@@ -757,7 +758,7 @@ class EarthPlot(FigureCanvas):
         return self._parallels
     # end of function get_parallels
 
-    def set_parallels(self, p: float, refresh: bool = False):
+    def set_parallels(self, p: str, refresh: bool = False):
         """Set the value of private attribute _parallels.
         If refresh is True, redraw Earth.
         Return the value passed to the function.
@@ -778,7 +779,7 @@ class EarthPlot(FigureCanvas):
         return self._meridians
     # end of function get_meridians
 
-    def set_meridians(self, m: float, refresh: bool = False):
+    def set_meridians(self, m: str, refresh: bool = False):
         """Set the value of the private attribute _meridians.
         If refresh is True, redraw Earth.
         Return the value passed to the function.

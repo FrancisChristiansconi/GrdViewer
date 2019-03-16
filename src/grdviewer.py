@@ -385,8 +385,12 @@ class GrdViewer(QMainWindow):
         """
         if action.text() == 'Geo':
             self.earth_plot.projection('nsper')
+            self.getmenuitem('View>Projection>Geo').setChecked(True)
+            self.getmenuitem('View>Projection>Cylindrical').setChecked(False)
         elif action.text() == 'Cylindrical':
             self.earth_plot.projection('cyl')
+            self.getmenuitem('View>Projection>Geo').setChecked(False)
+            self.getmenuitem('View>Projection>Cylindrical').setChecked(True)
         self.earth_plot.draw_elements()
     # end of method toggleprojection
 
@@ -398,10 +402,7 @@ class GrdViewer(QMainWindow):
         resolution = self.earth_plot._resolution
         self.earth_plot.drawearth(proj=projection,
                                   resolution=resolution)
-        bluemarble_action = [self._menuview.actions()[i] \
-                             for i in range(len(self._menuview.actions())) \
-                             if self._menuview.actions()[i].text() == 'Blue Marble']
-        bluemarble_action[0].setChecked(self.earth_plot._bluemarble)
+        self.getmenuitem('View>Blue Marble').setChecked(self.earth_plot._bluemarble)
         self.earth_plot.draw_axis()
         self.earth_plot.draw()
         # end of method toggle_bluemarble
@@ -427,6 +428,11 @@ class GrdViewer(QMainWindow):
     def set_earth_resolution(self, action):
         """Call back to call for EarthPlot set_resolution function.
         """
+        menu = self.getmenuitem('View>Map resolution').menu()
+        action_dictionary = self.getmenuitemlist(menu=menu)
+        for act in action_dictionary:
+            action_dictionary[act].setChecked(False)
+        action.setChecked(True)
         self.earth_plot.set_resolution(action.text()[0].lower())
     # end of set_earth_resolution
 
@@ -434,11 +440,12 @@ class GrdViewer(QMainWindow):
         """Callback to set the boldness of coastlines on Earth map
         """
         utils.trace('in')
-        boldness = {'no line': 0,
-                    'light': 0.1,
-                    'medium': 0.3,
-                    'heavy':0.5}
-        self.earth_plot.set_coastlines(boldness[action.text()], True)
+        menu = self.getmenuitem('View>Coast lines').menu()
+        action_dictionary = self.getmenuitemlist(menu=menu)
+        for act in action_dictionary:
+            action_dictionary[act].setChecked(False)
+        action.setChecked(True)
+        self.earth_plot.set_coastlines(action.text(), True)
         utils.trace('out')
     # end of method set_coastlines
 
@@ -446,11 +453,12 @@ class GrdViewer(QMainWindow):
         """Callback to set the boldness of country borders on Earth map
         """
         utils.trace('in')
-        boldness = {'no line': 0,
-                    'light': 0.1,
-                    'medium': 0.3,
-                    'heavy':0.5}
-        self.earth_plot.set_countries(boldness[action.text()], True)
+        menu = self.getmenuitem('View>Country borders').menu()
+        action_dictionary = self.getmenuitemlist(menu=menu)
+        for act in action_dictionary:
+            action_dictionary[act].setChecked(False)
+        action.setChecked(True)
+        self.earth_plot.set_countries(action.text(), True)
         utils.trace('out')
     # end of method set_countries
 
@@ -458,11 +466,12 @@ class GrdViewer(QMainWindow):
         """Callback to set the boldness of parallels on Earth map
         """
         utils.trace('in')
-        boldness = {'no line': 0,
-                    'light': 0.1,
-                    'medium': 0.5,
-                    'heavy':0.9}
-        self.earth_plot.set_parallels(boldness[action.text()], True)
+        menu = self.getmenuitem('View>Parallels').menu()
+        action_dictionary = self.getmenuitemlist(menu=menu)
+        for act in action_dictionary:
+            action_dictionary[act].setChecked(False)
+        action.setChecked(True)
+        self.earth_plot.set_parallels(action.text(), True)
         utils.trace('out')
     # end of method set_parallels
 
@@ -470,11 +479,12 @@ class GrdViewer(QMainWindow):
         """Callback to set the boldness of meridians on Earth map
         """
         utils.trace('in')
-        boldness = {'no line': 0,
-                    'light': 0.1,
-                    'medium': 0.5,
-                    'heavy':0.9}
-        self.earth_plot.set_meridians(boldness[action.text()], True)
+        menu = self.getmenuitem('View>Meridians').menu()
+        action_dictionary = self.getmenuitemlist(menu=menu)
+        for act in action_dictionary:
+            action_dictionary[act].setChecked(False)
+        action.setChecked(True)
+        self.earth_plot.set_meridians(action.text(), True)
         utils.trace('out')
     # end of method set_meridians
 
@@ -502,26 +512,29 @@ class GrdViewer(QMainWindow):
         return self.centralwidget
     # end of get_centralwidget
 
-    def getmenuitem(self, menu: str, item: str, menubar: bool=False):
+    def getmenuitem(self, item: str):
         """Return menu item from menu name and item name.
         """
-        # recursive browsing of menu
-        splitted_menu = menu.split(sep='>', maxsplit=1) 
+        menu_dictionary = self.getmenuitemlist(self._menubar)
+        try:
+            return menu_dictionary[item]
+        except:
+            return None
 
-        if menubar:
-            menu_list = self._menubar.actions()
-
-        target_menu = [menu_list[i] for i in range(len(menu_list)) \
-                       if menu_list[i].text() == splitted_menu[0]][0]
-        # if len(splitted_menu[1].split(sep='>', maxsplit=1)) > 1:
-        #     return self.getmenuitem(splitted_menu[1], item)
-        # else:
-        #     item_list = target_menu.actions()
-        #     target_item = [item_list[i] for i in range(len(item_list)) \
-        #                    if item_list[i].text() == item][0]
-        #     return target_item
-
-        #TODO use QAction.menu() and QMenu.menuAction()
+    def getmenuitemlist(self, menu, basename=''):
+        item_dictionary = {}
+        for item in menu.actions():
+            if type(item) == QAction:
+                if basename == '':
+                    name = item.text()
+                else:
+                    name = basename + '>' + item.text()
+                item_dictionary[name] = item
+                try:
+                    item_dictionary.update(self.getmenuitemlist(item.menu(), name))
+                except:
+                    pass
+        return item_dictionary
 
 
 # End of Class GrdViewer   

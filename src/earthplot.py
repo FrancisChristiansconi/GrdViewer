@@ -20,6 +20,7 @@ from matplotlib.patches import Rectangle
 
 # import PyQt5 and link with matplotlib
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, QFileDialog
+from PyQt5 import QtCore
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 
 # import numpy for arrays and mathematical operations
@@ -69,6 +70,8 @@ class EarthPlot(FigureCanvas):
                                    QSizePolicy.Expanding, \
                                    QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
+        self.setFocusPolicy( QtCore.Qt.ClickFocus )
+        self.setFocus()
 
         # initialize EarthPlot fields
         self._patterns = {}
@@ -97,14 +100,12 @@ class EarthPlot(FigureCanvas):
                                           'map resolution', \
                                           fallback=self._resolution).lower()
             self._app.getmenuitem(item='View>Map resolution>' + self._resolution).setChecked(True)
-            self._resolution =  self._resolution[0]
+            self._resolution = self._resolution[0]
             self._projection = config.get('DEFAULT', 'projection', fallback='nsper')
             if self._projection == 'nsper':
                 self._app.getmenuitem(item='View>Projection>Geo').setChecked(True)
             elif self._projection == 'cyl':
                 self._app.getmenuitem(item='View>Projection>Cylindrical').setChecked(True)
-
-
 
             # get point of view coordinates if defined
             longitude = config.getfloat('VIEWER', 'longitude', fallback=0.0)
@@ -199,8 +200,6 @@ class EarthPlot(FigureCanvas):
         # default file name to save figure
         self.filename = 'plot.PNG'
 
-        self.draw_elements()
-
         # connect canvas to mouse event (enable zoom and recenter)
         self.zoomposorigin = None
         self.zoomposfinal = None
@@ -208,6 +207,10 @@ class EarthPlot(FigureCanvas):
         self.mpl_connect('motion_notify_event', self.mouse_move)
         self.mpl_connect('button_press_event', self.mouse_press)
         self.mpl_connect('button_release_event', self.mouse_release)
+        self.mpl_connect('key_press_event', self.key_press)
+
+        # draw the already loaded elements 
+        self.draw_elements()
 
         utils.trace('out')
     # End of EarthPlot constructor
@@ -412,6 +415,23 @@ class EarthPlot(FigureCanvas):
             self.draw_elements()
     # end of method mouse_release_event
 
+    def key_press(self, event):
+        action = {'escape': self.key_press_esc}
+        try:
+            action[event.key](event)
+        except:
+            pass
+
+    def key_press_esc(self, event):
+        # abort mouse drag and zoom
+        if self.zoomposorigin is not None:
+            self.zoomposorigin = None
+            self.zoomposfinal = None
+            self.zoompatch.remove()
+            self.zoompatch = None
+            self.draw()
+
+
     def draw_elements(self):
         """This method redraw all elements of the earth plot
         """
@@ -443,11 +463,13 @@ class EarthPlot(FigureCanvas):
 
         # draw stations
         for s in self._stations:
-            s.plot(self._earth_map, self._viewer.altitude(), fontsize='large')
+            s.clearplot()
+            s.plot()
 
         # draw polygons
         for p in self._polygons:
-            p.plot(self._earth_map, linestyle='--', linewidth=0.5)
+            p.clearplot()
+            p.plot()
 
         # draw axis
         self.draw_axis()
@@ -960,6 +982,13 @@ class EarthPlot(FigureCanvas):
         return d
     # end of function earth_angular_diameter
 
+    def get_earthmap(self):
+        return self._earth_map
+    # end of function get_earthmap
+
+    def get_axes(self):
+        return self._axes
+    # end of function get_axes
 
 
 # end of class EarthPlot

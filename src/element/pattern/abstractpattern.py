@@ -46,11 +46,12 @@ import angles as ang
 import constant as cst
 # Edit dialog
 from .dialog import PatternDialog
+from element.element import Element
 
 # Class definition
 #--------------------------------------------------------------------------------------------------
-class AbstractPattern(ABC):
-    """Abstract class representing an antenna pattern. This class define all the 
+class AbstractPattern(Element):
+    """Abstract class representing an antenna pattern. This class define all the
     functions and methods mandatory for compatibility with the viewer features.
     """
 
@@ -159,7 +160,6 @@ class AbstractPattern(ABC):
     # end of constructor
 
     def reshapedata(self):
-
         # for interpolation, the azimuth and elevation gradient have to be positive
         for set in range(self._nb_sets):
 

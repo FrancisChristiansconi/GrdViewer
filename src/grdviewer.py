@@ -44,7 +44,7 @@ from zoom import ZoomDialog
 import element.station as stn
 from element.station import StationDialog
 # import polygon module
-import element.polygon
+from element import polygon
 # import constant file
 import constant as cst
 
@@ -364,7 +364,7 @@ class GrdViewer(QMainWindow):
         filename, _ = StationDialog.getOpenFileName()
         if filename:
             # add the stations to the station list
-            self.earth_plot._stations.extend(stn.get_station_from_file(filename))
+            self.earth_plot._stations.extend(stn.get_station_from_file(filename, self.earth_plot))
             # refresh display
             self.earth_plot.draw_elements()
     # end of method station_dialog
@@ -375,7 +375,7 @@ class GrdViewer(QMainWindow):
         filename, _ = QFileDialog.getOpenFileName()
         if filename:
             # get list of polygon and append it to the existing list
-            self.earth_plot._polygons.extend(polygon.getpolygons(filename))
+            self.earth_plot._polygons.extend(polygon.getpolygons(self.earth_plot, filename))
             # refresh display
             self.earth_plot.draw_elements()
     # end of method 

@@ -37,13 +37,69 @@ class LineDialog(QDialog):
     def initgui(self):
         """Initialise GUI.
         """
-        layout = QHBoxLayout(self)
-        self.combolinesstyle = QComboBox(self)
-        self.combolinesstyle.addItems(['solid', 'dashed', 'dashdot', 'dotted', '(offset, on-off-dash-seq)', '-', '--', '-.', ':'])
-        layout.addWidget(self.combolinesstyle)
+        # create this widget layout
+        layout = QVBoxLayout(self)
+        # add line parameters gui elements
+        # linestyle
+        linestylelayout = QHBoxLayout()
+        labellinestyle = QLabel(self)
+        labellinestyle.setText('linestyle')
+        linestylelayout.addWidget(labellinestyle)
+        self.combolinestyle = QComboBox(self)
+        self.combolinestyle.addItems(['solid', 'dashed', 'dashdot', 'dotted',
+                                      '-', '--', '-.', ':'])
+        linestylelayout.addWidget(self.combolinestyle)
+        linestylelayout.addStretch(1)
+        layout.addLayout(linestylelayout)
+        # linewidth
+        linewidthlayout = QHBoxLayout()
+        labellinewidth = QLabel(self)
+        labellinewidth.setText('linewidth')
+        linewidthlayout.addWidget(labellinewidth)
+        self.combolinewidth = QComboBox(self)
+        self.combolinewidth.addItems(['no line', 'light',
+                                      'medium', 'heavy'])
+        linewidthlayout.addWidget(self.combolinewidth)
+        linewidthlayout.addStretch(1)
+        layout.addLayout(linewidthlayout)
+        # label
+         
 
-    # end fo method initGUI
+        # add Apply/Ok/Cancel buttons
+        buttonlayout = QHBoxLayout()
+        applybutton = QPushButton('Apply', self)
+        okbutton = QPushButton('Ok', self)
+        cancelbutton = QPushButton('Cancel', self)
+        buttonlayout.addStretch(1)
+        buttonlayout.addWidget(applybutton)
+        buttonlayout.addWidget(okbutton)
+        buttonlayout.addWidget(cancelbutton)
+        layout.addLayout(buttonlayout)
 
+        # connect buttons to action
+        applybutton.clicked.connect(self.config)
+        okbutton.clicked.connect(self.configandclose)
+        cancelbutton.clicked.connect(self.close)
+
+    # end of method initGUI
+
+    def config(self):
+        """Collect value from widget and configure parent with the collected values.
+        """
+        # dictionary used to collect parameters
+        conf = {}
+
+        # call to parent configure method
+        parent.configure(conf)
+        pass
+    # end of method config
+
+    def configandclose(self):
+        """Configure parent and close the widget.
+        """
+        self.config()
+        self.close()
+    # end of method configandclose
 
 # Getters and Setters
 

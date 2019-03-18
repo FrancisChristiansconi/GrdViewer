@@ -71,7 +71,7 @@ class PatternControler():
         utils.trace('out')
     # end of constructor
 
-    def configure(self, dialog=True, config=None):
+    def configure(self, config=None, dialog=True):
         """This method is used to update PatternControler attributes either via
         predefined configuration or via dialog window.
         """

@@ -30,6 +30,7 @@ import numpy as np
 import utils
 from element.pattern.control import PatternControler
 from element.pattern.dialog import PatternDialog
+import element.station as stn
 from viewer import Viewer
 from zoom import Zoom
 import angles
@@ -186,13 +187,30 @@ class EarthPlot(FigureCanvas):
                                                     'linestyles', fallback='solid')
                     conf['linewidths'] = cst.BOLDNESS[config.get(pattern_section,
                                                                  'linewidths', fallback='medium')]
+                    conf['isolevel'] = [float(s) for s in conf['level'].split(',')]
                     pattern = self.load_pattern(conf=conf)
+                    
                     self.settitle(conf['title'])
-                    pattern.isolevel = [float(s) for s in conf['level'].split(',')]
 
                     # check for next pattern
                     pattern_index += 1
                     pattern_section = 'PATTERN' + str(pattern_index)
+            # add stations from ini file
+            station_index = 1
+            station_section = 'STATION' + str(station_index)
+            while station_section in config:
+                # load stations from sta file
+                if 'file' in config[station_section]:
+                    station_file = config.get(station_section, 'file')
+                    self._stations.extend(stn.get_station_from_file(station_file, self))
+                # load station from description in ini file
+                elif 'name' in config[station_section]:
+                    station = stn.Station(parent=self)
+                    station.configure(config._sections[station_section])
+                    self._stations.append(station)
+                # check for next station section
+                station_index += 1
+                station_section = 'STATION' + str(station_index)
 
         # initialise reference to Blue Marble
         self._bluemarble_imshow = None
@@ -697,8 +715,11 @@ class EarthPlot(FigureCanvas):
             return None
         file_key = self.get_file_key(filename)
         conf['key'] = file_key
-
-        pattern = PatternControler(parent=self, filename=filename)
+        try:
+            pattern = PatternControler(parent=self, filename=filename)
+        except FileNotFoundError as err:
+            print('Pattern file ' + filename + ' not found')
+            return None
         if not 'sat_lon' in conf:
             dialog = True
             conf['sat_lon'] = self._viewer.longitude()

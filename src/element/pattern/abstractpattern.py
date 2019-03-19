@@ -778,6 +778,9 @@ class AbstractPattern(Element):
         # endif
     # end of method plot
 
+    def clearplot(self):
+        self._parent.clearplot()
+
     def export_to_file(self, filename: str, shrunk: bool = False, set: int = 0):
         """Export this pattern to .pat file.
         filename is the target filename

@@ -13,9 +13,9 @@ import numpy as np
 
 # import local modules
 #==================================================================================================
-import constant as cst
-import earthplot as eplt
-from .element import Element
+import constant as cst       # constants for the application
+import earthplot as eplt     # Earth Plot class definition
+from .element import Element # Astract  mother class Element
 
 
 class Station(Element):
@@ -24,121 +24,97 @@ class Station(Element):
     A station has several others attributes helping for display.
     """
 
-    # Constructor of station
+# Constructor of class Station
+#==================================================================================================
     def __init__(self, parent=None):
         """Constructor
         """
         if not isinstance(parent, eplt.EarthPlot) and parent is not None:
             raise TypeError(args='parent should be of type EarthPlot')
         self._parent = parent # reference to the parent EarthPlot
-        self._longitude = 0.0 # Longitude in degrees
-        self._latitude = 0.0  # Latitude in degrees
-        self._name = ''       # Long name for reference
-        self._tag = ''        # Short name for display
-        self._tagpos = ''     # upleft, upright, downleft or downright
-        self._bpe = 0         # Radius of circle to draw around station
         self._station = None  # display elements references
+        # configuration is stored in a dictionary
+        self._config = {}
+        # station conf
+        self._config['longitude'] = 0.0      # Longitude in degrees
+        self._config['latitude'] = 0.0       # Latitude in degrees
+        self._config['name'] = ''            # Long name for reference
+        self._config['marker'] = 'o'         # station marker
+        self._config['marker size'] = 1      # marker size
+        self._config['marker color'] = 'r'   # marker color
+        # tag config
+        self._config['tag'] = ''             # Short name for display
+        self._config['tagpos'] = ''          # upleft, upright, downleft or downright
+        self._config['fontsize'] = 3         # Tag fontsize
+        # Beam pointing error circle
+        self._config['bpe'] = 0              # Radius of circle to draw around station
+        self._config['circle color'] = 'k'   # Color of bpe circle
+        self._config['linewidth'] = 0.3      # Width of bpe circle line
+        self._config['linestyle'] = 'dashed' # Style of bpe circle line  
     # end of constructor
 
-# getter and setter
+# mandatory abstract method implementation inherited from class Element
 #==================================================================================================
-    def longitude(self, lon: float = None) -> float:
-        """Get/set for longitude.
-        """
-        if lon != None:
-            self._longitude = lon
-        return self._longitude
-    
-    def latitude(self, lat: float = None) -> float:
-        """Get/set for latitude.
-        """
-        if lat != None:
-            self._latitude = lat
-        return self._latitude
-    
-    def tagpos(self, tagpos: str = None) -> str:
-        """Get/set for tag x coordinate.
-        """
-        if tagpos != None:
-            self._tag_x = tagpos
-        return self._tag_x
-    
-    def beampointingerr(self, bpe: float = None) -> float:
-        """Get/set for Beam pointing error value.
-        """
-        if bpe != None:
-            self._bpe = bpe
-        return self._bpe
-    
-    def name(self, name: str = None) -> str:
-        """Get/set for station name.
-        """
-        if name != None:
-            self._name = name
-        return self._name
-
-    def tag(self, tag: str = None) -> str:
-        """Get/set for station tag.
-        """
-        if tag != None:
-            self._tag = tag
-        return self._tag
-
-    def visible(self, earthmap):
-        """States if station is visible in the map frame. 
-        """
-        # get coordinates of station in earth plot frame
-        xsta, ysta = earthmap(self._longitude,self._latitude)
-        return earthmap.llcrnrx < xsta and \
-               xsta < earthmap.urcrnrx and \
-               earthmap.llcrnry < ysta and \
-               ysta < earthmap.urcrnry
-    # end of function visible
-
     def plot(self):
         """Plot the station on the given map if in the frame.
         """
+        # get reference to Earth Map where station should be plotted
         earthmap = self._parent.get_earthmap()
-        radius = self._parent.az2x(self._bpe)
+        # radius of the Beam Pointing Error circle to be displayed (optionally)
+        radius = self._parent.az2x(self._config['bpe'])
         # get coordinates of station in earth plot frame
-        xsta, ysta = earthmap(self._longitude, self._latitude)
+        xsta, ysta = earthmap(self._config['longitude'], self._config['latitude'])
         # if station is out of plot do not display
         if self.visible(earthmap):
             # if BPE defined, display circle around station
             circle = None
-            if self._bpe:
-                circle = plt.Circle((xsta, ysta), radius, \
-                                    color='k', fill=False, linewidth=0.3, linestyle='dashed')
+            if self._config['bpe']:
+                circle = plt.Circle((xsta, ysta), radius,
+                                    color=self._config['circle color'], fill=False,
+                                    linewidth=self._config['linewidth'],
+                                    linestyle=self._config['linestyle'])
                 earthmap.ax.add_artist(circle)
             # display a dot at station coordinates
-            point = earthmap.scatter(xsta, ysta, 1, marker='o', color='r')
-            # add station tag
+            point = earthmap.scatter(xsta, ysta,
+                                     self._config['marker size'],
+                                     marker=self._config['marker'],
+                                     color=self._config['marker color'])
+            # add station tag, position is computed from plot size and desired relative position
+            # wrt. station coordinates
             plot_width = self._parent.get_width()
             plot_height = self._parent.get_height()
             x_offset = plot_width / 200
             y_offset = plot_height / 200
-            if self._tagpos == 'upleft':
+            position = self._config['tagpos']
+            if position == 'upleft':
                 x_offset *= -1
                 valign = 'bottom'
                 halign = 'right'
-            elif self._tagpos == 'upright':
+            elif position == 'upright':
                 valign = 'bottom'
                 halign = 'left'
-            elif self._tagpos == 'downleft':
+            elif position == 'downleft':
                 x_offset *= -1
                 y_offset *= -1
                 valign = 'top'
                 halign = 'right'
-            elif self._tagpos == 'downright':
+            elif position == 'downright':
                 y_offset *= -1
                 valign = 'top'
-                halign = 'right'
-            tag = earthmap.ax.text(s=self._tag, x=xsta + x_offset,y=ysta + y_offset, va=valign, ha=halign)
+                halign = 'left'
+            tag = earthmap.ax.text(s=self._config['tag'],
+                                   x=xsta + x_offset,
+                                   y=ysta + y_offset,
+                                   va=valign,
+                                   ha=halign,
+                                   fontsize=self._config['fontsize'])
+            # store references to plotted elements (point, tag and BPE circle)
             self._station = point, tag, circle
     # end of method plot
 
     def clearplot(self):
         """Implementation of abstract method clearplot.
+        All plotted elements feature a remove method.
         """
         if self._station is not None:
             for element in self._station:
@@ -150,16 +126,39 @@ class Station(Element):
     def configure(self, config=None):
         """Implementation of abstract method configure.
         """
-        self._longitude = self.set(config, 'longitude')
-        self._latitude = self.set(config, 'latitude')
-        self._name = self.set(config, 'name')
-        self._tag = self.set(config, 'tag')
-        self._tagpos = self.set(config, 'tagpos')
-        self._bpe = self.set(config, 'bpe')
+        # merge configuration of self with provided dictionary
+        if config is not None:
+            self._config.update(config)
+            # check and convert to float
+            self._config['longitude'] = float(self._config['longitude'])
+            self._config['latitude'] = float(self._config['latitude'])
+            self._config['marker size'] = float(self._config['marker size'])
+            self._config['fontsize'] = float(self._config['fontsize'])
+            self._config['bpe'] = float(self._config['bpe'])
+            self._config['linewidth'] = float(self._config['linewidth'])
+        # return merged dictionary
+        return self._config
+    # end of method configure
+
+# Other functions and methods    
+#==================================================================================================
+    def visible(self, earthmap):
+        """States if station is visible in the map frame.
+        """
+        # get coordinates of station in earth plot frame
+        lon = self._config['longitude']
+        lat = self._config['latitude']
+        xsta, ysta = earthmap(lon, lat)
+        return earthmap.llcrnrx < xsta and \
+               xsta < earthmap.urcrnrx and \
+               earthmap.llcrnry < ysta and \
+               ysta < earthmap.urcrnry
+    # end of function visible
 
 # end of class Station
+#==================================================================================================
 
-class StationDialog(QFileDialog):
+class Dialog(QFileDialog):
     """Customised dialog box to open a file and load station list.
     """
     def __init__(self):
@@ -174,6 +173,10 @@ class StationDialog(QFileDialog):
         self.show()
     # end of constructor
 # End of Customized QDialog StationDialog
+
+# TODO implement class View to reconfigure a station
+
+# TODO implement class Control to handle station element
 
 
 def get_station_from_file(filename: str, earthplot=None):
@@ -191,7 +194,7 @@ def get_station_from_file(filename: str, earthplot=None):
 
     # split data and add them to Station list
     for line in lines:
-        if len(line):
+        if line is not '':
             if not line[0] == "#":
                 tokens = line.split(',')
                 name = tokens[0]

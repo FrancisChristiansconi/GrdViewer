@@ -42,7 +42,6 @@ from zoom import Zoom
 from zoom import ZoomDialog
 # imports from station module
 import element.station as stn
-from element.station import StationDialog
 # import polygon module
 from element import polygon
 # import constant file
@@ -95,7 +94,7 @@ class GrdViewer(QMainWindow):
             os.chdir(target_dir)
         # read .ini file
         self.config = configparser.ConfigParser()
-        self.config.read('grdviewer.ini')
+        self.config.read('GrdViewer\grdviewer.ini')
         # go back to original directory
         os.chdir(cwd)
 
@@ -361,7 +360,7 @@ class GrdViewer(QMainWindow):
     def station_dialog(self):
         """Open dialog to get stations to draw.
         """
-        filename, _ = StationDialog.getOpenFileName()
+        filename, _ = stn.Dialog.getOpenFileName()
         if filename:
             # add the stations to the station list
             self.earth_plot._stations.extend(stn.get_station_from_file(filename, self.earth_plot))

@@ -1,26 +1,85 @@
 """This module helps dealing with elevation contour display.
 """
-# Imports
+# Imports of third party modules
 # PyQt5 widgets import
 from PyQt5.QtWidgets import QDialog, QLineEdit, \
                             QHBoxLayout, QVBoxLayout, QPushButton, QLabel
+import numpy as np
 
-
+# import of local modules
 # Constants
 import constant as cst
+from .element import Element # Astract  mother class Element
+import utils
 
 # Classes
-class Elevation(object):
+class Elevation(Element):
     """This class defines an elevation angle.
     """
-    def __init__(self, elev=cst.DEFAULT_ELEVATION):
-        self._angle = elev
+    def __init__(self, parent=None, config=None):
+        self._parent = parent
+        self._config = {}
+        self._config['linewidths'] = 0.3
+        self._config['linestyles'] = 'dashed'
+        self._config['colors'] = 'k'
+        self.configure(config)
+        self._plot = None
 
-    def angle(self,a: float = None) -> float:
-        if a != None:
-            self._angle = a
-        return self._angle
-    # end of function angle
+    def elevation(self, stalon, stalat):
+        """Compute elevation of spacecraft seen from a station on the ground.
+        """  
+        utils.trace('in')
+        # compute phi
+        phi = np.arccos(np.cos(cst.DEG2RAD * stalat)
+              * np.cos(cst.DEG2RAD * (self._parent._viewer.longitude() - stalon)))
+
+        # compute elevation
+        elev = np.reshape([90 if phi == 0 else cst.RAD2DEG * np.arctan((np.cos(phi) - (cst.EARTH_RAD_EQUATOR_M/(cst.EARTH_RAD_EQUATOR_M+self._parent._viewer.altitude())))/ np.sin(phi)) for phi in phi.flatten()], phi.shape)
+        
+        # remove station out of view
+        elev = np.where(np.absolute(stalon - self._parent._viewer.longitude()) < 90, elev, -1)
+        
+        utils.trace('out')
+        # Return vector
+        return elev
+    # end of function elevation
+
+# implementation of Element abstract methods
+    def plot(self):
+        utils.trace('in')
+        emap = self._parent.get_earthmap()
+        # define grid
+        nx = 200
+        ny = 200
+        xvec = np.linspace(emap.xmin, emap.xmax, nx)
+        yvec = np.linspace(emap.ymin, emap.ymax, ny)
+        xgrid, ygrid = np.meshgrid(xvec, yvec)
+        longrid, latgrid = emap(xgrid, ygrid, inverse=True)
+        # define Elevation matrix
+        elevgrid = self.elevation(longrid, latgrid)
+        self._plot = emap.contour(xgrid, ygrid, elevgrid,
+                                  self._config['levels'],
+                                  colors=self._config['colors'],
+                                  linestyles=self._config['linestyles'],
+                                  linewidths=self._config['linewidths'])
+        utils.trace('out')
+        return self._plot
+    # end of plot
+
+    def clearplot(self):
+        for element in self._plot.collections:
+            try:
+                element.remove()
+            except ValueError:
+                print(element)
+
+    def configure(self, config=None):
+        if config is not None:
+            self._config.update(config)
+            self._config['linewidths'] = float(self.set(self._config, 'linewidths'))
+            self._config['levels'] = [float(s) for s in self._config['elevation'].split(',')]  
+        return self._config         
+
     
 # end of class Elevation
 
@@ -33,58 +92,63 @@ class ElevDialog(QDialog):
         # Parent constructor
         super().__init__()
 
-        self.earth_plot = parent.earth_plot
+        self._eplt = parent.earth_plot
 
         # Add Title to the widget
         self.setWindowTitle('Add/Remove Elevation contour')
         self.setMinimumSize(100, 50)
 
         # Everything in a vertical Layout
-        vboxElev = QVBoxLayout(self)
+        vbox = QVBoxLayout(self)
 
         # Add longitude field
-        self.lblElev = QLabel('Elevation (deg)', parent=self)
-        self.fldElev = QLineEdit('10', parent=self)
-        hboxElev = QHBoxLayout(None)
-        hboxElev.addWidget(self.lblElev)
-        hboxElev.addStretch(1)
-        hboxElev.addWidget(self.fldElev)
-        vboxElev.addLayout(hboxElev)
+        self.labelelev = QLabel('Elevation (deg)', parent=self)
+        self.fieldelev = QLineEdit('10', parent=self)
+        hboxelev = QHBoxLayout(None)
+        hboxelev.addWidget(self.labelelev)
+        hboxelev.addStretch(1)
+        hboxelev.addWidget(self.fieldelev)
+        vbox.addLayout(hboxelev)
 
         # Add Ok/Cancel buttons
-        addButton = QPushButton('Add',self)
-        remButton = QPushButton('Remove',self)
-        cancelButton = QPushButton('Cancel',self)
+        addbutton = QPushButton('Add',self)
+        rembutton = QPushButton('Remove',self)
+        cancelbutton = QPushButton('Cancel',self)
 
         # Place Ok/Cancel button in an horizontal box layout
-        hboxButton = QHBoxLayout()
-        hboxButton.addStretch(1)
-        hboxButton.addWidget(addButton)
-        hboxButton.addWidget(remButton)
-        hboxButton.addWidget(cancelButton)
+        hboxbutton = QHBoxLayout()
+        hboxbutton.addStretch(1)
+        hboxbutton.addWidget(addbutton)
+        hboxbutton.addWidget(rembutton)
+        hboxbutton.addWidget(cancelbutton)
 
         # put the button layout in the Vertical Layout
-        vboxElev.addLayout(hboxButton)
+        vbox.addLayout(hboxbutton)
 
         # set dialog box layout
-        self.setLayout(vboxElev)
+        self.setLayout(vbox)
 
         # connect buttons to actions
-        addButton.clicked.connect(self.addElevContour)
-        remButton.clicked.connect(self.remElevContour)
-        cancelButton.clicked.connect(self.close)
+        addbutton.clicked.connect(self.addcontour)
+        rembutton.clicked.connect(self.removecontour)
+        cancelbutton.clicked.connect(self.close)
 
         # Dialog is modal to avoid reentry and weird behaviour
         self.setModal(True)
         self.show()
     # end of constructor
 
-    def addElevContour(self):
+    def addcontour(self):
         self.close()
-        self.earth_plot._elev['Elev' + self.fldElev.text()] = Elevation(float(self.fldElev.text()))
-        self.earth_plot.draw_elements()
+        config = {}
+        config['level'] = float(self.fieldelev.text())
+        self._eplt._elev['Elev' + self.fieldelev.text()] = Elevation(parent=self._eplt, 
+                                                                     config=config)
+        self._eplt.draw_elements()
 
-    def remElevContour(self):
+    def removecontour(self):
         self.close()
-        del self.earth_plot._elev['Elev' + self.fldElev.text()]
-        self.earth_plot.draw_elements()
+        self._eplt._elev['Elev' + self.fieldelev.text()].clearplot()
+        del self._eplt._elev['Elev' + self.fieldelev.text()]
+        self._eplt.draw()
+        # self._eplt.draw_elements()

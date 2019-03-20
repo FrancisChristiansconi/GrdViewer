@@ -31,6 +31,7 @@ import utils
 from element.pattern.control import PatternControler
 from element.pattern.dialog import PatternDialog
 import element.station as stn
+import element.elevation as elv
 from viewer import Viewer
 from zoom import Zoom
 import angles
@@ -211,6 +212,17 @@ class EarthPlot(FigureCanvas):
                 # check for next station section
                 station_index += 1
                 station_section = 'STATION' + str(station_index)
+            # add elevation contour from ini file
+            elevation_index = 1
+            elevation_section = 'ELEVATION' + str(elevation_index)
+            while elevation_section in config:
+                # load stations from sta file
+                elevation = elv.Elevation(parent=self)
+                elevation.configure(config._sections[elevation_section])
+                self._elev['Elev' + elevation.configure()['elevation']] = elevation
+                # check for next station section
+                elevation_index += 1
+                elevation_section = 'ELEVATION' + str(elevation_index)
 
         # initialise reference to Blue Marble
         self._bluemarble_imshow = None
@@ -476,8 +488,10 @@ class EarthPlot(FigureCanvas):
                     self._figure.delaxes(self._figure.axes[i])
         
         # draw all Elevation contour
-        if self._elev:
-            self.drawelevation([self._elev[key].angle() for key in self._elev])
+        # if self._elev:
+        #     self.drawelevation([self._elev[key].angle() for key in self._elev])
+        for element in self._elev:
+            self._elev[element].plot()
 
         # draw stations
         for s in self._stations:

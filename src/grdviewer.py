@@ -121,7 +121,7 @@ class GrdViewer(QMainWindow):
                           self.earth_plot.viewer().altitude())
         hbox.addWidget(self._viewer_label)
         hbox.addStretch(1)
-        self._mouse_pos_label = QLabel('', parent=self)
+        self._mouse_pos_label = QLabel('0.00deg. E  0.00deg. N', parent=self)
         self.setmousepos(0, 0)
         hbox.addWidget(self._mouse_pos_label)
         vbox.addLayout(hbox)
@@ -334,10 +334,10 @@ class GrdViewer(QMainWindow):
         if len(file_name):
             for f in file_name:
                 try:
-                    p = self.earth_plot.load_pattern({'filename':f})
+                    pattern = self.earth_plot.load_pattern({'filename':f})
                 except:
                     print("Load pattern cancelled.")
-            if p:
+            if pattern:
                 self.earth_plot.draw_elements()
         utils.trace('out')
     # end of method load_pattern

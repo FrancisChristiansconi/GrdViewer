@@ -78,7 +78,7 @@ class PatternControler():
         utils.trace('in')
         if config:
             self._config.update(config)
-            self._pattern.configure(conf=config)
+            self._pattern.configure(config=config)
         if dialog:
             # if dialog use the GUI to update
             self._pdialog.configure(self._pattern)
@@ -130,7 +130,7 @@ class PatternControler():
         """
         utils.trace('in')
         if self._plot:
-            self.clear_plot()
+            self.clearplot()
         self._plot = self._pattern.plot(self._earthplot._earth_map, self._earthplot._viewer, \
                                         self._earthplot._figure, self._earthplot._axes, \
                                         self._earthplot._clrbar, self._earthplot._clrbar_axes)
@@ -146,7 +146,7 @@ class PatternControler():
         utils.trace('out')
     # end of function plot
 
-    def clear_plot(self):
+    def clearplot(self):
         """Clear the current plot
         """
         utils.trace('in')
@@ -170,6 +170,8 @@ class PatternControler():
                     print("None element have no attribute remove")
                 for element in self._plot[3]:
                     element.remove()
+        self._plot = None
+        self._plot_type = None
         utils.trace('out')
     # end of function clear_plot
 
@@ -184,7 +186,14 @@ class PatternControler():
 
         del self._earthplot._patterns[self._config['key']]
 
+
         self._earthplot.draw_elements()
+
+        # refresh pattern combo box
+        itemlist = ['']
+        itemlist.extend(self._earthplot._patterns.keys())
+        self._mainwindow.setpatterncombo(itemlist)
+
         utils.trace('out')
     # end of function make_remove_pattern
 

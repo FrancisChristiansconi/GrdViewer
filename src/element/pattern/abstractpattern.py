@@ -154,7 +154,7 @@ class AbstractPattern(Element):
             self._elevation.append(np.zeros_like(self._x[k]))
 
         # configure 
-        self.configure(conf=conf)
+        self.configure(config=conf)
 
         utils.trace('out')
     # end of constructor
@@ -201,135 +201,138 @@ class AbstractPattern(Element):
             self._azimuth[k], self._elevation[k] = self.azel_grid(k)
     # end of function generate_grid
 
-    def configure(self, conf):
+    def configure(self, config):
         utils.trace('in')
 
-        self._conf.update(conf)
-        # file name
-        try:
-            self._filename = self._conf['filename']
-        except:
-            raise ValueError("No file name provided")
-        # boolean: display slope (True) or isolevel (False)
-        try:
-            self._display_slope = self._conf['display_slope']
-        except:
-            self._display_slope = False
+        if config is not None:
+            
+            self._conf.update(config)
+            # file name
+            try:
+                self._filename = self._conf['filename']
+            except:
+                raise ValueError("No file name provided")
+            # boolean: display slope (True) or isolevel (False)
+            try:
+                self._display_slope = self._conf['display_slope']
+            except:
+                self._display_slope = False
 
-        # float[]: range of slope displayed
-        try:
-            self._slope_range = self._conf['slopes']
-        except:
-            self._slope_range = [3, 20]
+            # float[]: range of slope displayed
+            try:
+                self._slope_range = self._conf['slopes']
+            except:
+                self._slope_range = [3, 20]
 
-        # boolean: use x axis reverted 
-        try:
-            self._revert_x = self._conf['revert_x']
-        except:
-            self._revert_x = False
+            # boolean: use x axis reverted 
+            try:
+                self._revert_x = self._conf['revert_x']
+            except:
+                self._revert_x = False
 
-        # boolean: use y axis reverted
-        try:
-            self._revert_y = self._conf['revert_y']
-        except:
-            self._revert_y = False
+            # boolean: use y axis reverted
+            try:
+                self._revert_y = self._conf['revert_y']
+            except:
+                self._revert_y = False
 
-        # boolean: rotate 180 degrees around sub sat
-        try:
-            self._rotate = self._conf['rotate']
-        except:
-            self._rotate = False
+            # boolean: rotate 180 degrees around sub sat
+            try:
+                self._rotate = self._conf['rotate']
+            except:
+                self._rotate = False
 
-        # boolean: use second polarisation as copol
-        try:
-            self._use_second_pol = self._conf['use_second_pol']
-        except:
-            self._use_second_pol = False
+            # boolean: use second polarisation as copol
+            try:
+                self._use_second_pol = self._conf['use_second_pol']
+            except:
+                self._use_second_pol = False
 
-        # boolean: shrink the pattern at display
-        try:
-            self._shrink = self._conf['shrink']
-        except:
-            self._shrink = False
+            # boolean: shrink the pattern at display
+            try:
+                self._shrink = self._conf['shrink']
+            except:
+                self._shrink = False
 
-        # float: absolute shrink along azimuth in degrees
-        try:
-            self._azshrink = self._conf['azshrink']
-        except:
-            self._azshrink = 0.25
+            # float: absolute shrink along azimuth in degrees
+            try:
+                self._azshrink = self._conf['azshrink']
+            except:
+                self._azshrink = 0.25
 
-        # float: absolute shrink along elevation in degrees
-        try:
-            self._elshrink = self._conf['elshrink']
-        except:
-            self._elshrink = 0.25
+            # float: absolute shrink along elevation in degrees
+            try:
+                self._elshrink = self._conf['elshrink']
+            except:
+                self._elshrink = 0.25
 
-        # offset of pattern
-        try:
-            self._offset = self._conf['offset']
-        except:
-            self._offset = False 
+            # offset of pattern
+            try:
+                self._offset = self._conf['offset']
+            except:
+                self._offset = False 
 
-        # azimuth offset
-        try:
-            self._azimuth_offset = self._conf['azoffset']
-        except:
-            self._azimuth_offset = 0
+            # azimuth offset
+            try:
+                self._azimuth_offset = self._conf['azoffset']
+            except:
+                self._azimuth_offset = 0
 
-        # elevation offset
-        try:
-            self._elevation_offset = self._conf['eloffset']
-        except:
-            self._elevation_offset = 0
+            # elevation offset
+            try:
+                self._elevation_offset = self._conf['eloffset']
+            except:
+                self._elevation_offset = 0
 
-        # conversion factor
-        try:
-            self._conversion_factor = self._conf['cf']
-        except:
-            self._conversion_factor = 0
+            # conversion factor
+            try:
+                self._conversion_factor = self._conf['cf']
+            except:
+                self._conversion_factor = 0
+            
+            # satellite position
+            try:
+                sat_lon = self._conf['sat_lon']
+            except:
+                sat_lon = 0
+            try:
+                sat_lat = self._conf['sat_lat']
+            except:
+                sat_lat = 0
+            try:
+                sat_alt = self._conf['sat_alt']
+            except:
+                sat_alt = cst.ALTGEO
+            self._satellite = Viewer(sat_lon, sat_lat, sat_alt)
+
+            for set in range(self._nb_sets):
+                if (self._rotate and not self._rotated) or \
+                (not self._rotate and self._rotated):
+                    x_offset = (np.max(self._x[set][:]) - np.min(self._x[set][:]))
+                    y_offset = (np.max(self._y[set][:][:]) - np.min(self._y[set][:][:]))
+                    self._x[set] = -1*self._x[set]
+                    self._y[set] = -1*self._y[set]
+                    self._rotated = self._rotate
+
+            self.reshapedata()
+
+            self.generate_grid()
+
+            self.set_to_plot(self._use_second_pol)
+
+            # revevrse x and y axis if requested
+            if self._revert_x:
+                self._to_plot = self._to_plot[::-1,:]
+            if self._revert_y:
+                self._to_plot = self._to_plot[:,::-1]
+
+            try:
+                self._isolevel = self._conf['isolevel']
+            except KeyError:
+                max_directivity = np.max(self._to_plot)
+                self._isolevel = np.array(cst.DEFAULT_ISOLEVEL_DBI) + int(max_directivity + self._conversion_factor)
         
-        # satellite position
-        try:
-            sat_lon = self._conf['sat_lon']
-        except:
-            sat_lon = 0
-        try:
-            sat_lat = self._conf['sat_lat']
-        except:
-            sat_lat = 0
-        try:
-            sat_alt = self._conf['sat_alt']
-        except:
-            sat_alt = cst.ALTGEO
-        self._satellite = Viewer(sat_lon, sat_lat, sat_alt)
-
-        for set in range(self._nb_sets):
-            if (self._rotate and not self._rotated) or \
-               (not self._rotate and self._rotated):
-                x_offset = (np.max(self._x[set][:]) - np.min(self._x[set][:]))
-                y_offset = (np.max(self._y[set][:][:]) - np.min(self._y[set][:][:]))
-                self._x[set] = -1*self._x[set]
-                self._y[set] = -1*self._y[set]
-                self._rotated = self._rotate
-
-        self.reshapedata()
-
-        self.generate_grid()
-
-        self.set_to_plot(self._use_second_pol)
-
-        # revevrse x and y axis if requested
-        if self._revert_x:
-            self._to_plot = self._to_plot[::-1,:]
-        if self._revert_y:
-            self._to_plot = self._to_plot[:,::-1]
-
-        try:
-            self._isolevel = self._conf['isolevel']
-        except KeyError:
-            max_directivity = np.max(self._to_plot)
-            self._isolevel = np.array(cst.DEFAULT_ISOLEVEL_DBI) + int(max_directivity + self._conversion_factor)
-
+        return self._conf
     # end of function configure
 
     def get_conf(self):
@@ -725,6 +728,7 @@ class AbstractPattern(Element):
                 cs_label = figure.axes[0].clabel(cs_pattern, self._isolevel, inline=True, fmt='%1.1f',fontsize=2)
                 
                 utils.trace('out')
+
                 return cs_pattern, cs_marker, cs_tag, cs_label
 
             except ValueError as value_err:

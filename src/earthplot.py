@@ -56,6 +56,7 @@ class EarthPlot(FigureCanvas):
         self._height = height
         self._dpi = dpi
         self._centralwidget = parent
+        self._app = self._centralwidget.parent()
         # store _earth_map properties
         self._projection = proj
         self._resolution = res
@@ -234,9 +235,13 @@ class EarthPlot(FigureCanvas):
         self.zoomposorigin = None
         self.zoomposfinal = None
         self.zoompatch = None
+        # detect motion to update zoom rectangle
         self.mpl_connect('motion_notify_event', self.mouse_move)
+        # detect mouse press to recenter or initiate drag and zoom
         self.mpl_connect('button_press_event', self.mouse_press)
+        # detect mouse button release to finalize zoom
         self.mpl_connect('button_release_event', self.mouse_release)
+        # detect keyboard kkey press for shortcut
         self.mpl_connect('key_press_event', self.key_press)
 
         # draw the already loaded elements 
@@ -260,8 +265,8 @@ class EarthPlot(FigureCanvas):
             mouselat = np.nan
         # compute mouse azimuth and elevation for directivity computation
         mouseaz, mouseel = self.get_mouse_azel(xevent, yevent, bbox)
-        if len(self._patterns) > 0:
-            controler = next(iter(self._patterns.values()))
+        if self._patterns is not {} and self._app.getpatterncombo() is not '':
+            controler = self._patterns[self._app.getpatterncombo()]
             pattern = controler.get_pattern()
             if pattern.get_conf()['offset']:
                 az_offset = pattern.get_conf()['azoffset']
@@ -426,18 +431,22 @@ class EarthPlot(FigureCanvas):
         # if original and final position are defined, zoom the plot
         if self.zoomposorigin is not None and\
            self.zoomposfinal is not None:
-            azorigin, elorigin, lonorigin, latorigin, _, _ = self.zoomposorigin
-            azfinal, elfinal, lonfinal, latfinal, _, _ = self.zoomposfinal        
-            if self._projection == 'nsper':
-                self._zoom.min_azimuth = round(min(azorigin, azfinal), 1)
-                self._zoom.min_elevation = round(min(elorigin, elfinal), 1)
-                self._zoom.max_azimuth = round(max(azorigin, azfinal), 1)
-                self._zoom.max_elevation = round(max(elorigin, elfinal), 1)
-            elif self._projection == 'cyl':
-                self._zoom.min_longitude = round(min(lonorigin, lonfinal), 1)
-                self._zoom.min_latitude = round(min(latorigin, latfinal), 1)
-                self._zoom.max_longitude = round(max(lonorigin, lonfinal), 1)
-                self._zoom.max_latitude = round(max(latorigin, latfinal), 1)
+            azorigin, elorigin, lonorigin, latorigin, xorigin, yorigin = self.zoomposorigin
+            azfinal, elfinal, lonfinal, latfinal, xfinal, yfinal = self.zoomposfinal 
+            xzoom = abs(xfinal - xorigin) / self.get_width()
+            yzoom = abs(yfinal - yorigin) / self.get_height()
+            # authorize zooming if bigger than 5% of each axis dimension
+            if xzoom > 0.05 and yzoom > 0.05:
+                if self._projection == 'nsper':
+                    self._zoom.min_azimuth = round(min(azorigin, azfinal), 1)
+                    self._zoom.min_elevation = round(min(elorigin, elfinal), 1)
+                    self._zoom.max_azimuth = round(max(azorigin, azfinal), 1)
+                    self._zoom.max_elevation = round(max(elorigin, elfinal), 1)
+                elif self._projection == 'cyl':
+                    self._zoom.min_longitude = round(min(lonorigin, lonfinal), 1)
+                    self._zoom.min_latitude = round(min(latorigin, latfinal), 1)
+                    self._zoom.max_longitude = round(max(lonorigin, lonfinal), 1)
+                    self._zoom.max_latitude = round(max(latorigin, latfinal), 1)
             self.zoomposorigin = None
             self.zoomposfinal = None
             self.zoompatch.remove()
@@ -460,7 +469,6 @@ class EarthPlot(FigureCanvas):
             self.zoompatch.remove()
             self.zoompatch = None
             self.draw()
-
 
     def draw_elements(self):
         """This method redraw all elements of the earth plot
@@ -507,10 +515,10 @@ class EarthPlot(FigureCanvas):
         self.draw_axis()
 
         # call to surcharged draw function
-        self.draw()  
-        utils.trace('out')     
+        self.draw()
+        utils.trace('out')
     # end of draw_elements function
-    
+
     def draw_axis(self):
         utils.trace('in')
         if self._projection == 'nsper':
@@ -746,7 +754,12 @@ class EarthPlot(FigureCanvas):
         # Add grd in grd dictionary
         self._patterns[file_key] = pattern
 
-        utils.trace('out')              
+        utils.trace('out')    
+        # refresh pattern combo box   
+        itemlist = ['']
+        itemlist.extend(self._patterns.keys())
+        self._app.setpatterncombo(itemlist)
+        # return pattern controler instance       
         return self._patterns[file_key]
     # end of load_pattern
 

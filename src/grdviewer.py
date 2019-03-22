@@ -17,7 +17,7 @@ import configparser
 # import PyQt5 and link with matplotlib
 from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, qApp, \
                             QVBoxLayout, QHBoxLayout, QWidget, QFileDialog, \
-                            QLabel
+                            QLabel, QComboBox
 # import QtCore and QCursor to handle mouse movement, position and event
 from PyQt5 import QtCore
 from PyQt5.QtGui import QCursor
@@ -104,27 +104,36 @@ class GrdViewer(QMainWindow):
         # Add menu bar and menus
         self._menubar = self.createmenu()
 
+        # status bar
+        statusbar = QHBoxLayout(None)
+        # add viewer position to status bar
+        self._viewer_label = QLabel('', parent=self)
+        statusbar.addWidget(self._viewer_label)
+        statusbar.addStretch(1)
+        # add mouse ll and gain display
+        self._mouse_pos_label = QLabel('0.00deg. E  0.00deg. N', parent=self)
+        self.setmousepos(0, 0)
+        statusbar.addWidget(self._mouse_pos_label)
+        # add combo box for pattern selection
+        self._patterncombobox = QComboBox(parent=self)
+        statusbar.addWidget(self._patterncombobox)
+
         # Add map
         self.earth_plot = plc.EarthPlot(parent=self.centralwidget,
                                         config=self.config)
+
+        # set viewer pos from EarthPlot config
+        self.setviewerpos(self.earth_plot.viewer().longitude(),
+                          self.earth_plot.viewer().latitude(),
+                          self.earth_plot.viewer().altitude())
 
         # place test field in a vertical box layout
         vbox = QVBoxLayout(self.centralwidget)
         vbox.addWidget(self._menubar)
         vbox.addWidget(self.earth_plot)
+        vbox.addLayout(statusbar)
 
-        # status bar
-        hbox = QHBoxLayout(None)
-        self._viewer_label = QLabel('', parent=self)
-        self.setviewerpos(self.earth_plot.viewer().longitude(),
-                          self.earth_plot.viewer().latitude(),
-                          self.earth_plot.viewer().altitude())
-        hbox.addWidget(self._viewer_label)
-        hbox.addStretch(1)
-        self._mouse_pos_label = QLabel('0.00deg. E  0.00deg. N', parent=self)
-        self.setmousepos(0, 0)
-        hbox.addWidget(self._mouse_pos_label)
-        vbox.addLayout(hbox)
+
 
         # self.centralwidget.addLayout(vbox)
         self.setCentralWidget(self.centralwidget)
@@ -158,6 +167,20 @@ class GrdViewer(QMainWindow):
                                                                                        alt)
         self._viewer_label.setText(viewer_label_text)
     # end of method setviewerpos
+
+    def setpatterncombo(self, items):
+        """Update status bar combobox items list.
+        """
+        pbox = self._patterncombobox
+        pbox.clear()
+        pbox.addItems(items)
+        allitems = [pbox.itemText(i) for i in range(pbox.count())]
+        return allitems
+
+    def getpatterncombo(self):
+        """Access to pattern combobox value.
+        """
+        return self._patterncombobox.currentText()
 
     # Create menu bar and menus
     def createmenu(self):

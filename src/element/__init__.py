@@ -4,4 +4,5 @@ __all__ = ['element',
            'pattern',
            'elevation',
            'polygon',
-           'station']
+           'station',
+           'linedialog']

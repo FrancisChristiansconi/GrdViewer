@@ -35,7 +35,11 @@ BOLDNESS = {'no line': 0,
             'light': 0.1,
             'medium': 0.3,
             'heavy':0.5}
+
 def getboldness(linewidth):
+    """This function return a string key from a line width value.
+    The string keys are the ones of the dictionary BOLDNESS defined in constant.py.
+    """
     if linewidth == 0:
         return 'no line'
     elif linewidth < 0.2:
@@ -44,3 +48,4 @@ def getboldness(linewidth):
         return 'medium'
     else:
         return 'heavy'
+# end of function getboldness

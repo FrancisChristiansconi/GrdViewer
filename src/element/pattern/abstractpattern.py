@@ -29,9 +29,9 @@ import matplotlib.pyplot as plt
 # import Basemap of mpltoolkit
 from mpl_toolkits.basemap import Basemap
 # PyQt5 widgets import
-from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, QLineEdit, \
+from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, \
                             QHBoxLayout, QVBoxLayout, QPushButton, QWidget, QFileDialog, QLabel, \
-                            QGridLayout, QCheckBox
+                            QGridLayout, QCheckBox, QLineEdit
 from PyQt5.QtGui import QColor, QPalette
 # abstract class toolbox
 from abc import ABC, abstractmethod
@@ -55,7 +55,7 @@ class AbstractPattern(Element):
     functions and methods mandatory for compatibility with the viewer features.
     """
 
-# Function and methods common to all 
+# Function and methods common to all
 #--------------------------------------------------------------------------------------------------
     def __init__(self, filename=None, conf=None, dialog=False, parent=None):
         """Constructor of abstract class Pattern do nothing.
@@ -160,7 +160,9 @@ class AbstractPattern(Element):
     # end of constructor
 
     def reshapedata(self):
-        # for interpolation, the azimuth and elevation gradient have to be positive
+        """For interpolation, the azimuth and elevation gradient have to be positive
+        """
+        # apply to all sets of data
         for set in range(self._nb_sets):
 
             if self._x[set][0,1] > self._x[set][0,0] and self._y[set][1,0] > self._y[set][0,0]:
@@ -196,153 +198,89 @@ class AbstractPattern(Element):
     # end of reshapedata function
 
     def generate_grid(self):
+        """Generate longitude/latitude and azimuth/elevation grid from native format grid.
+        """
         for k in range(self._nb_sets):
             self._longitude[k], self._latitude[k] = self.ll_grid(k)
             self._azimuth[k], self._elevation[k] = self.azel_grid(k)
     # end of function generate_grid
 
-    def configure(self, config):
+    def configure(self, config=None):
         utils.trace('in')
-
+        # if config dictionary is provided, merge it to this instance dictionary
         if config is not None:
-            
+            # merge to this instance dictionary
             self._conf.update(config)
             # file name
-            try:
-                self._filename = self._conf['filename']
-            except:
-                raise ValueError("No file name provided")
+            self._filename = self.set(self._conf, 'filename')
             # boolean: display slope (True) or isolevel (False)
-            try:
-                self._display_slope = self._conf['display_slope']
-            except:
-                self._display_slope = False
-
+            self._display_slope = self.set(self._conf, 'display_slope', False)
             # float[]: range of slope displayed
-            try:
-                self._slope_range = self._conf['slopes']
-            except:
-                self._slope_range = [3, 20]
-
+            self._slope_range = self.set(self._conf, 'slopes', [3, 20])
             # boolean: use x axis reverted 
-            try:
-                self._revert_x = self._conf['revert_x']
-            except:
-                self._revert_x = False
-
+            self._revert_x = self.set(self._conf, 'revert_x', False)
             # boolean: use y axis reverted
-            try:
-                self._revert_y = self._conf['revert_y']
-            except:
-                self._revert_y = False
-
+            self._revert_y = self.set(self._conf, 'revert_y', False)
             # boolean: rotate 180 degrees around sub sat
-            try:
-                self._rotate = self._conf['rotate']
-            except:
-                self._rotate = False
-
+            self._rotate = self.set(self._conf, 'rotate', False)
             # boolean: use second polarisation as copol
-            try:
-                self._use_second_pol = self._conf['use_second_pol']
-            except:
-                self._use_second_pol = False
-
+            self._use_second_pol = self.set(self._conf, 'use_second_pol', False)
             # boolean: shrink the pattern at display
-            try:
-                self._shrink = self._conf['shrink']
-            except:
-                self._shrink = False
-
+            self._shrink = self.set(self._conf, 'shrink', False)
             # float: absolute shrink along azimuth in degrees
-            try:
-                self._azshrink = self._conf['azshrink']
-            except:
-                self._azshrink = 0.25
-
+            self._azshrink = self.set(self._conf, 'azshrink', 0.25)
             # float: absolute shrink along elevation in degrees
-            try:
-                self._elshrink = self._conf['elshrink']
-            except:
-                self._elshrink = 0.25
-
+            self._elshrink = self.set(self._conf, 'elshrink', 0.25)
             # offset of pattern
-            try:
-                self._offset = self._conf['offset']
-            except:
-                self._offset = False 
-
+            self._offset = self.set(self._conf, 'offset', False)
             # azimuth offset
-            try:
-                self._azimuth_offset = self._conf['azoffset']
-            except:
-                self._azimuth_offset = 0
-
+            self._azimuth_offset = self.set(self._conf, 'azoffset', 0)
             # elevation offset
-            try:
-                self._elevation_offset = self._conf['eloffset']
-            except:
-                self._elevation_offset = 0
-
+            self._elevation_offset = self.set(self._conf, 'eloffset', 0)
             # conversion factor
-            try:
-                self._conversion_factor = self._conf['cf']
-            except:
-                self._conversion_factor = 0
-            
+            self._conversion_factor = self.set(self._conf, 'cf', 0)
             # satellite position
-            try:
-                sat_lon = self._conf['sat_lon']
-            except:
-                sat_lon = 0
-            try:
-                sat_lat = self._conf['sat_lat']
-            except:
-                sat_lat = 0
-            try:
-                sat_alt = self._conf['sat_alt']
-            except:
-                sat_alt = cst.ALTGEO
+            sat_lon = self.set(self._conf, 'sat_lon', 0)
+            sat_lat = self.set(self._conf, 'sat_lat', 0)
+            sat_alt = self.set(self._conf, 'sat_alt', cst.ALTGEO)
             self._satellite = Viewer(sat_lon, sat_lat, sat_alt)
 
+            # if requested by the new configuration, rotate the pattern
             for set in range(self._nb_sets):
                 if (self._rotate and not self._rotated) or \
-                (not self._rotate and self._rotated):
+                   (not self._rotate and self._rotated):
                     x_offset = (np.max(self._x[set][:]) - np.min(self._x[set][:]))
                     y_offset = (np.max(self._y[set][:][:]) - np.min(self._y[set][:][:]))
                     self._x[set] = -1*self._x[set]
                     self._y[set] = -1*self._y[set]
                     self._rotated = self._rotate
 
+            # reshape the grid to correspond to interpolation standard
             self.reshapedata()
-
+            # regenerate longitue/latitude and azimuth/elevation grids
             self.generate_grid()
 
+            # set the data to be plotted according to configuration
             self.set_to_plot(self._use_second_pol)
 
-            # revevrse x and y axis if requested
+            # reverse x and y axis if requested
             if self._revert_x:
                 self._to_plot = self._to_plot[::-1,:]
             if self._revert_y:
                 self._to_plot = self._to_plot[:,::-1]
 
-            try:
-                self._isolevel = self._conf['isolevel']
-            except KeyError:
+            self._isolevel = self.set(self._conf, 'isolevel')
+            if self._isolevel is None:
                 max_directivity = np.max(self._to_plot)
-                self._isolevel = np.array(cst.DEFAULT_ISOLEVEL_DBI) + int(max_directivity + self._conversion_factor)
+                self._isolevel = np.array(cst.DEFAULT_ISOLEVEL_DBI) + \
+                                 int(max_directivity + self._conversion_factor)
         
         return self._conf
     # end of function configure
 
-    def get_conf(self):
-        """Return _conf dictionary.
-        """
-        return self._conf
-    # end of function get_conf
-
-
     def set_to_plot(self, cross=False):
+        """Set the pattern data to be plotted by the plot method.
+        """
         utils.trace('in')
 
         # select to plot co or cross
@@ -686,10 +624,17 @@ class AbstractPattern(Element):
 
 # plot or export to file methods
 #--------------------------------------------------------------------------------------------------
-    def plot(self, map: Basemap, viewer, figure, axes, cbar, cbar_axes):
+    def plot(self):
         """Draw pattern on the earth plot from the provided grd.
         """
         utils.trace('in')
+
+        map = self._earth_plot.get_earthmap()
+        viewer = self._earth_plot._viewer
+        figure = self._earth_plot._figure
+        axes = self._earth_plot._axes
+        cbar = self._earth_plot._clrbar
+        cbar_axes = self._earth_plot._clrbar_axes
 
         # project pattern grid in map coordinates
         x, y = map(self.longitude(), self.latitude())

@@ -34,13 +34,13 @@ class Element(ABC):
         pass
 
     @staticmethod
-    def set(conf, key):
+    def set(conf, key, fallback=None):
         """Try to return element key of dictionary conf. KeyError exception is handled.
-        In case of KeyError exception, log message is printed on standard output and None
-        value is returned.
+        In case of KeyError exception, log message is printed on standard output and fallback
+        value is returned. By default, fallback value is None
         """
         # initialize return value
-        param = None
+        param = fallback
         try:
             param = conf[key]
         except KeyError as err:

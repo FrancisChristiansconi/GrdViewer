@@ -268,14 +268,14 @@ class EarthPlot(FigureCanvas):
         if self._patterns is not {} and self._app.getpatterncombo() is not '':
             controler = self._patterns[self._app.getpatterncombo()]
             pattern = controler.get_pattern()
-            if pattern.get_conf()['offset']:
-                az_offset = pattern.get_conf()['azoffset']
-                el_offset = pattern.get_conf()['eloffset']
+            if pattern.configure()['offset']:
+                az_offset = pattern.configure()['azoffset']
+                el_offset = pattern.configure()['eloffset']
             else:
                 az_offset = 0
                 el_offset = 0
             gain, _ = pattern.interpolate_copol(mouseaz - az_offset, mouseel - el_offset)
-            gain += pattern.get_conf()['cf']
+            gain += pattern.configure()['cf']
             if mouseaz > self._zoom.max_azimuth or \
             mouseaz < self._zoom.min_azimuth or \
             mouseel > self._zoom.max_elevation or \

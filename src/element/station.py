@@ -177,8 +177,19 @@ class Dialog(QFileDialog):
 # TODO implement class View to reconfigure a station
 
 # TODO implement class Control to handle station element
+class StationControler():
+    """Enable control over a Station instance.
+    """
+
+    def __init(self, station):
+        """Constructor of class StationControler. It takes as parameter a reference to an instance
+        of class Station.
+        """
+        pass
 
 
+# Static methods and functions
+#==================================================================================================
 def get_station_from_file(filename: str, earthplot=None):
     """Returns a list of Station created from a text file passed
     to the function.

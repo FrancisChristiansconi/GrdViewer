@@ -123,7 +123,7 @@ class PatternControler():
         """
         utils.trace()
         return self._config['filename'][-3:] == 'pat'
-    # end of isgrd function
+    # end of ispat function
 
     def plot(self):
         """Plot the antenna pattern into the parent EarthPlot.
@@ -131,9 +131,7 @@ class PatternControler():
         utils.trace('in')
         if self._plot:
             self.clearplot()
-        self._plot = self._pattern.plot(self._earthplot._earth_map, self._earthplot._viewer, \
-                                        self._earthplot._figure, self._earthplot._axes, \
-                                        self._earthplot._clrbar, self._earthplot._clrbar_axes)
+        self._plot = self._pattern.plot()
         try:
             if self._config['display_slope'] is True:
                 self._plot_type = 'surf'

@@ -24,6 +24,8 @@ import numpy as np
 import utils
 # import constant file
 import constant as cst
+
+from element.linedialog import LineDialog
 #==================================================================================================
 
 # classe definition
@@ -177,6 +179,7 @@ class PatternDialog(QDialog):
             self.cf_field.setText(str(self._pattern._conversion_factor))
         
         # Add Ok/Cancel buttons
+        lines_button = QPushButton('Lines', self)
         apply_button = QPushButton('Apply', self)
         ok_button = QPushButton('OK', self)
         cancel_button = QPushButton('Cancel', self)
@@ -184,6 +187,7 @@ class PatternDialog(QDialog):
         # Place Ok/Cancel button in an horizontal box layout
         hbox2 = QHBoxLayout()
         hbox2.addStretch(1)
+        hbox2.addWidget(lines_button)
         hbox2.addWidget(apply_button)
         hbox2.addWidget(ok_button)
         hbox2.addWidget(cancel_button)
@@ -195,6 +199,7 @@ class PatternDialog(QDialog):
         self.setLayout(vbox)
 
         # connect buttons to actions
+        lines_button.clicked.connect(self.setlines)
         apply_button.clicked.connect(self.set_pattern_conf)
         ok_button.clicked.connect(lambda: self.set_pattern_conf(close=True))
         cancel_button.clicked.connect(self.close)
@@ -291,30 +296,31 @@ class PatternDialog(QDialog):
     def set_pattern_conf(self, close=False):
         utils.trace('in')
 
-        # if no defined pattern attribute return 
+        # if no defined pattern attribute return
         if not self._pattern:
             return
 
-        conf = {}
-        conf['revert_x'] = self.chk_revert_x.isChecked()
-        conf['revert_y'] = self.chk_revert_y.isChecked()
-        conf['rotate'] = self.chk_rotate.isChecked()
-        conf['use_second_pol'] = self.chkXPol.isChecked()
-        conf['sat_alt'] = float(self.alt_field.text())
-        conf['sat_lon'] = float(self.lon_field.text())
-        conf['sat_lat'] = float(self.lat_field.text())
-        conf['display_slope'] = self.chkSlope.isChecked()
-        conf['shrink'] = self.chkshrink.isChecked()
-        if conf['shrink']:
-            conf['azshrink'] = float(self.azfield.text())
-            conf['elshrink'] = float(self.elfield.text())
-        conf['offset'] = self.chk_offset.isChecked()
-        if conf['offset']:
-            conf['azoffset'] = float(self.az_offset_field.text())
-            conf['eloffset'] = float(self.el_offset_field.text())
-        conf['isolevel'] = [float(s) for s in self.isolevel_field.text().split(',')]
+        config = {}
+        config['revert_x'] = self.chk_revert_x.isChecked()
+        config['revert_y'] = self.chk_revert_y.isChecked()
+        config['rotate'] = self.chk_rotate.isChecked()
+        config['use_second_pol'] = self.chkXPol.isChecked()
+        config['sat_alt'] = float(self.alt_field.text())
+        config['sat_lon'] = float(self.lon_field.text())
+        config['sat_lat'] = float(self.lat_field.text())
+        config['display_slope'] = self.chkSlope.isChecked()
+        config['shrink'] = self.chkshrink.isChecked()
+        if config['shrink']:
+            config['azshrink'] = float(self.azfield.text())
+            config['elshrink'] = float(self.elfield.text())
+        config['offset'] = self.chk_offset.isChecked()
+        if config['offset']:
+            config['azoffset'] = float(self.az_offset_field.text())
+            config['eloffset'] = float(self.el_offset_field.text())
+        config['isolevel'] = [float(s) for s in self.isolevel_field.text().split(',')]
+        config['cf'] = float(self.cf_field.text())
 
-        self._pattern.configure(conf=conf)
+        self._pattern.configure(config=config)
 
         # self._pattern._isolevel = [float(s) for s in self.isolevel_field.text().split(',')]
         self.earth_plot.settitle(self.title_field.text())
@@ -346,6 +352,14 @@ class PatternDialog(QDialog):
         self.az_offset_field.setEnabled(self.chk_offset.isChecked())
         self.el_offset_field.setEnabled(self.chk_offset.isChecked())
     # end of callback
+
+    def setlines(self):
+        linedlg = LineDialog(self._pattern)
+        self.setModal(False)
+        linedlg.setModal(True)
+        # linedlg.show()
+        linedlg.exec_()
+        self.setModal(True)
 
 # end of classe PatternDialog
 

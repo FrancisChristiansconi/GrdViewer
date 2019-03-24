@@ -1,6 +1,8 @@
 """__init__ file of module element.
 """
-__all__ = ['pattern',
+__all__ = ['element',
+           'pattern',
            'elevation',
            'polygon',
-           'station']
+           'station',
+           'linedialog']

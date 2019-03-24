@@ -6,7 +6,7 @@ import numpy as np
 
 
 # Software version
-VERSION = '1.1.2Beta'
+VERSION = '1.1.3Beta'
 
 # Contact mail address
 CONTACT = 'christian.francesconi@ses.com'
@@ -35,3 +35,12 @@ BOLDNESS = {'no line': 0,
             'light': 0.1,
             'medium': 0.3,
             'heavy':0.5}
+def getboldness(linewidth):
+    if linewidth == 0:
+        return 'no line'
+    elif linewidth < 0.2:
+        return 'light'
+    elif linewidth < 0.4:
+        return 'medium'
+    else:
+        return 'heavy'

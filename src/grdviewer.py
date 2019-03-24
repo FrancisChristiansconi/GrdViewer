@@ -17,7 +17,7 @@ import configparser
 # import PyQt5 and link with matplotlib
 from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, qApp, \
                             QVBoxLayout, QHBoxLayout, QWidget, QFileDialog, \
-                            QLabel
+                            QLabel, QComboBox
 # import QtCore and QCursor to handle mouse movement, position and event
 from PyQt5 import QtCore
 from PyQt5.QtGui import QCursor
@@ -42,9 +42,8 @@ from zoom import Zoom
 from zoom import ZoomDialog
 # imports from station module
 import element.station as stn
-from element.station import StationDialog
 # import polygon module
-import element.polygon
+from element import polygon
 # import constant file
 import constant as cst
 
@@ -95,7 +94,7 @@ class GrdViewer(QMainWindow):
             os.chdir(target_dir)
         # read .ini file
         self.config = configparser.ConfigParser()
-        self.config.read('grdviewer.ini')
+        self.config.read('GrdViewer\grdviewer.ini')
         # go back to original directory
         os.chdir(cwd)
 
@@ -105,27 +104,36 @@ class GrdViewer(QMainWindow):
         # Add menu bar and menus
         self._menubar = self.createmenu()
 
+        # status bar
+        statusbar = QHBoxLayout(None)
+        # add viewer position to status bar
+        self._viewer_label = QLabel('', parent=self)
+        statusbar.addWidget(self._viewer_label)
+        statusbar.addStretch(1)
+        # add mouse ll and gain display
+        self._mouse_pos_label = QLabel('0.00deg. E  0.00deg. N', parent=self)
+        self.setmousepos(0, 0)
+        statusbar.addWidget(self._mouse_pos_label)
+        # add combo box for pattern selection
+        self._patterncombobox = QComboBox(parent=self)
+        statusbar.addWidget(self._patterncombobox)
+
         # Add map
         self.earth_plot = plc.EarthPlot(parent=self.centralwidget,
                                         config=self.config)
+
+        # set viewer pos from EarthPlot config
+        self.setviewerpos(self.earth_plot.viewer().longitude(),
+                          self.earth_plot.viewer().latitude(),
+                          self.earth_plot.viewer().altitude())
 
         # place test field in a vertical box layout
         vbox = QVBoxLayout(self.centralwidget)
         vbox.addWidget(self._menubar)
         vbox.addWidget(self.earth_plot)
+        vbox.addLayout(statusbar)
 
-        # status bar
-        hbox = QHBoxLayout(None)
-        self._viewer_label = QLabel('', parent=self)
-        self.setviewerpos(self.earth_plot.viewer().longitude(),
-                          self.earth_plot.viewer().latitude(),
-                          self.earth_plot.viewer().altitude())
-        hbox.addWidget(self._viewer_label)
-        hbox.addStretch(1)
-        self._mouse_pos_label = QLabel('', parent=self)
-        self.setmousepos(0, 0)
-        hbox.addWidget(self._mouse_pos_label)
-        vbox.addLayout(hbox)
+
 
         # self.centralwidget.addLayout(vbox)
         self.setCentralWidget(self.centralwidget)
@@ -159,6 +167,20 @@ class GrdViewer(QMainWindow):
                                                                                        alt)
         self._viewer_label.setText(viewer_label_text)
     # end of method setviewerpos
+
+    def setpatterncombo(self, items):
+        """Update status bar combobox items list.
+        """
+        pbox = self._patterncombobox
+        pbox.clear()
+        pbox.addItems(items)
+        allitems = [pbox.itemText(i) for i in range(pbox.count())]
+        return allitems
+
+    def getpatterncombo(self):
+        """Access to pattern combobox value.
+        """
+        return self._patterncombobox.currentText()
 
     # Create menu bar and menus
     def createmenu(self):
@@ -335,10 +357,10 @@ class GrdViewer(QMainWindow):
         if len(file_name):
             for f in file_name:
                 try:
-                    p = self.earth_plot.load_pattern({'filename':f})
+                    pattern = self.earth_plot.load_pattern({'filename':f})
                 except:
                     print("Load pattern cancelled.")
-            if p:
+            if pattern:
                 self.earth_plot.draw_elements()
         utils.trace('out')
     # end of method load_pattern
@@ -361,10 +383,10 @@ class GrdViewer(QMainWindow):
     def station_dialog(self):
         """Open dialog to get stations to draw.
         """
-        filename, _ = StationDialog.getOpenFileName()
+        filename, _ = stn.Dialog.getOpenFileName()
         if filename:
             # add the stations to the station list
-            self.earth_plot._stations.extend(stn.get_station_from_file(filename))
+            self.earth_plot._stations.extend(stn.get_station_from_file(filename, self.earth_plot))
             # refresh display
             self.earth_plot.draw_elements()
     # end of method station_dialog
@@ -375,7 +397,7 @@ class GrdViewer(QMainWindow):
         filename, _ = QFileDialog.getOpenFileName()
         if filename:
             # get list of polygon and append it to the existing list
-            self.earth_plot._polygons.extend(polygon.getpolygons(filename))
+            self.earth_plot._polygons.extend(polygon.getpolygons(self.earth_plot, filename))
             # refresh display
             self.earth_plot.draw_elements()
     # end of method 

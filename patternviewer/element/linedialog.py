@@ -51,7 +51,11 @@ class LineDialog(QDialog):
         self.combolinestyle = QComboBox(self)
         self.combolinestyle.addItems(['solid', 'dashed', 'dashdot', 'dotted',
                                       '-', '--', '-.', ':'])
-        self.combolinestyle.setCurrentText(config['linestyles'])
+        try:
+            linestyles = config['linestyles']
+        except:
+            linestyles = 'solid'
+        self.combolinestyle.setCurrentText(linestyles)
         linestylelayout.addWidget(self.combolinestyle)
         linestylelayout.addStretch(1)
         layout.addLayout(linestylelayout)
@@ -62,13 +66,17 @@ class LineDialog(QDialog):
         linewidthlayout.addWidget(labellinewidth)
         self.combolinewidth = QComboBox(self)
         self.combolinewidth.addItems(['no line', 'light',
-                                      'medium', 'heavy'])                                      
-        self.combolinewidth.setCurrentText(cst.getboldness(config['linewidths']))
+                                      'medium', 'heavy'])
+        try:
+            linewidths = config['linewidths']
+        except:
+            linewidths = 'light'
+        self.combolinewidth.setCurrentText(cst.getboldness(linewidths))
         linewidthlayout.addWidget(self.combolinewidth)
         linewidthlayout.addStretch(1)
         layout.addLayout(linewidthlayout)
         # label
-         
+
 
         # add Apply/Ok/Cancel buttons
         buttonlayout = QHBoxLayout()

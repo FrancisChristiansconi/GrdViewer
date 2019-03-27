@@ -28,11 +28,11 @@ import numpy as np
 
 # local module
 import patternviewer.utils as utils
-from patternviewer.element.pattern.control import PatternControler
-from patternviewer.element.pattern.dialog import PatternDialog
-from patternviewer.element import station as stn
+from element.pattern.control import PatternControler
+from element.pattern.dialog import PatternDialog
+from element import station as stn
 # import patternviewer.element.station as stn
-import patternviewer.element.elevation as elv
+import element.elevation as elv
 from patternviewer.viewer import Viewer
 from patternviewer.zoom import Zoom
 import patternviewer.angles
@@ -807,10 +807,10 @@ class EarthPlot(FigureCanvas):
         return np.tan(el * cst.DEG2RAD) * self._viewer.altitude()
     
     def x2az(self, x):
-        return np.arctan2(x / self._viewer.altitude()) * cst.RAD2DEG
+        return np.arctan2(x, self._viewer.altitude()) * cst.RAD2DEG
     
     def y2el(self, y):
-        return np.arctan2(y / self._viewer.altitude()) * cst.RAD2DEG
+        return np.arctan2(y, self._viewer.altitude()) * cst.RAD2DEG
 
     def projection(self,proj: str = None):
         """This function allows access to attribute _projection.

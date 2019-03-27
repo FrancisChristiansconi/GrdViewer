@@ -267,6 +267,7 @@ class AbstractPattern(Element):
                 self._isolevel = np.array(cst.DEFAULT_ISOLEVEL_DBI) + \
                                  int(max_directivity + self._conversion_factor)
         
+        utils.trace('out')
         return self._conf
     # end of function configure
 
@@ -622,13 +623,22 @@ class AbstractPattern(Element):
                              ' +lon_0=' + str(self._satellite.longitude()) + \
                              ' +lat_0=' + str(self._satellite.latitude()) + \
                              ' +x_0=0 +y_0=0 +units=meters +no_defs')
+        # consider offset
+        if self._offset:
+            az_offset = self._azimuth_offset
+            el_offset = self._elevation_offset
+        else:
+            az_offset = 0
+            el_offset = 0
+
         # get az el vector
         x, y = self.proj(lon, lat, inverse=False)
-        az = cst.RAD2DEG * np.arctan2(x / self._satellite.altitude())
-        el = cst.RAD2DEG * np.arctan2(y / self._satellite.altitude())
+        az = cst.RAD2DEG * np.arctan2(x, self._satellite.altitude()) - az_offset
+        el = cst.RAD2DEG * np.arctan2(y, self._satellite.altitude()) - el_offset
 
         # get directivity vector
-        return self.interpolate_copol(az, el)
+        gain, _ = self.interpolate_copol(az, el)
+        return gain
     # end of function directivity
 
 #==================================================================================================

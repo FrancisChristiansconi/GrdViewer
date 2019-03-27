@@ -28,8 +28,6 @@ class Station(Element):
     def __init__(self, parent=None):
         """Constructor
         """
-        if not isinstance(parent, eplt.EarthPlot) and parent is not None:
-            raise TypeError(args='parent should be of type EarthPlot')
         self._parent = parent # reference to the parent EarthPlot
         self._station = None  # display elements references
         # configuration is stored in a dictionary
@@ -204,11 +202,11 @@ def get_station_from_file(filename: str, earthplot=None):
 
     # split data and add them to Station list
     for line in lines:
-        if line is not '':
-            if not line[0] == "#":
-                tokens = line.split(',')
+        if not line[0] == "#":
+            tokens = line.split(',')
+            if len(tokens) > 1:
                 name = tokens[0]
-                tag  = tokens[1]
+                tag = tokens[1]
                 lon = float(tokens[2]) 
                 lat = float(tokens[3])
                 tagpos = tokens[4]

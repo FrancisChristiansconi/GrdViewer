@@ -4,19 +4,26 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-    {
-        "name": "Python: Terminal (integrated) - GrdViewer",
-        "type": "python",
-        "request": "launch",
-        "program": "C:\\Users\\cfrance\\Dev\\Python\\PayPat\\src\\grdviewer.py",
-        "console": "integratedTerminal"
-    },
         {
-            "name": "Python: Current File (Integrated Terminal)",
+            "name": "Python:  Debug GrdViewer (Debug Console)",
+            "type": "python",
+            "request": "launch",
+            "program": "C:\\Users\\cfrance\\Dev\\Python\\PayPat\\patternviewer\\grdviewer.py",
+            "console": "none"
+        },
+        {
+            "name": "Python:  Debug LATAM offset generator (Debug Console)",
+            "type": "python",
+            "request": "launch",
+            "program": "C:\\Users\\cfrance\\Dev\\Python\\PayPat\\patternviewer\\latamfmstest.py",
+            "console": "none"
+        },
+        {
+            "name": "Python: Debug Current File (Debug Console)",
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "console": "integratedTerminal"
+            "console": "none"
         },
         {
             "name": "Python: Attach",

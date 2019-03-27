@@ -8,15 +8,15 @@ import os.path
 from PyQt5.QtWidgets import QAction, QFileDialog
 
 # import traceback utilities
-import utils
+import patternviewer.utils as utils
 
 # Import dialog to configure pattern display
-from .dialog import PatternDialog
+from element.pattern.dialog import PatternDialog
 
 # import patterns classes
-from .abstractpattern import AbstractPattern
-from .pat import Pat
-from .grd import Grd
+from element.pattern.abstractpattern import AbstractPattern
+from element.pattern.pat import Pat
+from element.pattern.grd import Grd
 
 
 class PatternControler():

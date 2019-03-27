@@ -7,4 +7,5 @@ __all__ = ['angles',
            'grdviewer',
            'utils',
            'viewer',
-           'zoom']
+           'zoom',
+           'element']

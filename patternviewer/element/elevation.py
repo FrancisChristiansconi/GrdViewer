@@ -8,9 +8,9 @@ import numpy as np
 
 # import of local modules
 # Constants
-import constant as cst
-from .element import Element # Astract  mother class Element
-import utils
+import patternviewer.constant as cst
+from element.element import Element # Astract  mother class Element
+import patternviewer.utils as utils
 
 # Classes
 class Elevation(Element):

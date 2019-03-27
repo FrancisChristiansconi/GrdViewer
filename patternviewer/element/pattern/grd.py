@@ -1,8 +1,8 @@
 import numpy as np
 
-import utils
+import patternviewer.utils as utils
 
-from .abstractpattern import AbstractPattern
+from element.pattern.abstractpattern import AbstractPattern
 
 class Grd(AbstractPattern):
     """This class implement an antenna pattern object using data from a Ticra .grd file.

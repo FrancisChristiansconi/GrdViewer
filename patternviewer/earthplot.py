@@ -27,17 +27,18 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import numpy as np
 
 # local module
-import utils
-from element.pattern.control import PatternControler
-from element.pattern.dialog import PatternDialog
-import element.station as stn
-import element.elevation as elv
-from viewer import Viewer
-from zoom import Zoom
-import angles
+import patternviewer.utils as utils
+from patternviewer.element.pattern.control import PatternControler
+from patternviewer.element.pattern.dialog import PatternDialog
+from patternviewer.element import station as stn
+# import patternviewer.element.station as stn
+import patternviewer.element.elevation as elv
+from patternviewer.viewer import Viewer
+from patternviewer.zoom import Zoom
+import patternviewer.angles
 
 # import constant file
-import constant as cst
+import patternviewer.constant as cst
 
 
 class EarthPlot(FigureCanvas):

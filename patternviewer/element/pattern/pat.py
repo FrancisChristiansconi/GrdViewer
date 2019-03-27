@@ -1,10 +1,10 @@
 import numpy as np
 
-import utils
+import patternviewer.utils as utils
 
-import constant as cst
+import patternviewer.constant as cst
 
-from .abstractpattern import AbstractPattern
+from element.pattern.abstractpattern import AbstractPattern
 
 class Pat(AbstractPattern):
     """This class implement reading and processing of Satsoft .pat files.

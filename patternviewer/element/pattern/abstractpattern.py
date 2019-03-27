@@ -39,11 +39,11 @@ from abc import ABC, abstractmethod
 # Local module import
 #==================================================================================================
 # debug
-import utils
-from viewer import Viewer
-import angles as ang
+import patternviewer.utils as utils
+from patternviewer.viewer import Viewer
+import patternviewer.angles as ang
 # import constant file
-import constant as cst
+import patternviewer.constant as cst
 # Edit dialog
 from .dialog import PatternDialog
 from element.element import Element
@@ -69,7 +69,8 @@ class AbstractPattern(Element):
         self._parent = parent
 
         # get reference to Earth_plot object
-        self._earth_plot = self._parent.get_earthplot()
+        if self._parent is not None:
+            self._earth_plot = self._parent.get_earthplot()
 
         # dictionary with the pattern conf
         self._conf = conf
@@ -108,18 +109,9 @@ class AbstractPattern(Element):
         self._rotated = False
 
         # satellite position
-        try:
-            sat_lon = conf['sat_lon']
-        except:
-            sat_lon = 0
-        try:
-            sat_lat = conf['sat_lat']
-        except:
-            sat_lat = 0
-        try:
-            sat_alt = conf['sat_alt']
-        except:
-            sat_alt = cst.ALTGEO
+        sat_lon = self.set(conf, 'sat_lon', 0)
+        sat_lat = self.set(conf, 'sat_lat', 0)
+        sat_alt = self.set(conf, 'sat_alt', cst.ALTGEO)
         self._satellite = Viewer(sat_lon, sat_lat, sat_alt)
 
         # Conversion factor
@@ -619,6 +611,26 @@ class AbstractPattern(Element):
         """
         return self._latitude[set]
     # end of function latitude
+
+    def directivity(self, lon, lat):
+        """Return directivity for a vector of stations defined with longitude and latitude.
+        """
+        # get projection
+        self.proj = prj.Proj(init='epsg:4326 +proj=nsper' + \
+                             ' +h=' + str(self._satellite.altitude()) + \
+                             ' +a=6378137.00 +b=6378137.00' + \
+                             ' +lon_0=' + str(self._satellite.longitude()) + \
+                             ' +lat_0=' + str(self._satellite.latitude()) + \
+                             ' +x_0=0 +y_0=0 +units=meters +no_defs')
+        # get az el vector
+        x, y = self.proj(lon, lat, inverse=False)
+        az = cst.RAD2DEG * np.arctan2(x / self._satellite.altitude())
+        el = cst.RAD2DEG * np.arctan2(y / self._satellite.altitude())
+
+        # get directivity vector
+        return self.interpolate_copol(az, el)
+    # end of function directivity
+
 #==================================================================================================
 
 

@@ -13,9 +13,8 @@ import numpy as np
 
 # import local modules
 #==================================================================================================
-import constant as cst       # constants for the application
-import earthplot as eplt     # Earth Plot class definition
-from .element import Element # Astract  mother class Element
+import patternviewer.earthplot as eplt     # Earth Plot class definition
+from element.element import Element # Astract  mother class Element
 
 
 class Station(Element):

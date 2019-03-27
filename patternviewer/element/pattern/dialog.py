@@ -21,9 +21,9 @@ import numpy as np
 # import local modules
 #--------------------------------------------------------------------------------------------------
 # debug utility module
-import utils
+import patternviewer.utils as utils
 # import constant file
-import constant as cst
+import patternviewer.constant as cst
 
 from element.linedialog import LineDialog
 #==================================================================================================

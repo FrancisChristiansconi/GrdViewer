@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import QDialog, QLineEdit, QVBoxLayout, QHBoxLayout, \
 import PyQt5.QtCore as QtCore
 
 # import constant file
-import constant as cst
+import patternviewer.constant as cst
 
 
 class Viewer(object):

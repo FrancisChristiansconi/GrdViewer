@@ -11,9 +11,9 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qAp
 from PyQt5.QtGui import QColor, QPalette
 
 # Import local modules
-import utils
+import patternviewer.utils as utils
 
-import constant as cst
+import patternviewer.constant as cst
 
 class LineDialog(QDialog):
     """This class implement a dialog widget to deal with line configuration.

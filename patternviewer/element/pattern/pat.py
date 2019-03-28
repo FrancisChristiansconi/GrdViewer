@@ -4,7 +4,7 @@ import patternviewer.utils as utils
 
 import patternviewer.constant as cst
 
-from element.pattern.abstractpattern import AbstractPattern
+from patternviewer.element.pattern.abstractpattern import AbstractPattern
 
 class Pat(AbstractPattern):
     """This class implement reading and processing of Satsoft .pat files.

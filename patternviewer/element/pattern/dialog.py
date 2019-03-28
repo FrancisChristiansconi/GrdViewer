@@ -24,8 +24,8 @@ import numpy as np
 import patternviewer.utils as utils
 # import constant file
 import patternviewer.constant as cst
-
-from element.linedialog import LineDialog
+# import line configuration dialog
+from patternviewer.element.linedialog import LineDialog
 #==================================================================================================
 
 # classe definition

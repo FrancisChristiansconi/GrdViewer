@@ -27,25 +27,25 @@ import numpy as np
 # import local modules
 #==================================================================================================
 # debug utilities
-import utils
+import patternviewer.utils as utils
 # Earthplot objects
-import earthplot as plc
+import patternviewer.earthplot as plc
 # Antenna pattern configuration dialog
-from element.pattern.dialog import PatternDialog
+from patternviewer.element.pattern.dialog import PatternDialog
 # elevation curves dialog
-from element.elevation import ElevDialog
+from patternviewer.element.elevation import ElevDialog
 # import from viewer module
-from viewer import Viewer
-from viewer import ViewerPosDialog
+from patternviewer.viewer import Viewer
+from patternviewer.viewer import ViewerPosDialog
 # import from zoom module
-from zoom import Zoom
-from zoom import ZoomDialog
+from patternviewer.zoom import Zoom
+from patternviewer.zoom import ZoomDialog
 # imports from station module
-import element.station as stn
+import patternviewer.element.station as stn
 # import polygon module
-from element import polygon
+from patternviewer.element import polygon
 # import constant file
-import constant as cst
+import patternviewer.constant as cst
 
 # static functions
 #==================================================================================================
@@ -94,7 +94,7 @@ class GrdViewer(QMainWindow):
             os.chdir(target_dir)
         # read .ini file
         self.config = configparser.ConfigParser()
-        self.config.read('GrdViewer\grdviewer.ini')
+        self.config.read('grdviewer.ini')
         # go back to original directory
         os.chdir(cwd)
 

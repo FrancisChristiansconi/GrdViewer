@@ -17,9 +17,9 @@ import numpy as np
 # import local module
 #==================================================================================================
 # import constant file
-import constant as cst
+import patternviewer.constant as cst
 
-from .element import Element
+from patternviewer.element.element import Element
 
 class Polygon(Element):
     """Represent a polygon in longitude, latitude and provide function and methods

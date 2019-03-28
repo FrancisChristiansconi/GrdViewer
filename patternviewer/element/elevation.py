@@ -9,7 +9,7 @@ import numpy as np
 # import of local modules
 # Constants
 import patternviewer.constant as cst
-from element.element import Element # Astract  mother class Element
+from patternviewer.element.element import Element # Astract  mother class Element
 import patternviewer.utils as utils
 
 # Classes

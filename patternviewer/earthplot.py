@@ -28,11 +28,11 @@ import numpy as np
 
 # local module
 import patternviewer.utils as utils
-from element.pattern.control import PatternControler
-from element.pattern.dialog import PatternDialog
-from element import station as stn
+from patternviewer.element.pattern.control import PatternControler
+from patternviewer.element.pattern.dialog import PatternDialog
+from patternviewer.element import station as stn
 # import patternviewer.element.station as stn
-import element.elevation as elv
+import patternviewer.element.elevation as elv
 from patternviewer.viewer import Viewer
 from patternviewer.zoom import Zoom
 import patternviewer.angles

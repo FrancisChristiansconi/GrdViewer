@@ -11,12 +11,12 @@ from PyQt5.QtWidgets import QAction, QFileDialog
 import patternviewer.utils as utils
 
 # Import dialog to configure pattern display
-from element.pattern.dialog import PatternDialog
+from patternviewer.element.pattern.dialog import PatternDialog
 
 # import patterns classes
-from element.pattern.abstractpattern import AbstractPattern
-from element.pattern.pat import Pat
-from element.pattern.grd import Grd
+from patternviewer.element.pattern.abstractpattern import AbstractPattern
+from patternviewer.element.pattern.pat import Pat
+from patternviewer.element.pattern.grd import Grd
 
 
 class PatternControler():

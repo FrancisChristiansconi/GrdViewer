@@ -45,8 +45,8 @@ import patternviewer.angles as ang
 # import constant file
 import patternviewer.constant as cst
 # Edit dialog
-from .dialog import PatternDialog
-from element.element import Element
+from patternviewer.element.pattern.dialog import PatternDialog
+from patternviewer.element.element import Element
 
 # Class definition
 #--------------------------------------------------------------------------------------------------

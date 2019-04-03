@@ -1,0 +1,8 @@
+{
+    "python.pythonPath": "C:\\Users\\cfrance\\AppData\\Local\\Programs\\Python\\Python36\\python.exe",
+    "python.linting.pylintEnabled": true,
+    "python.linting.pylintArgs": [
+        "--extension-pkg-whitelist=PyQt5"
+    ],
+    "python.linting.enabled": true
+}

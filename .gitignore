@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # folders
 ./data/
 ./out/
@@ -5,3 +6,12 @@
 
 # files
 ./src/__pycache__/*.pyc
+=======
+# folder
+data/
+src/__pycache__/
+
+# files
+*.pyc
+*.old
+>>>>>>> develop

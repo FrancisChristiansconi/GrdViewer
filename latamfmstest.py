@@ -108,7 +108,7 @@ def main():
     file.close()
 
     # write header of output file
-    temp = 'az,el,'
+    temp = 'Pitch,Roll,'
     for station in stations_list:
         conf = station.configure()
         temp = temp + conf['tag'] + ' F2' + ',' + conf['tag'] + ' TM' + ','
@@ -136,7 +136,7 @@ def main():
                 TM_gain[name][(azoffset, eloffset)] = TM_pattern.directivity(lon, lat)
                 F2_delta = F2_gain[name][(azoffset, eloffset)] - F2_gain[name][(0, 0)]
                 TM_delta = TM_gain[name][(azoffset, eloffset)] - TM_gain[name][(0, 0)]
-                temp = temp + '{1:0.2f},{2:0.2f}'.format(name,
+                temp = temp + '{1:0.1f},{2:0.1f}'.format(name,
                                                          F2_delta,
                                                          TM_delta) + ','
             outfile.write(temp[:-1] + '\n')

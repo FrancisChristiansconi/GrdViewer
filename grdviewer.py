@@ -9,6 +9,7 @@ all the work is done.
 import os
 # system module
 import sys
+from sys import argv
 
 # import third party modules
 #==================================================================================================
@@ -66,7 +67,7 @@ class GrdViewer(QMainWindow):
     """
 
     # constructor
-    def __init__(self):
+    def __init__(self, inifile=None):
         utils.trace("in")
 
         # Parent constructor
@@ -87,14 +88,14 @@ class GrdViewer(QMainWindow):
 
         # get current dir
         cwd = os.getcwd()
-        # go to .ini directory
-        # target work directory is
-        if cwd[-3:] == 'src':
-            target_dir = cwd[:-4]
-            os.chdir(target_dir)
+        if inifile is None:
+            filename = 'grdviewer.ini'
+        else:
+            filename = inifile
+        print(".ini file: {0:s}",format(inifile))
         # read .ini file
         self.config = configparser.ConfigParser()
-        self.config.read('grdviewer.ini')
+        self.config.read(filename)
         # go back to original directory
         os.chdir(cwd)
 
@@ -565,8 +566,12 @@ class GrdViewer(QMainWindow):
 # Main execution
 if __name__ == '__main__':   
     # Create main window
-    MAIN_WINDOW = QApplication(sys.argv)
-    APP = GrdViewer()
+    MAIN_WINDOW = QApplication(argv)
+    if len(argv) > 1:
+        inifile = argv[1]
+    else:
+        inifile = None
+    APP = GrdViewer(inifile)
 
     # Start main loop
     sys.exit(MAIN_WINDOW.exec_())

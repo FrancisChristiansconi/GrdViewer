@@ -20,7 +20,7 @@
             "args": [
                 "P:\\ASTRIUM\\Astra_2EFG5B_-_SES6\\FMSLATAM\\Ground Stations location\\SES6\\SES06.sta",
                 "C:\\Temp\\FMSLATAM\\azel.txt",
-                "P:\\ASTRIUM\\Astra_2EFG5B_-_SES6\\FMSLATAM\\SES6 patterns\\Reference patterns\\SES6_Brazil_36_Tx_11680.00_V.grd",
+                "C:\\Users\\cfrance\\Documents\\SES06\\Antenna files IRESLess\\ADS_REF_ses6_Brazil_FIST_101_1168000_V.grd",
                 "P:\\ASTRIUM\\Astra_2EFG5B_-_SES6\\FMSLATAM\\SES6 patterns\\Reference patterns\\SES 6_TM_FIST_102_1170050_V.pat",
                 "C:\\Temp\\FMSLATAM"
             ]

@@ -48,7 +48,7 @@ class Element(ABC):
             param = conf[key]
         except KeyError as err:
             pass
-            # print('KeyError: {0} not defined'.format(err.args[0]), file=sys.stderr)
+            # print('KeyError: {0} not defined. Set to fallback value: {1}'.format(err.args[0], param), file=sys.stderr)
         # return either the desired value or None
         return param
     # end of function set

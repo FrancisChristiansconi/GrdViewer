@@ -47,10 +47,11 @@ def main():
     F2_config['filename'] = F2_pattern_file
     F2_config['revert_x'] = False
     F2_config['revert_y'] = False
+    F2_config['rotate']  = True
     F2_config['use_second_pol'] = True
     F2_config['sat_alt'] = cst.ALTGEO
     F2_config['sat_lon'] = -40.5
-    F2_config['sat_lon'] = 0
+    F2_config['sat_lat'] = 0
     F2_config['display_slope'] = False
     F2_config['offset'] = True
     F2_config['azoffset'] = 0
@@ -67,7 +68,7 @@ def main():
     TM_config['use_second_pol'] = False
     TM_config['sat_alt'] = cst.ALTGEO
     TM_config['sat_lon'] = -40.5
-    TM_config['sat_lon'] = 0
+    TM_config['sat_lat'] = 0
     TM_config['display_slope'] = False
     TM_config['offset'] = True
     TM_config['azoffset'] = 0

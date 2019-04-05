@@ -192,7 +192,7 @@ class EarthPlot(FigureCanvas):
                                                                  'linewidths', fallback='medium')]
                     conf['isolevel'] = [float(s) for s in conf['level'].split(',')]
                     pattern = self.load_pattern(conf=conf)
-                    
+
                     self.settitle(conf['title'])
 
                     # check for next pattern
@@ -236,6 +236,7 @@ class EarthPlot(FigureCanvas):
         self.zoomposorigin = None
         self.zoomposfinal = None
         self.zoompatch = None
+        self.dragorigin = None
         # detect motion to update zoom rectangle
         self.mpl_connect('motion_notify_event', self.mouse_move)
         # detect mouse press to recenter or initiate drag and zoom
@@ -245,7 +246,7 @@ class EarthPlot(FigureCanvas):
         # detect keyboard kkey press for shortcut
         self.mpl_connect('key_press_event', self.key_press)
 
-        # draw the already loaded elements 
+        # draw the already loaded elements
         self.draw_elements()
 
         utils.trace('out')
@@ -275,7 +276,8 @@ class EarthPlot(FigureCanvas):
             else:
                 az_offset = 0
                 el_offset = 0
-            gain, _ = pattern.interpolate_copol(mouseaz - az_offset, mouseel - el_offset)
+            # gain, _ = pattern.interpolate_copol(mouseaz - az_offset, mouseel - el_offset)
+            gain = pattern.directivity(mouselon, mouselat)
             gain += pattern.configure()['cf']
             if mouseaz > self._zoom.max_azimuth or \
             mouseaz < self._zoom.min_azimuth or \
@@ -301,6 +303,19 @@ class EarthPlot(FigureCanvas):
             self.zoompatch.set_width(abs(x - self.zoomposorigin[4]))
             self.zoompatch.set_height(abs(y - self.zoomposorigin[5]))
             self.draw()
+
+        if self.dragorigin is not None:
+            deltalon = mouselon - self.dragorigin[0]
+            deltalat = mouselat - self.dragorigin[1]
+            self._viewer.longitude(self._viewer.longitude() - deltalon)
+            self._viewer.latitude(self._viewer.latitude() - deltalat)
+            print("lon:{0:0.2f}, lat:{1:0.2f}".format(self._viewer.longitude(), self._viewer.latitude()))
+            self.draw_elements()
+            app = self.parent().parent()
+            app.setviewerpos(self._viewer.longitude(),
+                            self._viewer.latitude(),
+                            self._viewer.altitude())
+            self.dragorigin = mouselon, mouselat
     # end of method mouse_move
 
     def get_mouse_xy(self, xmouse, ymouse, bbox):
@@ -365,14 +380,14 @@ class EarthPlot(FigureCanvas):
     def mouse_press(self, event):
         """Process mouse click event.
         Buttons Ids:
-        1: left-click: start drag and zoom 
+        1: left-click: start drag and zoom
         2: wheel-click
         3: right-click: recenter plot
-        """        
+        """
         # affectation of action to button id
         action = {1: self.mouse_press_zoom,
                   2: self.mouse_donothing,
-                  3: self.mouse_set_viewer}
+                  3: self.mouse_press_drag}
         # execution of action
         action[event.button](event)
     # end of method mouse_click
@@ -383,11 +398,11 @@ class EarthPlot(FigureCanvas):
         1: left-click
         2: wheel-click
         3: right-click
-        """        
+        """
         # affectation of action to button id
         action = {1: self.mouse_release_zoom,
                   2: self.mouse_donothing,
-                  3: self.mouse_donothing}
+                  3: self.mouse_release_drag}
         # execution of action
         action[event.button](event)
     # end of method mouse_click
@@ -425,15 +440,15 @@ class EarthPlot(FigureCanvas):
         self.zoompatch = Rectangle(xy=(x, y), width=0, height=0,fill=False, linewidth=0.2)
         self._axes.add_patch(self.zoompatch)
     # end of method mouse_press_zoom
-    
-    def mouse_release_zoom(self, event):
+
+    def mouse_release_zoom(self, _):
         """Process mouse release event.
         """
         # if original and final position are defined, zoom the plot
         if self.zoomposorigin is not None and\
            self.zoomposfinal is not None:
             azorigin, elorigin, lonorigin, latorigin, xorigin, yorigin = self.zoomposorigin
-            azfinal, elfinal, lonfinal, latfinal, xfinal, yfinal = self.zoomposfinal 
+            azfinal, elfinal, lonfinal, latfinal, xfinal, yfinal = self.zoomposfinal
             xzoom = abs(xfinal - xorigin) / self.get_width()
             yzoom = abs(yfinal - yorigin) / self.get_height()
             # authorize zooming if bigger than 5% of each axis dimension
@@ -454,6 +469,15 @@ class EarthPlot(FigureCanvas):
             self.zoompatch = None
             self.draw_elements()
     # end of method mouse_release_event
+
+    def mouse_press_drag(self, event):
+        xevent = event.x
+        yevent = event.y
+        bbox = event.canvas.figure.axes[0].bbox
+        self.dragorigin = self.get_mouse_ll(xevent, yevent, bbox)
+
+    def mouse_release_drag(self, _):
+            self.dragorigin = None
 
     def key_press(self, event):
         action = {'escape': self.key_press_esc}
@@ -495,7 +519,7 @@ class EarthPlot(FigureCanvas):
             for i in range(len(self._figure.axes)):
                 if i:
                     self._figure.delaxes(self._figure.axes[i])
-        
+
         # draw all Elevation contour
         # if self._elev:
         #     self.drawelevation([self._elev[key].angle() for key in self._elev])
@@ -561,7 +585,7 @@ class EarthPlot(FigureCanvas):
         utils.trace('out')
     # end of method settitle
 
-    # Change observer Longitude 
+    # Change observer Longitude
     def setviewerlongitude(self, lon):
         utils.trace()
         self._viewer.longitude(lon)
@@ -570,7 +594,7 @@ class EarthPlot(FigureCanvas):
     # Draw Earth and return Basemap handler
     def drawearth(self, proj='nsper', resolution='c'):
         utils.trace('in')
-        
+
         ax = self._axes
         # add Earth _earth_map
         # resolution :
@@ -593,7 +617,7 @@ class EarthPlot(FigureCanvas):
                             satellite_height=self._viewer.altitude(), \
                             resolution=resolution, \
                             ax=ax)
-            # display Blue Marble picture, projected and cropped 
+            # display Blue Marble picture, projected and cropped
             if self._bluemarble:
                 self._bluemarble_imshow = self.croppedbluemarble()
             else:
@@ -609,7 +633,7 @@ class EarthPlot(FigureCanvas):
                             lat_0=self._viewer.latitude(), \
                             lat_ts=self._viewer.latitude(), \
                             resolution=resolution, \
-                            ax=ax) 
+                            ax=ax)
             if self._bluemarble:
                 self._bluemarble_imshow = self._earth_map.bluemarble(scale=0.5)
             else:
@@ -670,11 +694,11 @@ class EarthPlot(FigureCanvas):
                     linewidth=cst.BOLDNESS[self._meridians])
         # Unconditional drawing of Earth boundary
         self._earth_map.drawmapboundary(linewidth=0.2)
-    
+
         utils.trace('out')
         return self._earth_map
-    # end of drawEarth function    
-        
+    # end of drawEarth function
+
     # Draw isoElevation contours
     def drawelevation(self, level=(10, 20, 30)):
         utils.trace('in')
@@ -690,11 +714,11 @@ class EarthPlot(FigureCanvas):
         csElev = self._earth_map.contour(fXMesh,fYMesh,fElev, level, colors='black', linestyles='dotted', linewidths=0.5)
         utils.trace('out')
         return csElev
-    # end of drawelevation    
+    # end of drawelevation
 
     def elevation(self, stalon, stalat):
         """Compute elevation of spacecraft seen from a station on the ground.
-        """  
+        """
         utils.trace('in')
         # compute phi
         phi = np.arccos(np.cos(cst.DEG2RAD * stalat)
@@ -702,18 +726,18 @@ class EarthPlot(FigureCanvas):
 
         # compute elevation
         elev = np.reshape([90 if phi == 0 else cst.RAD2DEG * np.arctan((np.cos(phi) - (cst.EARTH_RAD_EQUATOR_M/(cst.EARTH_RAD_EQUATOR_M+self._viewer.altitude())))/ np.sin(phi)) for phi in phi.flatten()], phi.shape)
-        
+
         # remove station out of view
         elev = np.where(np.absolute(stalon - self._viewer.longitude()) < 90, elev, -1)
-        
+
         utils.trace('out')
         # Return vector
         return elev
     # end of function elevation
 
 
-    def get_file_key(self, filename):    
-        utils.trace('in')    
+    def get_file_key(self, filename):
+        utils.trace('in')
         file_index = 1
         f = os.path.basename(filename)
         file_key = f + ' ' + str(file_index)
@@ -728,7 +752,7 @@ class EarthPlot(FigureCanvas):
 
     def load_pattern(self, conf=None):
         """Load and display a grd file.
-        """    
+        """
         utils.trace('in')
         try:
             filename = conf['filename']
@@ -755,12 +779,12 @@ class EarthPlot(FigureCanvas):
         # Add grd in grd dictionary
         self._patterns[file_key] = pattern
 
-        utils.trace('out')    
-        # refresh pattern combo box   
+        utils.trace('out')
+        # refresh pattern combo box
         itemlist = ['']
         itemlist.extend(self._patterns.keys())
         self._app.setpatterncombo(itemlist)
-        # return pattern controler instance       
+        # return pattern controler instance
         return self._patterns[file_key]
     # end of load_pattern
 
@@ -797,25 +821,25 @@ class EarthPlot(FigureCanvas):
         else:
             return 0
     # end of function get_width
-    
+
     # convert Azimuth to _earth_map.x
     def az2x(self, az):
         return np.tan(az * cst.DEG2RAD) * self._viewer.altitude()
-    
+
     # convert Elevation to _earth_map.y
     def el2y(self, el):
         return np.tan(el * cst.DEG2RAD) * self._viewer.altitude()
-    
+
     def x2az(self, x):
         return np.arctan2(x, self._viewer.altitude()) * cst.RAD2DEG
-    
+
     def y2el(self, y):
         return np.arctan2(y, self._viewer.altitude()) * cst.RAD2DEG
 
     def projection(self,proj: str = None):
         """This function allows access to attribute _projection.
         """
-        utils.trace('in') 
+        utils.trace('in')
         if proj:
             if proj=='nsper' or proj == 'cyl':
                 self._projection = proj
@@ -874,7 +898,7 @@ class EarthPlot(FigureCanvas):
         """
         return self._coastlines
     # end of function get_coastlines
-    
+
     def set_coastlines(self, c: str, refresh: bool = False):
         """Set private attribute _coastlines value.
         If refresh is True, redraw Earth.
@@ -1001,7 +1025,7 @@ class EarthPlot(FigureCanvas):
             # crop in azimuth
             y0_source = int(np.abs(elmin + ead/2) / stepy)
         else:
-            y0_destination = int(np.abs(elmin + ead/2) / stepy)        
+            y0_destination = int(np.abs(elmin + ead/2) / stepy)
         # if destination array smaller than origin array, limit source array
         if new_ny - y0_destination < ny - y0_source:
             y_source = range(y0_source, y0_source + new_ny - y0_destination)

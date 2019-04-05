@@ -100,7 +100,7 @@ class PatternDialog(QDialog):
         vbox.addLayout(hbox_sat_position)
 
 
-        # Add isolevel 
+        # Add isolevel
         self.isolevel_label = QLabel('Isolevels', parent=self)
         self.isolevel_field = QLineEdit(self.get_isolevel(), parent=self)
         self.cf_label = QLabel('Conv. Factor', parent=self)
@@ -175,9 +175,9 @@ class PatternDialog(QDialog):
             self.lon_field.setText(str(self.earth_plot._viewer.longitude()))
             self.lat_field.setText(str(self.earth_plot._viewer.latitude()))
             self.alt_field.setText(str(self.earth_plot._viewer.altitude()))
-            # TODO do something for the multiple beams in one file case 
+            # TODO do something for the multiple beams in one file case
             self.cf_field.setText(str(self._pattern._conversion_factor))
-        
+
         # Add Ok/Cancel buttons
         lines_button = QPushButton('Lines', self)
         apply_button = QPushButton('Apply', self)
@@ -243,14 +243,14 @@ class PatternDialog(QDialog):
             self.chkXPol.setEnabled(True)
         else:
             self.chkXPol.setEnabled(False)
-        
+
         self.refresh_isolevel()
         utils.trace('out')
     # end of configure method
 
     def get_isolevel(self, pattern=None):
         """Return string formatted isolevel list. Each value separated with comma.
-        pattern is the antenna pattern 
+        pattern is the antenna pattern
         """
         if self._pattern == None:
             return ",".join(str(x) for x in cst.DEFAULT_ISOLEVEL_DBI)
@@ -289,7 +289,7 @@ class PatternDialog(QDialog):
             tmp_str = ",".join(str(x) for x in isolevel + max_cr + cf)
         else:
             tmp_str = ",".join(str(x) for x in isolevel + max_co + cf)
-        
+
         self.isolevel_field.setText(tmp_str)
     # end of method refresh_isolevel
 
@@ -331,12 +331,12 @@ class PatternDialog(QDialog):
 
         # update plot from GUI input
         self._control.plot()
-        
+
         if close:
             self.close()
         utils.trace('out')
     # end of function set_pattern_conf
-    
+
     def chkshrinkstatechanged(self):
         """Callback deactivating the shrink fields when shrink checkbox is unchecked.
         """
@@ -364,7 +364,7 @@ class PatternDialog(QDialog):
 # end of classe PatternDialog
 
 # Main execution
-if __name__ == '__main__':   
+if __name__ == '__main__':
     # Create main window
     MAIN_WINDOW = QApplication(sys.argv)
     APP = PatternDialog()

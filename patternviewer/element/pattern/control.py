@@ -7,6 +7,9 @@ import os.path
 # to be able to add action to menu Pattern
 from PyQt5.QtWidgets import QAction, QFileDialog
 
+# axes manipulation
+from mpl_toolkits.axes_grid1 import make_axes_locatable, Size
+
 # import traceback utilities
 import patternviewer.utils as utils
 
@@ -150,7 +153,14 @@ class PatternControler():
         utils.trace('in')
         # if self._config['display_slope']:
         if self._plot_type == 'surf':
-            self._plot.remove()
+            self._plot[0].remove()
+            figure = self._plot[2]
+            figure.delaxes(figure.axes[1])
+            # self._plot[1].remove()
+            ax = self._earthplot._axes
+            cbax = self._earthplot._clrbar_axes
+            divider = make_axes_locatable(ax)
+            divider.set_horizontal([Size.AxesX(ax), Size.Fixed(0), Size.Fixed(0)])
         elif self._plot_type == 'contour':
             for element in self._plot[0].collections:
                 try:

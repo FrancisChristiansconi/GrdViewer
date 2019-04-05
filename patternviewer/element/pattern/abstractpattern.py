@@ -23,7 +23,7 @@ import pyproj as prj
 # import path for customised marker
 from matplotlib.path import Path
 # axes manipulation
-from mpl_toolkits.axes_grid1 import make_axes_locatable
+from mpl_toolkits.axes_grid1 import make_axes_locatable, Size
 # other matplotlib utilities
 import matplotlib.pyplot as plt
 # import Basemap of mpltoolkit
@@ -138,14 +138,14 @@ class AbstractPattern(Element):
 
         # matrix to be plotted
         self._to_plot = np.zeros(shape=np.array(self._E_mag_co).shape, dtype=float)
-        
+
         for k in range(self._nb_sets):
             self._longitude.append(np.zeros_like(self._x[k]))
             self._latitude.append(np.zeros_like(self._x[k]))
             self._azimuth.append(np.zeros_like(self._x[k]))
             self._elevation.append(np.zeros_like(self._x[k]))
 
-        # configure 
+        # configure
         self.configure(config=conf)
 
         utils.trace('out')
@@ -209,7 +209,7 @@ class AbstractPattern(Element):
             self._display_slope = self.set(self._conf, 'display_slope', False)
             # float[]: range of slope displayed
             self._slope_range = self.set(self._conf, 'slopes', [3, 20])
-            # boolean: use x axis reverted 
+            # boolean: use x axis reverted
             self._revert_x = self.set(self._conf, 'revert_x', False)
             # boolean: use y axis reverted
             self._revert_y = self.set(self._conf, 'revert_y', False)
@@ -266,7 +266,7 @@ class AbstractPattern(Element):
                 max_directivity = np.max(self._to_plot)
                 self._isolevel = np.array(cst.DEFAULT_ISOLEVEL_DBI) + \
                                  int(max_directivity + self._conversion_factor)
-        
+
         utils.trace('out')
         return self._conf
     # end of function configure
@@ -288,7 +288,7 @@ class AbstractPattern(Element):
         if self._shrink:
             # shrink_copol uses interpolate_copol function that uses _to_plot attribute
             self._to_plot = self.shrink_copol(self._azshrink, self._elshrink)
-   
+
         utils.trace('out')
 
     def copol(self, set: int = 0):
@@ -368,7 +368,7 @@ class AbstractPattern(Element):
             azimuth_grad, _ = np.gradient(self.azimuth())
             # get gradient of Elevation coordinate
             _, elevation_grad = np.gradient(self.elevation())
-            # get gradient of pattern in Azimuth and Elevation             
+            # get gradient of pattern in Azimuth and Elevation
             co_grad_az, co_grad_el = np.gradient(self._to_plot)
             # normalize gradient of pattern in Azimuth direction
             co_grad_az /= azimuth_grad
@@ -384,7 +384,7 @@ class AbstractPattern(Element):
         """Return interpolated value of the pattern.
         The spline object is also returned for reuse.
         """
-        
+
         if spline == None:
             if self._x[set][0, 0] == self._x[set][1, 0]:
                 x = self._x[set][0, :]
@@ -404,7 +404,7 @@ class AbstractPattern(Element):
             z[np.where(np.isnan(z))] = -99
             z[np.where(np.isneginf(z))] = -99
             spline = interp.RectBivariateSpline(x, y, z)
-                    
+
         # transform azel into native coordinates
         x, y = self.azel2xy(az, el)
 
@@ -436,7 +436,7 @@ class AbstractPattern(Element):
             z[np.where(np.isnan(z))] = -99
             z[np.where(np.isneginf(z))] = -99
             spline = interp.RectBivariateSpline(x, y, z)
-            
+
         # transform azel into native coordinates
         x, y = self.azel2xy(az, el)
 
@@ -545,7 +545,7 @@ class AbstractPattern(Element):
                    5:ang.azel2azovel}
         return convert[self.grid_type()](az, el)
     # end of function azel2xy
-    
+
     def ll_grid(self, set: int = 0):
         """ Return (longitude, latitude) grid converted from (az, el) grid.
         set is the data set to be used
@@ -557,7 +557,7 @@ class AbstractPattern(Element):
         else:
             az_offset = 0
             el_offset = 0
-            
+
         x = self._satellite.altitude() * np.tan((az + az_offset) * cst.DEG2RAD)
         y = self._satellite.altitude() * np.tan((el + el_offset) * cst.DEG2RAD)
         self.proj = prj.Proj(init='epsg:4326 +proj=nsper' + \
@@ -565,9 +565,9 @@ class AbstractPattern(Element):
                              ' +a=6378137.00 +b=6378137.00' + \
                              ' +lon_0=' + str(self._satellite.longitude()) + \
                              ' +lat_0=' + str(self._satellite.latitude()) + \
-                             ' +x_0=0 +y_0=0 +units=meters +no_defs') 
+                             ' +x_0=0 +y_0=0 +units=meters +no_defs')
         return self.proj(x, y, inverse=True)
-    # end of function ll_grid    
+    # end of function ll_grid
 
     def revert_x(self, set=0):
         """Revert pattern along x axis.
@@ -594,7 +594,7 @@ class AbstractPattern(Element):
         """
         return self._azimuth[set]
     # end of function azimuth
-        
+
     def elevation(self, set: int = 0):
         """Return Elevation grid for data set of index set
         """
@@ -660,8 +660,8 @@ class AbstractPattern(Element):
 
         # project pattern grid in map coordinates
         x, y = map(self.longitude(), self.latitude())
-        
-        # display either isolevel or color map of slopes 
+
+        # display either isolevel or color map of slopes
         if not self._display_slope:
             # try to display isolevel
             # if wrong pol is chosen, isolevel value might not be found, hence an exception is thrown
@@ -681,7 +681,7 @@ class AbstractPattern(Element):
                 # if shrink pattern option is selected, use shrink_copol function
                 cs_pattern = map.contour(x, y,
                                          self._to_plot + self._conversion_factor,
-                                         self._isolevel, 
+                                         self._isolevel,
                                          linestyles=linestyles,
                                          linewidths=linewidths)
                 if not self._shrink:
@@ -691,9 +691,9 @@ class AbstractPattern(Element):
                     cs_tag = None
                     # no call to displaymax because it has no meaning when shrinking the pattern
 
-                # add isolevels labels    
+                # add isolevels labels
                 cs_label = figure.axes[0].clabel(cs_pattern, self._isolevel, inline=True, fmt='%1.1f',fontsize=2)
-                
+
                 utils.trace('out')
 
                 return cs_pattern, cs_marker, cs_tag, cs_label
@@ -713,20 +713,20 @@ class AbstractPattern(Element):
             az_lin = np.linspace(az_min, az_max, nx)
             el_lin = np.linspace(el_min, el_max, ny)
             az_mesh, el_mesh = np.meshgrid(az_lin, el_lin)
-            
+
             # convert grid to plot coordinates
             x = np.tan(az_mesh * cst.DEG2RAD) * self._satellite.altitude()
             y = np.tan(el_mesh * cst.DEG2RAD) * self._satellite.altitude()
-            
+
             # compute plot origin (Nadir of spacecraft)
             x_origin, y_origin = map(self._satellite.longitude(),
                                      self._satellite.latitude())
-            
+
             # display color mesh
             cmap = plt.get_cmap('jet')
             cmap.set_over('white', self._slope_range[1])
             cmap.set_under('white', self._slope_range[0])
-            
+
             slope, _ = self.interpolate_slope(az_mesh, el_mesh)
 
             pcm_pattern = map.pcolormesh(x + x_origin, \
@@ -745,7 +745,7 @@ class AbstractPattern(Element):
             cbar.ax.set_ylabel('Pattern slope (dB/deg)')
 
             utils.trace('out')
-            return pcm_pattern
+            return pcm_pattern, cbar, figure
         # endif
     # end of method plot
 
@@ -789,7 +789,7 @@ class AbstractPattern(Element):
         else:
             x_offset = 0
             y_offset = 0
-        file.write("  " + str(xs + x_offset) + ", " 
+        file.write("  " + str(xs + x_offset) + ", "
                         + str(ys + y_offset) + ", "
                         + str(xe + x_offset) + ", "
                         + str(ye + y_offset) + "\n")
@@ -799,10 +799,10 @@ class AbstractPattern(Element):
         x, y = np.meshgrid(x, y)
         x = x * cst.RAD2DEG
         y = y * cst.RAD2DEG
-        
+
         # white line
-        file.write(" \n")                
-        
+        file.write(" \n")
+
         # beam center
         file.write(" 0, 0\n")
         # Frequency
@@ -810,7 +810,7 @@ class AbstractPattern(Element):
 
         # write pattern data
         if shrunk:
-            co_to_write = self.shrink_copol(azshrink=self._azshrink, elshrink=self._elshrink, 
+            co_to_write = self.shrink_copol(azshrink=self._azshrink, elshrink=self._elshrink,
                                             az_co=x, el_co=y, set=set)
         else:
             co_to_write, _ = self.interpolate_copol(x, y, set)
@@ -849,7 +849,7 @@ class AbstractPattern(Element):
         # 4: Elevation over Azimuth
         # 5: Elevation and Azimuth
         # 6: Azimuth over Elevation
-        # 7: thetaphi grid 
+        # 7: thetaphi grid
         #
         # Type of pat field grid
         # 1 - uv

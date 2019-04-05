@@ -270,25 +270,17 @@ class EarthPlot(FigureCanvas):
         if self._patterns is not {} and self._app.getpatterncombo() is not '':
             controler = self._patterns[self._app.getpatterncombo()]
             pattern = controler.get_pattern()
-            if pattern.configure()['offset']:
-                az_offset = pattern.configure()['azoffset']
-                el_offset = pattern.configure()['eloffset']
-            else:
-                az_offset = 0
-                el_offset = 0
-            # gain, _ = pattern.interpolate_copol(mouseaz - az_offset, mouseel - el_offset)
             gain = pattern.directivity(mouselon, mouselat)
             gain += pattern.configure()['cf']
-            if mouseaz > self._zoom.max_azimuth or \
-            mouseaz < self._zoom.min_azimuth or \
-            mouseel > self._zoom.max_elevation or \
-            mouseel < self._zoom.min_elevation:
-                mouselon = np.nan
-                mouselat = np.nan
-            if np.isnan(mouselon) or np.isnan(mouselat):
-                gain = np.nan
         else:
             gain = None
+        if mouseaz >= self._zoom.max_azimuth or \
+            mouseaz <= self._zoom.min_azimuth or \
+            mouseel >= self._zoom.max_elevation or \
+            mouseel <= self._zoom.min_elevation:
+            mouselon = np.nan
+            mouselat = np.nan
+            gain = np.nan
         # set status bar text
         app = self.parent().parent()
         app.setmousepos(mouselon, mouselat, gain)

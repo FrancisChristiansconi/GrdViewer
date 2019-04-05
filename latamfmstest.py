@@ -9,6 +9,9 @@ from sys import argv
 # import glob
 import glob
 
+# import numpy
+import numpy as np
+
 # import patterns classes
 from patternviewer.element.pattern.grd import Grd
 from patternviewer.element.pattern.pat import Pat
@@ -107,39 +110,53 @@ def main():
     # close file
     file.close()
 
+    # if azel file is not empty, use its value otherwise generate standard grid
+    az = []
+    el = []
+    if len(lines) > 0:
+        for line in lines:
+            if line is not '':
+                tokens = line.split(',')
+                az.append(tokens[0])
+                el.append(tokens[1])
+    else:
+        azvec = np.linspace(-0.3, 0.3, 61)
+        elvec = np.linspace(-0.3, 0.3, 61)
+        azgrid, elgrid = np.meshgrid(azvec, elvec)
+        az = azgrid.flatten()
+        el = elgrid.flatten()
+
     # write header of output file
-    temp = 'Pitch,Roll,'
+    temp = 'Test ID,Pitch,Roll,'
     for station in stations_list:
         conf = station.configure()
         temp = temp + conf['tag'] + ' F2' + ',' + conf['tag'] + ' TM' + ','
     outfile.write(temp[:-1] + '\n')
 
     # write data in output file
-    for line in lines:
-        tokens = line.split(',')
-        if len(tokens) > 1:
-            azoffset = float(tokens[0])
-            eloffset = float(tokens[1])
-            temp = line[:-1] + ','
-            for station in stations_list:
-                F2_config['azoffset'] = azoffset
-                F2_config['eloffset'] = eloffset
-                F2_pattern.configure(F2_config)
-                TM_config['azoffset'] = azoffset
-                TM_config['eloffset'] = eloffset
-                TM_pattern.configure(TM_config)
-                conf = station.configure()
-                lon = conf['longitude']
-                lat = conf['latitude']
-                name = conf['tag']
-                F2_gain[name][(azoffset, eloffset)] = F2_pattern.directivity(lon, lat)
-                TM_gain[name][(azoffset, eloffset)] = TM_pattern.directivity(lon, lat)
-                F2_delta = F2_gain[name][(azoffset, eloffset)] - F2_gain[name][(0, 0)]
-                TM_delta = TM_gain[name][(azoffset, eloffset)] - TM_gain[name][(0, 0)]
-                temp = temp + '{1:0.1f},{2:0.1f}'.format(name,
-                                                         F2_delta,
-                                                         TM_delta) + ','
-            outfile.write(temp[:-1] + '\n')
+    for itest in range(len(az)):
+        print('Test ID: {0:05d}'.format(itest))
+        azoffset = az[itest]
+        eloffset = el[itest]
+        temp = '{0:05d},{1:0.2f},{2:0.2f},'.format(itest, azoffset, eloffset)
+        for station in stations_list:
+            F2_config['azoffset'] = azoffset
+            F2_config['eloffset'] = eloffset
+            F2_pattern.configure(F2_config)
+            TM_config['azoffset'] = azoffset
+            TM_config['eloffset'] = eloffset
+            TM_pattern.configure(TM_config)
+            conf = station.configure()
+            lon = conf['longitude']
+            lat = conf['latitude']
+            name = conf['tag']
+            F2_gain[name][(azoffset, eloffset)] = F2_pattern.directivity(lon, lat)
+            TM_gain[name][(azoffset, eloffset)] = TM_pattern.directivity(lon, lat)
+            F2_delta = F2_gain[name][(azoffset, eloffset)] - F2_gain[name][(0, 0)]
+            TM_delta = TM_gain[name][(azoffset, eloffset)] - TM_gain[name][(0, 0)]
+            temp = temp + '{0:0.1f},{1:0.1f},'.format(F2_delta, TM_delta)
+        outfile.write(temp[:-1] + '\n')
+    outfile.close()
 # end of main function
 
 # Main execution

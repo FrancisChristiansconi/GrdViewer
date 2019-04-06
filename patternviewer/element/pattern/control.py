@@ -150,37 +150,7 @@ class PatternControler():
     def clearplot(self):
         """Clear the current plot
         """
-        utils.trace('in')
-        # if self._config['display_slope']:
-        if self._plot_type == 'surf':
-            self._plot[0].remove()
-            figure = self._plot[2]
-            figure.delaxes(figure.axes[1])
-            # self._plot[1].remove()
-            ax = self._earthplot._axes
-            cbax = self._earthplot._clrbar_axes
-            divider = make_axes_locatable(ax)
-            divider.set_horizontal([Size.AxesX(ax), Size.Fixed(0), Size.Fixed(0)])
-        elif self._plot_type == 'contour':
-            for element in self._plot[0].collections:
-                try:
-                    element.remove()
-                except ValueError:
-                    print(element)
-            if len(self._plot) > 1:
-                try:
-                    self._plot[1][0].remove()
-                except TypeError:
-                    print("None element cannot be removed")
-                try:
-                    self._plot[2].remove()
-                except AttributeError:
-                    print("None element have no attribute remove")
-                for element in self._plot[3]:
-                    element.remove()
-        self._plot = None
-        self._plot_type = None
-        utils.trace('out')
+        self._pattern.clearplot()
     # end of function clear_plot
 
     # def make_remove_pattern(self, file_key, patterns, eplot):
@@ -192,10 +162,12 @@ class PatternControler():
         menu_action = menu.menuAction()
         menu.parent().removeAction(menu_action)
 
+        # delete reference to pattern object
         del self._earthplot._patterns[self._config['key']]
 
-
-        self._earthplot.draw_elements()
+        # clear the plot and redraw EarthPlot
+        self.clearplot()
+        self._earthplot.draw()
 
         # refresh pattern combo box
         itemlist = ['']

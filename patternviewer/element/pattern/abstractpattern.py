@@ -70,7 +70,7 @@ class AbstractPattern(Element):
 
         # get reference to Earth_plot object
         if self._parent is not None:
-            self._earth_plot = self._parent.get_earthplot()
+            self._earthplot = self._parent.get_earthplot()
 
         # dictionary with the pattern conf
         self._conf = conf
@@ -107,6 +107,9 @@ class AbstractPattern(Element):
 
         # rotated pattern
         self._rotated = False
+
+        # storage for plot objects
+        self._plot = None
 
         # satellite position
         sat_lon = self.set(conf, 'sat_lon', 0)
@@ -344,8 +347,8 @@ class AbstractPattern(Element):
     def displaymax(self, map: Basemap, set: int = 0):
         """Display max of pattern as a cross on the map.
         """
-        plot_width = self._earth_plot.get_width()
-        plot_height = self._earth_plot.get_height()
+        plot_width = self._earthplot.get_width()
+        plot_height = self._earthplot.get_height()
         x_offset = plot_width / 200
         y_offset = plot_height / 200
         max_val, max_lon, max_lat = self.getmax(set)
@@ -651,12 +654,12 @@ class AbstractPattern(Element):
         """
         utils.trace('in')
 
-        map = self._earth_plot.get_earthmap()
-        viewer = self._earth_plot._viewer
-        figure = self._earth_plot._figure
-        axes = self._earth_plot._axes
-        cbar = self._earth_plot._clrbar
-        cbar_axes = self._earth_plot._clrbar_axes
+        map = self._earthplot.get_earthmap()
+        viewer = self._earthplot._viewer
+        figure = self._earthplot._figure
+        axes = self._earthplot._axes
+        cbar = self._earthplot._clrbar
+        cbar_axes = self._earthplot._clrbar_axes
 
         # project pattern grid in map coordinates
         x, y = map(self.longitude(), self.latitude())
@@ -696,12 +699,14 @@ class AbstractPattern(Element):
 
                 utils.trace('out')
 
-                return cs_pattern, cs_marker, cs_tag, cs_label
+                self._plot = cs_pattern, cs_marker, cs_tag, cs_label
+                return self._plot
 
             except ValueError as value_err:
                 print(value_err)
                 print('Pattern ' + self._filename + ' will not be displayed.')
                 utils.trace('out')
+                self._plot = None
                 return None
         else:
             # define regular grid and azimuth/elevation
@@ -745,12 +750,41 @@ class AbstractPattern(Element):
             cbar.ax.set_ylabel('Pattern slope (dB/deg)')
 
             utils.trace('out')
-            return pcm_pattern, cbar, figure
+            self._plot = pcm_pattern, cbar, figure
+            return self._plot
         # endif
     # end of method plot
 
     def clearplot(self):
-        self._parent.clearplot()
+        utils.trace('in')
+        if self._conf['display_slope']:
+            self._plot[0].remove()
+            figure = self._plot[2]
+            figure.delaxes(figure.axes[1])
+            # self._plot[1].remove()
+            ax = self._earthplot._axes
+            cbax = self._earthplot._clrbar_axes
+            divider = make_axes_locatable(ax)
+            divider.set_horizontal([Size.AxesX(ax), Size.Fixed(0), Size.Fixed(0)])
+        else:
+            for element in self._plot[0].collections:
+                try:
+                    element.remove()
+                except ValueError:
+                    print(element)
+            if len(self._plot) > 1:
+                try:
+                    self._plot[1][0].remove()
+                except TypeError:
+                    print("None element cannot be removed")
+                try:
+                    self._plot[2].remove()
+                except AttributeError:
+                    print("None element have no attribute remove")
+                for element in self._plot[3]:
+                    element.remove()
+        self._plot = None
+        utils.trace('out')
 
     def export_to_file(self, filename: str, shrunk: bool = False, set: int = 0):
         """Export this pattern to .pat file.

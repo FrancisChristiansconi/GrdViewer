@@ -191,6 +191,8 @@ class EarthPlot(FigureCanvas):
                     conf['linewidths'] = cst.BOLDNESS[config.get(pattern_section,
                                                                  'linewidths', fallback='medium')]
                     conf['isolevel'] = [float(s) for s in conf['level'].split(',')]
+                    conf['Color surface'] = config.getboolean(pattern_section, 'Color surface',
+                                                              fallback=False)
                     pattern = self.load_pattern(conf=conf)
 
                     self.settitle(conf['title'])

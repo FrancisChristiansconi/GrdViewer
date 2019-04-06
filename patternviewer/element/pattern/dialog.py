@@ -12,7 +12,7 @@ import sys
 # import of PyQt5 for all GUI elements
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, \
                             QLineEdit, QHBoxLayout, QVBoxLayout, QPushButton, QWidget, \
-                            QFileDialog, QLabel, QGridLayout, QCheckBox
+                            QFileDialog, QLabel, QGridLayout, QCheckBox, QGridLayout
 from PyQt5.QtGui import QColor, QPalette
 # import numpy
 import numpy as np
@@ -51,9 +51,13 @@ class PatternDialog(QDialog):
         self.filename = filename
         self.earth_plot = parent
         self._control = control
-        self._pattern = control._pattern
-        self._plot = control._plot
-        self._item = control._pattern_sub_menu
+        self._pattern = None
+        self._plot = None
+        self._item = None
+        if control is not None:
+            self._pattern = control._pattern
+            self._plot = control._plot
+            self._item = control._pattern_sub_menu
 
         # Add Title to the widget
         self.setWindowTitle('Load pattern')
@@ -121,31 +125,35 @@ class PatternDialog(QDialog):
         hbox_revert.addWidget(self.chk_revert_y)
         hbox_revert.addWidget(self.chk_rotate)
         vbox.addLayout(hbox_revert)
-        self.chkXPol    = QCheckBox('Use crosspol data', parent=self)
-        self.chkXPol.stateChanged.connect(self.refresh_isolevel)
-        self.chkSlope   = QCheckBox('Display Slope', parent=self)
 
-        # place test field in a vertical box layout
-        vbox.addWidget(self.chkXPol)
-        vbox.addWidget(self.chkSlope)
-        vbox.addStretch(1)
+        # options grid layout
+        self.chkxpol = QCheckBox('Use crosspol data', parent=self)
+        self.chkxpol.stateChanged.connect(self.refresh_isolevel)
+        self.chkslope = QCheckBox('Display Slope', parent=self)
+        self.chksurf = QCheckBox('Color surface', parent=self)
+        optionbox = QGridLayout(None)
+        optionbox.addWidget(self.chkxpol, 1, 1)
+        optionbox.addWidget(self.chkslope, 1, 2)
+        optionbox.addWidget(self.chksurf, 1, 3)
+        vbox.addLayout(optionbox)
 
         # add shrink sub form
         self.chkshrink = QCheckBox('Shrink', parent=self)
         self.azshrklbl = QLabel('Az.', parent=self)
         self.azfield = QLineEdit('0.25', parent=self)
-        # self.azfield.setFixedWidth(50)
         self.elshrklbl = QLabel('El.', parent=self)
         self.elfield = QLineEdit('0.25', parent=self)
+        self.azfield.setFixedWidth(50)
+        self.elfield.setFixedWidth(50)
         # self.elfield.setFixedWidth(50)
-        hbox_shrink = QHBoxLayout(None)
-        hbox_shrink.addWidget(self.chkshrink)
-        hbox_shrink.addWidget(self.azshrklbl)
-        hbox_shrink.addWidget(self.azfield)
-        hbox_shrink.addWidget(self.elshrklbl)
-        hbox_shrink.addWidget(self.elfield)
-        hbox_shrink.addStretch(1)
-        vbox.addLayout(hbox_shrink)
+        hbox_shrink = QGridLayout(None)
+        hbox_shrink.addWidget(self.chkshrink, 1, 1)
+        hbox_shrink.addWidget(self.azshrklbl, 1, 2)
+        hbox_shrink.addWidget(self.azfield, 1, 3)
+        hbox_shrink.addWidget(self.elshrklbl, 1, 4)
+        hbox_shrink.addWidget(self.elfield, 1, 5)
+        # hbox_shrink.addStretch(1)
+        # vbox.addLayout(hbox_shrink)
         self.chkshrink.stateChanged.connect(self.chkshrinkstatechanged)
         self.chkshrinkstatechanged()
 
@@ -155,14 +163,16 @@ class PatternDialog(QDialog):
         self.az_offset_field = QLineEdit('0.0', parent=self)
         self.el_offset_label = QLabel('El.', parent=self)
         self.el_offset_field = QLineEdit('0.0', parent=self)
-        hbox_offset = QHBoxLayout(None)
-        hbox_offset.addWidget(self.chk_offset)
-        hbox_offset.addWidget(self.az_offset_label)
-        hbox_offset.addWidget(self.az_offset_field)
-        hbox_offset.addWidget(self.el_offset_label)
-        hbox_offset.addWidget(self.el_offset_field)
-        hbox_offset.addStretch(1)
-        vbox.addLayout(hbox_offset)
+        self.az_offset_field.setFixedWidth(50)
+        self.el_offset_field.setFixedWidth(50)
+        # hbox_shrink = QHBoxLayout(None)
+        hbox_shrink.addWidget(self.chk_offset, 1, 6)
+        hbox_shrink.addWidget(self.az_offset_label, 1, 7)
+        hbox_shrink.addWidget(self.az_offset_field, 1, 8)
+        hbox_shrink.addWidget(self.el_offset_label, 1, 9)
+        hbox_shrink.addWidget(self.el_offset_field, 1, 10)
+        # hbox_shrink.addStretch(1)
+        vbox.addLayout(hbox_shrink)
         self.chk_offset.stateChanged.connect(self.chk_offset_state_changed)
         self.chk_offset_state_changed()
 
@@ -227,10 +237,11 @@ class PatternDialog(QDialog):
         self.chk_revert_x.setChecked(pattern._revert_x)
         self.chk_revert_y.setChecked(pattern._revert_y)
         self.chk_rotate.setChecked(pattern._rotated)
-        self.chkXPol.setChecked(pattern._use_second_pol)
-        self.chkSlope.setChecked(pattern._display_slope)
+        self.chkxpol.setChecked(pattern._use_second_pol)
+        self.chkslope.setChecked(pattern._display_slope)
         self.chkshrink.setChecked(pattern._shrink)
         self.chk_offset.setChecked(pattern._offset)
+        self.chksurf.setChecked(pattern.set(pattern.configure(), 'Color surface', False))
         if pattern._shrink:
             self.azfield.setText(str(pattern._azshrink))
             self.elfield.setText(str(pattern._elshrink))
@@ -240,9 +251,9 @@ class PatternDialog(QDialog):
 
         # disable use second pol option if second pol not available
         if len(pattern._E_mag_cr):
-            self.chkXPol.setEnabled(True)
+            self.chkxpol.setEnabled(True)
         else:
-            self.chkXPol.setEnabled(False)
+            self.chkxpol.setEnabled(False)
 
         self.refresh_isolevel()
         utils.trace('out')
@@ -285,7 +296,7 @@ class PatternDialog(QDialog):
 
         cf = self.get_cf()
         isolevel = np.array(self._pattern._isolevel) - np.max(self._pattern._isolevel)
-        if self.chkXPol.checkState():
+        if self.chkxpol.checkState():
             tmp_str = ",".join(str(x) for x in isolevel + max_cr + cf)
         else:
             tmp_str = ",".join(str(x) for x in isolevel + max_co + cf)
@@ -304,11 +315,11 @@ class PatternDialog(QDialog):
         config['revert_x'] = self.chk_revert_x.isChecked()
         config['revert_y'] = self.chk_revert_y.isChecked()
         config['rotate'] = self.chk_rotate.isChecked()
-        config['use_second_pol'] = self.chkXPol.isChecked()
+        config['use_second_pol'] = self.chkxpol.isChecked()
         config['sat_alt'] = float(self.alt_field.text())
         config['sat_lon'] = float(self.lon_field.text())
         config['sat_lat'] = float(self.lat_field.text())
-        config['display_slope'] = self.chkSlope.isChecked()
+        config['display_slope'] = self.chkslope.isChecked()
         config['shrink'] = self.chkshrink.isChecked()
         if config['shrink']:
             config['azshrink'] = float(self.azfield.text())
@@ -319,6 +330,7 @@ class PatternDialog(QDialog):
             config['eloffset'] = float(self.el_offset_field.text())
         config['isolevel'] = [float(s) for s in self.isolevel_field.text().split(',')]
         config['cf'] = float(self.cf_field.text())
+        config['Color surface'] = self.chksurf.isChecked()
 
         self._pattern.configure(config=config)
 
@@ -368,6 +380,7 @@ if __name__ == '__main__':
     # Create main window
     MAIN_WINDOW = QApplication(sys.argv)
     APP = PatternDialog()
+    APP.show()
 
     # Start main loop
     sys.exit(MAIN_WINDOW.exec_())

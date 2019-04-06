@@ -661,11 +661,38 @@ class AbstractPattern(Element):
         cbar = self._earthplot._clrbar
         cbar_axes = self._earthplot._clrbar_axes
 
-        # project pattern grid in map coordinates
-        x, y = map(self.longitude(), self.latitude())
+        # choose data to plot
+        if not self._display_slope:
+            x, y = map(self.longitude(), self.latitude())
+            x_origin, y_origin = 0, 0
+            to_plot = self._to_plot + self._conversion_factor
+            isolevelscale = self._isolevel
+            maxgain, _, _ = self.getmax()
+            colorbarscale = min(self._isolevel), round(maxgain + 1)
+        else:
+            # define regular grid and azimuth/elevation
+            nx, ny = 1001, 1001
+            az_min = np.min(self.azimuth())
+            az_max = np.max(self.azimuth())
+            el_min = np.min(self.elevation())
+            el_max = np.max(self.elevation())
+            az_lin = np.linspace(az_min, az_max, nx)
+            el_lin = np.linspace(el_min, el_max, ny)
+            az_mesh, el_mesh = np.meshgrid(az_lin, el_lin)
+
+            # convert grid to plot coordinates
+            x = np.tan(az_mesh * cst.DEG2RAD) * self._satellite.altitude()
+            y = np.tan(el_mesh * cst.DEG2RAD) * self._satellite.altitude()
+            # compute plot origin (Nadir of spacecraft)
+            x_origin, y_origin = map(self._satellite.longitude(),
+                                     self._satellite.latitude())
+            # get interpolated points on a regular grid
+            to_plot, _ = self.interpolate_slope(az_mesh, el_mesh)
+            isolevelscale = range(self._slope_range[0], self._slope_range[1], 3)
+            colorbarscale = self._slope_range
 
         # display either isolevel or color map of slopes
-        if not self._display_slope:
+        if not self._conf['Color surface']:
             # try to display isolevel
             # if wrong pol is chosen, isolevel value might not be found, hence an exception is thrown
             # and has to be caught
@@ -682,9 +709,9 @@ class AbstractPattern(Element):
                     linewidths = 0.2
 
                 # if shrink pattern option is selected, use shrink_copol function
-                cs_pattern = map.contour(x, y,
-                                         self._to_plot + self._conversion_factor,
-                                         self._isolevel,
+                cs_pattern = map.contour(x + x_origin, y + y_origin,
+                                         to_plot,
+                                         isolevelscale,
                                          linestyles=linestyles,
                                          linewidths=linewidths)
                 if not self._shrink:
@@ -695,50 +722,25 @@ class AbstractPattern(Element):
                     # no call to displaymax because it has no meaning when shrinking the pattern
 
                 # add isolevels labels
-                cs_label = figure.axes[0].clabel(cs_pattern, self._isolevel, inline=True, fmt='%1.1f',fontsize=2)
+                cs_label = figure.axes[0].clabel(cs_pattern, isolevelscale, inline=True, fmt='%1.1f',fontsize=2)
 
-                utils.trace('out')
-
-                self._plot = cs_pattern, cs_marker, cs_tag, cs_label
-                return self._plot
+                # Set return value
+                self._plot = 'contour', cs_pattern, cs_marker, cs_tag, cs_label
 
             except ValueError as value_err:
                 print(value_err)
                 print('Pattern ' + self._filename + ' will not be displayed.')
-                utils.trace('out')
                 self._plot = None
-                return None
         else:
-            # define regular grid and azimuth/elevation
-            nx, ny = 1001, 1001
-            az_min = np.min(self.azimuth())
-            az_max = np.max(self.azimuth())
-            el_min = np.min(self.elevation())
-            el_max = np.max(self.elevation())
-            az_lin = np.linspace(az_min, az_max, nx)
-            el_lin = np.linspace(el_min, el_max, ny)
-            az_mesh, el_mesh = np.meshgrid(az_lin, el_lin)
-
-            # convert grid to plot coordinates
-            x = np.tan(az_mesh * cst.DEG2RAD) * self._satellite.altitude()
-            y = np.tan(el_mesh * cst.DEG2RAD) * self._satellite.altitude()
-
-            # compute plot origin (Nadir of spacecraft)
-            x_origin, y_origin = map(self._satellite.longitude(),
-                                     self._satellite.latitude())
 
             # display color mesh
             cmap = plt.get_cmap('jet')
-            cmap.set_over('white', self._slope_range[1])
-            cmap.set_under('white', self._slope_range[0])
+            cmap.set_over('white', max(colorbarscale))
+            cmap.set_under('white', min(colorbarscale))
 
-            slope, _ = self.interpolate_slope(az_mesh, el_mesh)
-
-            pcm_pattern = map.pcolormesh(x + x_origin, \
-                                    y + y_origin, \
-                                    slope, \
-                                    vmin=self._slope_range[0], vmax=self._slope_range[1], \
-                                    cmap=cmap, alpha=0.5)
+            pcm_pattern = map.pcolormesh(x + x_origin, y + y_origin, to_plot,
+                                         vmin=min(colorbarscale), vmax=max(colorbarscale),
+                                         cmap=cmap, alpha=0.5)
 
             # add color bar
             if cbar:
@@ -747,41 +749,45 @@ class AbstractPattern(Element):
                 divider = make_axes_locatable(axes)
                 cbar_axes = divider.append_axes("right", size="5%", pad=0.05)
                 cbar = figure.colorbar(pcm_pattern, cax=cbar_axes)
-            cbar.ax.set_ylabel('Pattern slope (dB/deg)')
+            if self._conf['display_slope']:
+                cbar.ax.set_ylabel('Slope (dB/deg)')
+            else:
+                cbar.ax.set_ylabel('Gain (dB)')
 
-            utils.trace('out')
-            self._plot = pcm_pattern, cbar, figure
-            return self._plot
+            self._plot = 'surface', pcm_pattern, cbar, figure
         # endif
+
+        utils.trace('out')
+        return self._plot
     # end of method plot
 
     def clearplot(self):
         utils.trace('in')
-        if self._conf['display_slope']:
-            self._plot[0].remove()
-            figure = self._plot[2]
-            figure.delaxes(figure.axes[1])
-            # self._plot[1].remove()
+        if self._plot[0] == 'surface':
+            self._plot[1].remove()
+            figure = self._plot[3]
+            if len(figure.axes) > 1:
+                figure.delaxes(figure.axes[1])
             ax = self._earthplot._axes
             cbax = self._earthplot._clrbar_axes
             divider = make_axes_locatable(ax)
             divider.set_horizontal([Size.AxesX(ax), Size.Fixed(0), Size.Fixed(0)])
-        else:
-            for element in self._plot[0].collections:
+        elif self._plot[0] == 'contour':
+            for element in self._plot[1].collections:
                 try:
                     element.remove()
                 except ValueError:
                     print(element)
-            if len(self._plot) > 1:
+            if len(self._plot) > 2:
                 try:
-                    self._plot[1][0].remove()
+                    self._plot[2][0].remove()
                 except TypeError:
                     print("None element cannot be removed")
                 try:
-                    self._plot[2].remove()
+                    self._plot[3].remove()
                 except AttributeError:
                     print("None element have no attribute remove")
-                for element in self._plot[3]:
+                for element in self._plot[4]:
                     element.remove()
         self._plot = None
         utils.trace('out')

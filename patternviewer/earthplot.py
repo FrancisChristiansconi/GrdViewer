@@ -301,12 +301,11 @@ class EarthPlot(FigureCanvas):
             deltalat = mouselat - self.dragorigin[1]
             self._viewer.longitude(self._viewer.longitude() - deltalon)
             self._viewer.latitude(self._viewer.latitude() - deltalat)
-            print("lon:{0:0.2f}, lat:{1:0.2f}".format(self._viewer.longitude(), self._viewer.latitude()))
             self.draw_elements()
             app = self.parent().parent()
             app.setviewerpos(self._viewer.longitude(),
-                            self._viewer.latitude(),
-                            self._viewer.altitude())
+                             self._viewer.latitude(),
+                             self._viewer.altitude())
             self.dragorigin = mouselon, mouselat
     # end of method mouse_move
 

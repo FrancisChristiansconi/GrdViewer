@@ -679,13 +679,27 @@ class AbstractPattern(Element):
             az_lin = np.linspace(az_min, az_max, nx)
             el_lin = np.linspace(el_min, el_max, ny)
             az_mesh, el_mesh = np.meshgrid(az_lin, el_lin)
+            if self._offset:
+                az_offset = self._azimuth_offset
+                el_offset = self._elevation_offset
+            else:
+                az_offset = 0
+                el_offset = 0
 
             # convert grid to plot coordinates
-            x = np.tan(az_mesh * cst.DEG2RAD) * self._satellite.altitude()
-            y = np.tan(el_mesh * cst.DEG2RAD) * self._satellite.altitude()
+            x = self._satellite.altitude() * np.tan((az_mesh + az_offset) * cst.DEG2RAD)
+            y = self._satellite.altitude() * np.tan((el_mesh + el_offset) * cst.DEG2RAD)
             # compute plot origin (Nadir of spacecraft)
-            x_origin, y_origin = map(self._satellite.longitude(),
-                                     self._satellite.latitude())
+            # get projection
+            self.proj = prj.Proj(init='epsg:4326 +proj=nsper' + \
+                                ' +h=' + str(self._satellite.altitude()) + \
+                                ' +a=6378137.00 +b=6378137.00' + \
+                                ' +lon_0=' + str(self._satellite.longitude()) + \
+                                ' +lat_0=' + str(self._satellite.latitude()) + \
+                                ' +x_0=0 +y_0=0 +units=meters +no_defs')
+            lon_mesh, lat_mesh = self.proj(x, y, inverse=True)
+            x, y = map(lon_mesh, lat_mesh, inverse=False)
+            x_origin, y_origin = 0, 0
             # get interpolated points on a regular grid
             to_plot, _ = self.interpolate_slope(az_mesh, el_mesh)
             isolevelscale = range(self._slope_range[0], self._slope_range[1], 3)
@@ -722,7 +736,8 @@ class AbstractPattern(Element):
                     # no call to displaymax because it has no meaning when shrinking the pattern
 
                 # add isolevels labels
-                cs_label = figure.axes[0].clabel(cs_pattern, isolevelscale, inline=True, fmt='%1.1f',fontsize=2)
+                cs_label = figure.axes[0].clabel(cs_pattern, isolevelscale,
+                                                 inline=True, fmt='%1.1f', fontsize=2)
 
                 # Set return value
                 self._plot = 'contour', cs_pattern, cs_marker, cs_tag, cs_label
@@ -731,8 +746,8 @@ class AbstractPattern(Element):
                 print(value_err)
                 print('Pattern ' + self._filename + ' will not be displayed.')
                 self._plot = None
-        else:
 
+        else:
             # display color mesh
             cmap = plt.get_cmap('jet')
             cmap.set_over('white', max(colorbarscale))

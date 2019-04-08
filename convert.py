@@ -25,7 +25,7 @@ for f in files:
     output_file = os.path.join(output_dir, f[:-3] + 'pat')
     second_pol = False
     if output_file[-5] == 'H':
-        second_pol = True 
+        second_pol = True
 
     config = {}
     config['filename'] = input_file
@@ -45,4 +45,3 @@ for f in files:
     elif f[-3:] == 'pat':
         p = Pat(conf=config, parent=None)
     p.export_to_file(output_file, True, 0)
-

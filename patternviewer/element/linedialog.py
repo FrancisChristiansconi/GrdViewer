@@ -6,14 +6,15 @@ import sys
 
 # PyQt5 widgets import
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, QLineEdit, \
-                            QHBoxLayout, QVBoxLayout, QPushButton, QWidget, QFileDialog, QLabel, \
-                            QGridLayout, QCheckBox, QComboBox
+    QHBoxLayout, QVBoxLayout, QPushButton, QWidget, QFileDialog, QLabel, \
+    QGridLayout, QCheckBox, QComboBox
 from PyQt5.QtGui import QColor, QPalette
 
 # Import local modules
 import patternviewer.utils as utils
 
 import patternviewer.constant as cst
+
 
 class LineDialog(QDialog):
     """This class implement a dialog widget to deal with line configuration.
@@ -76,7 +77,6 @@ class LineDialog(QDialog):
         linewidthlayout.addStretch(1)
         layout.addLayout(linewidthlayout)
         # label
-
 
         # add Apply/Ok/Cancel buttons
         buttonlayout = QHBoxLayout()

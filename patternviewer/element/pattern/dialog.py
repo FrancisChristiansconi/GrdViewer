@@ -2,39 +2,41 @@
 """
 
 # import standard modules
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
 # system module
 import sys
-#==================================================================================================
+# ==================================================================================================
 
 # import third party modules
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
 # import of PyQt5 for all GUI elements
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, \
-                            QLineEdit, QHBoxLayout, QVBoxLayout, QPushButton, QWidget, \
-                            QFileDialog, QLabel, QGridLayout, QCheckBox, QGridLayout
+    QLineEdit, QHBoxLayout, QVBoxLayout, QPushButton, QWidget, \
+    QFileDialog, QLabel, QGridLayout, QCheckBox, QGridLayout
 from PyQt5.QtGui import QColor, QPalette
 # import numpy
 import numpy as np
-#==================================================================================================
+# ==================================================================================================
 
 # import local modules
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
 # debug utility module
 import patternviewer.utils as utils
 # import constant file
 import patternviewer.constant as cst
 # import line configuration dialog
 from patternviewer.element.linedialog import LineDialog
-#==================================================================================================
+# ==================================================================================================
 
 # classe definition
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+
+
 class PatternDialog(QDialog):
     """QDialog derived class which is used to configure display of a pattern file.
     """
 
-    def __init__(self, filename: str=None, parent=None, control=None):
+    def __init__(self, filename: str = None, parent=None, control=None):
         """Constructor for PatternDialog class.
         filename: str is the path to the file containing data of antenna pattern
         parent is the EarthPlot instance which will display the antenna pattern
@@ -102,7 +104,6 @@ class PatternDialog(QDialog):
         hbox_sat_position.addWidget(self.alt_field)
         hbox_sat_position.addStretch(1)
         vbox.addLayout(hbox_sat_position)
-
 
         # Add isolevel
         self.isolevel_label = QLabel('Isolevels', parent=self)
@@ -176,7 +177,6 @@ class PatternDialog(QDialog):
         self.chk_offset.stateChanged.connect(self.chk_offset_state_changed)
         self.chk_offset_state_changed()
 
-
         # set fields value
         if filename:
             self.filename_field.setText(filename)
@@ -215,7 +215,6 @@ class PatternDialog(QDialog):
         cancel_button.clicked.connect(self.close)
         self.cf_field.textChanged.connect(self.refresh_isolevel)
 
-
         # Set default field value if pattern object has been provided
         if self._pattern:
             self.configure(self._pattern)
@@ -241,7 +240,8 @@ class PatternDialog(QDialog):
         self.chkslope.setChecked(pattern._display_slope)
         self.chkshrink.setChecked(pattern._shrink)
         self.chk_offset.setChecked(pattern._offset)
-        self.chksurf.setChecked(pattern.set(pattern.configure(), 'Color surface', False))
+        self.chksurf.setChecked(pattern.set(
+            pattern.configure(), 'Color surface', False))
         if pattern._shrink:
             self.azfield.setText(str(pattern._azshrink))
             self.elfield.setText(str(pattern._elshrink))
@@ -295,7 +295,8 @@ class PatternDialog(QDialog):
             max_cr = 0
 
         cf = self.get_cf()
-        isolevel = np.array(self._pattern._isolevel) - np.max(self._pattern._isolevel)
+        isolevel = np.array(self._pattern._isolevel) - \
+            np.max(self._pattern._isolevel)
         if self.chkxpol.checkState():
             tmp_str = ",".join(str(x) for x in isolevel + max_cr + cf)
         else:
@@ -328,7 +329,8 @@ class PatternDialog(QDialog):
         if config['offset']:
             config['azoffset'] = float(self.az_offset_field.text())
             config['eloffset'] = float(self.el_offset_field.text())
-        config['isolevel'] = [float(s) for s in self.isolevel_field.text().split(',')]
+        config['isolevel'] = [float(s)
+                              for s in self.isolevel_field.text().split(',')]
         config['cf'] = float(self.cf_field.text())
         config['Color surface'] = self.chksurf.isChecked()
 
@@ -374,6 +376,7 @@ class PatternDialog(QDialog):
         self.setModal(True)
 
 # end of classe PatternDialog
+
 
 # Main execution
 if __name__ == '__main__':

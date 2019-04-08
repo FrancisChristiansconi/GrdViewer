@@ -47,7 +47,7 @@ class EarthPlot(FigureCanvas):
     """
 
     # EarthPlot constructor
-    def __init__(self, parent=None, width=5, height=5, dpi=300, \
+    def __init__(self, parent=None, width=5, height=5, dpi=300,
                  proj='nsper', res='crude', config=None):
         utils.trace('in')
 
@@ -63,18 +63,18 @@ class EarthPlot(FigureCanvas):
         self._resolution = res
 
         # define figure in canvas
-        self._figure = Figure(figsize=(self._width, self._height), \
+        self._figure = Figure(figsize=(self._width, self._height),
                               dpi=self._dpi)
         self._axes = self._figure.add_subplot(111)
 
         FigureCanvas.__init__(self, self._figure)
         self.setParent(self._centralwidget)
         self._app = self.parent().parent()
-        FigureCanvas.setSizePolicy(self, \
-                                   QSizePolicy.Expanding, \
+        FigureCanvas.setSizePolicy(self,
+                                   QSizePolicy.Expanding,
                                    QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
-        self.setFocusPolicy( QtCore.Qt.ClickFocus )
+        self.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.setFocus()
 
         # initialize EarthPlot fields
@@ -100,33 +100,48 @@ class EarthPlot(FigureCanvas):
             self._axes.yaxis.label.set_fontsize(fontsize)
 
             # set map resolution (take only first letter in lower case)
-            self._resolution = config.get('DEFAULT', \
-                                          'map resolution', \
+            self._resolution = config.get('DEFAULT',
+                                          'map resolution',
                                           fallback=self._resolution).lower()
-            self._app.getmenuitem(item='View>Map resolution>' + self._resolution).setChecked(True)
+            self._app.getmenuitem(
+                item='View>Map resolution>' + self._resolution).setChecked(True)
             self._resolution = self._resolution[0]
-            self._projection = config.get('DEFAULT', 'projection', fallback='nsper')
+            self._projection = config.get(
+                'DEFAULT', 'projection', fallback='nsper')
             if self._projection == 'nsper':
-                self._app.getmenuitem(item='View>Projection>Geo').setChecked(True)
+                self._app.getmenuitem(
+                    item='View>Projection>Geo').setChecked(True)
             elif self._projection == 'cyl':
-                self._app.getmenuitem(item='View>Projection>Cylindrical').setChecked(True)
+                self._app.getmenuitem(
+                    item='View>Projection>Cylindrical').setChecked(True)
 
             # get point of view coordinates if defined
             longitude = config.getfloat('VIEWER', 'longitude', fallback=0.0)
             latitude = config.getfloat('VIEWER', 'latitude', fallback=0.0)
-            altitude = config.getfloat('VIEWER', 'altitude', fallback=cst.ALTGEO)
+            altitude = config.getfloat(
+                'VIEWER', 'altitude', fallback=cst.ALTGEO)
 
             # get Earth plot configuration
-            self._bluemarble = config.getboolean('DEFAULT', 'blue marble', fallback=False)
-            self._app.getmenuitem(item='View>Blue Marble').setChecked(self._bluemarble)
-            self._coastlines = config.get('DEFAULT', 'coast lines', fallback='light')
-            self._app.getmenuitem(item='View>Coast lines>' + self._coastlines).setChecked(True)
-            self._countries = config.get('DEFAULT', 'countries', fallback='light')
-            self._app.getmenuitem(item='View>Country borders>' + self._countries).setChecked(True)
-            self._parallels = config.get('DEFAULT', 'parallels', fallback='light')
-            self._app.getmenuitem(item='View>Parallels>' + self._parallels).setChecked(True)
-            self._meridians = config.get('DEFAULT', 'meridians', fallback='light')
-            self._app.getmenuitem(item='View>Meridians>' + self._meridians).setChecked(True)
+            self._bluemarble = config.getboolean(
+                'DEFAULT', 'blue marble', fallback=False)
+            self._app.getmenuitem(
+                item='View>Blue Marble').setChecked(self._bluemarble)
+            self._coastlines = config.get(
+                'DEFAULT', 'coast lines', fallback='light')
+            self._app.getmenuitem(
+                item='View>Coast lines>' + self._coastlines).setChecked(True)
+            self._countries = config.get(
+                'DEFAULT', 'countries', fallback='light')
+            self._app.getmenuitem(
+                item='View>Country borders>' + self._countries).setChecked(True)
+            self._parallels = config.get(
+                'DEFAULT', 'parallels', fallback='light')
+            self._app.getmenuitem(
+                item='View>Parallels>' + self._parallels).setChecked(True)
+            self._meridians = config.get(
+                'DEFAULT', 'meridians', fallback='light')
+            self._app.getmenuitem(
+                item='View>Meridians>' + self._meridians).setChecked(True)
 
             # initialize angle of view
             # Satellite Longitude, latitude and altitude
@@ -137,14 +152,22 @@ class EarthPlot(FigureCanvas):
 
             # Initialize zoom
             self._zoom = Zoom(self._projection)
-            self._zoom.min_azimuth = config.getfloat('GEO', 'min azimuth', fallback=-9)
-            self._zoom.min_elevation = config.getfloat('GEO', 'min elevation', fallback=-9)
-            self._zoom.max_azimuth = config.getfloat('GEO', 'max azimuth', fallback=9)
-            self._zoom.max_elevation = config.getfloat('GEO', 'max elevation', fallback=9)
-            self._zoom.min_longitude = config.getfloat('CYLINDRICAL', 'min longitude', fallback=-180)
-            self._zoom.min_latitude = config.getfloat('CYLINDRICAL', 'min latitude', fallback=-90)
-            self._zoom.max_longitude = config.getfloat('CYLINDRICAL', 'max longitude', fallback=180)
-            self._zoom.max_latitude = config.getfloat('CYLINDRICAL', 'max latitude', fallback=90)
+            self._zoom.min_azimuth = config.getfloat(
+                'GEO', 'min azimuth', fallback=-9)
+            self._zoom.min_elevation = config.getfloat(
+                'GEO', 'min elevation', fallback=-9)
+            self._zoom.max_azimuth = config.getfloat(
+                'GEO', 'max azimuth', fallback=9)
+            self._zoom.max_elevation = config.getfloat(
+                'GEO', 'max elevation', fallback=9)
+            self._zoom.min_longitude = config.getfloat(
+                'CYLINDRICAL', 'min longitude', fallback=-180)
+            self._zoom.min_latitude = config.getfloat(
+                'CYLINDRICAL', 'min latitude', fallback=-90)
+            self._zoom.max_longitude = config.getfloat(
+                'CYLINDRICAL', 'max longitude', fallback=180)
+            self._zoom.max_latitude = config.getfloat(
+                'CYLINDRICAL', 'max latitude', fallback=90)
             pattern_index = 1
             pattern_section = 'PATTERN' + str(pattern_index)
             while pattern_section in config:
@@ -190,7 +213,8 @@ class EarthPlot(FigureCanvas):
                                                     'linestyles', fallback='solid')
                     conf['linewidths'] = cst.BOLDNESS[config.get(pattern_section,
                                                                  'linewidths', fallback='medium')]
-                    conf['isolevel'] = [float(s) for s in conf['level'].split(',')]
+                    conf['isolevel'] = [float(s)
+                                        for s in conf['level'].split(',')]
                     conf['Color surface'] = config.getboolean(pattern_section, 'Color surface',
                                                               fallback=False)
                     pattern = self.load_pattern(conf=conf)
@@ -207,7 +231,8 @@ class EarthPlot(FigureCanvas):
                 # load stations from sta file
                 if 'file' in config[station_section]:
                     station_file = config.get(station_section, 'file')
-                    self._stations.extend(stn.get_station_from_file(station_file, self))
+                    self._stations.extend(
+                        stn.get_station_from_file(station_file, self))
                 # load station from description in ini file
                 elif 'name' in config[station_section]:
                     station = stn.Station(parent=self)
@@ -223,7 +248,8 @@ class EarthPlot(FigureCanvas):
                 # load stations from sta file
                 elevation = elv.Elevation(parent=self)
                 elevation.configure(config._sections[elevation_section])
-                self._elev['Elev' + elevation.configure()['elevation']] = elevation
+                self._elev['Elev' + elevation.configure()['elevation']
+                           ] = elevation
                 # check for next station section
                 elevation_index += 1
                 elevation_section = 'ELEVATION' + str(elevation_index)
@@ -277,9 +303,9 @@ class EarthPlot(FigureCanvas):
         else:
             gain = None
         if mouseaz >= self._zoom.max_azimuth or \
-            mouseaz <= self._zoom.min_azimuth or \
-            mouseel >= self._zoom.max_elevation or \
-            mouseel <= self._zoom.min_elevation:
+                mouseaz <= self._zoom.min_azimuth or \
+                mouseel >= self._zoom.max_elevation or \
+                mouseel <= self._zoom.min_elevation:
             mouselon = np.nan
             mouselat = np.nan
             gain = np.nan
@@ -430,7 +456,8 @@ class EarthPlot(FigureCanvas):
         lon, lat = self.get_mouse_ll(xevent, yevent, bbox)
         x, y = self.get_mouse_xy(xevent, yevent, bbox)
         self.zoomposorigin = az, el, lon, lat, x, y
-        self.zoompatch = Rectangle(xy=(x, y), width=0, height=0,fill=False, linewidth=0.2)
+        self.zoompatch = Rectangle(
+            xy=(x, y), width=0, height=0, fill=False, linewidth=0.2)
         self._axes.add_patch(self.zoompatch)
     # end of method mouse_press_zoom
 
@@ -452,10 +479,14 @@ class EarthPlot(FigureCanvas):
                     self._zoom.max_azimuth = round(max(azorigin, azfinal), 1)
                     self._zoom.max_elevation = round(max(elorigin, elfinal), 1)
                 elif self._projection == 'cyl':
-                    self._zoom.min_longitude = round(min(lonorigin, lonfinal), 1)
-                    self._zoom.min_latitude = round(min(latorigin, latfinal), 1)
-                    self._zoom.max_longitude = round(max(lonorigin, lonfinal), 1)
-                    self._zoom.max_latitude = round(max(latorigin, latfinal), 1)
+                    self._zoom.min_longitude = round(
+                        min(lonorigin, lonfinal), 1)
+                    self._zoom.min_latitude = round(
+                        min(latorigin, latfinal), 1)
+                    self._zoom.max_longitude = round(
+                        max(lonorigin, lonfinal), 1)
+                    self._zoom.max_latitude = round(
+                        max(latorigin, latfinal), 1)
             self.zoomposorigin = None
             self.zoomposfinal = None
             self.zoompatch.remove()
@@ -470,7 +501,7 @@ class EarthPlot(FigureCanvas):
         self.dragorigin = self.get_mouse_ll(xevent, yevent, bbox)
 
     def mouse_release_drag(self, _):
-            self.dragorigin = None
+        self.dragorigin = None
 
     def key_press(self, event):
         action = {'escape': self.key_press_esc}
@@ -543,25 +574,31 @@ class EarthPlot(FigureCanvas):
             self._axes.set_xlabel('Azimuth (deg)')
             self._axes.set_ylabel('Elevation (deg)')
             # compute and add x-axis ticks
-            azticks = np.arange(self._zoom.min_azimuth, self._zoom.max_azimuth + 0.1, 2)
+            azticks = np.arange(self._zoom.min_azimuth,
+                                self._zoom.max_azimuth + 0.1, 2)
             self._axes.set_xticks(self.az2x(azticks) +
                                   self._earth_map(self._viewer.longitude(), self._viewer.latitude())[0])
             self._axes.set_xticklabels('{0:0.1f}'.format(f) for f in azticks)
             # compute and add y-axis ticks
-            elticks = np.arange(self._zoom.min_elevation, self._zoom.max_elevation + 0.1, 2)
+            elticks = np.arange(self._zoom.min_elevation,
+                                self._zoom.max_elevation + 0.1, 2)
             self._axes.set_yticks(self.el2y(elticks) +
                                   self._earth_map(self._viewer.longitude(), self._viewer.latitude())[1])
             self._axes.set_yticklabels('{0:0.1f}'.format(f) for f in elticks)
         elif self._projection == 'cyl':
             self._axes.set_xlabel('Longitude (deg)')
             self._axes.set_ylabel('Latitude (deg)')
-            lonticks = np.arange(int(self._zoom.min_longitude / 10) * 10, self._zoom.max_longitude + 0.1, 20)
-            lonticks_converted, _ = np.array(self._earth_map(lonticks, np.ones(lonticks.shape) * self._zoom.min_latitude))
+            lonticks = np.arange(
+                int(self._zoom.min_longitude / 10) * 10, self._zoom.max_longitude + 0.1, 20)
+            lonticks_converted, _ = np.array(self._earth_map(
+                lonticks, np.ones(lonticks.shape) * self._zoom.min_latitude))
             self._axes.set_xticks(lonticks_converted)
             self._axes.set_xticklabels('{0:0.1f}'.format(f) for f in lonticks)
             # compute and add y-axis ticks
-            latticks = np.arange(int(self._zoom.min_latitude / 10) * 10, self._zoom.max_latitude + 0.1, 20)
-            _, latticks_converted = np.array(self._earth_map(np.ones(latticks.shape) * self._zoom.min_longitude, latticks))
+            latticks = np.arange(
+                int(self._zoom.min_latitude / 10) * 10, self._zoom.max_latitude + 0.1, 20)
+            _, latticks_converted = np.array(self._earth_map(
+                np.ones(latticks.shape) * self._zoom.min_longitude, latticks))
             self._axes.set_yticks(latticks_converted)
             self._axes.set_yticklabels('{0:0.1f}'.format(f) for f in latticks)
         self._axes.tick_params(axis='both', width=0.2)
@@ -600,33 +637,33 @@ class EarthPlot(FigureCanvas):
             self._bluemarble_imshow.remove()
 
         if proj == 'nsper':
-            self._earth_map = Basemap(projection='nsper', \
-                            llcrnrx=self.llcrnrx, \
-                            llcrnry=self.llcrnry, \
-                            urcrnrx=self.urcrnrx, \
-                            urcrnry=self.urcrnry, \
-                            lon_0=self._viewer.longitude(), \
-                            lat_0=self._viewer.latitude(), \
-                            satellite_height=self._viewer.altitude(), \
-                            resolution=resolution, \
-                            ax=ax)
+            self._earth_map = Basemap(projection='nsper',
+                                      llcrnrx=self.llcrnrx,
+                                      llcrnry=self.llcrnry,
+                                      urcrnrx=self.urcrnrx,
+                                      urcrnry=self.urcrnry,
+                                      lon_0=self._viewer.longitude(),
+                                      lat_0=self._viewer.latitude(),
+                                      satellite_height=self._viewer.altitude(),
+                                      resolution=resolution,
+                                      ax=ax)
             # display Blue Marble picture, projected and cropped
             if self._bluemarble:
                 self._bluemarble_imshow = self.croppedbluemarble()
             else:
                 self._bluemarble_imshow = None
 
-        elif proj=='cyl':
-            self._earth_map = Basemap(projection=proj, \
-                            llcrnrlat=self.llcrnrlat, \
-                            urcrnrlat=self.urcrnrlat,\
-                            llcrnrlon=self.llcrnrlon, \
-                            urcrnrlon=self.urcrnrlon, \
-                            lon_0=self._viewer.longitude(), \
-                            lat_0=self._viewer.latitude(), \
-                            lat_ts=self._viewer.latitude(), \
-                            resolution=resolution, \
-                            ax=ax)
+        elif proj == 'cyl':
+            self._earth_map = Basemap(projection=proj,
+                                      llcrnrlat=self.llcrnrlat,
+                                      urcrnrlat=self.urcrnrlat,
+                                      llcrnrlon=self.llcrnrlon,
+                                      urcrnrlon=self.urcrnrlon,
+                                      lon_0=self._viewer.longitude(),
+                                      lat_0=self._viewer.latitude(),
+                                      lat_ts=self._viewer.latitude(),
+                                      resolution=resolution,
+                                      ax=ax)
             if self._bluemarble:
                 self._bluemarble_imshow = self._earth_map.bluemarble(scale=0.5)
             else:
@@ -698,13 +735,14 @@ class EarthPlot(FigureCanvas):
         # define grid
         iNx = 200
         iNy = 200
-        fXlin = np.linspace(self._earth_map.xmin,self._earth_map.xmax,iNx)
-        fYlin = np.linspace(self._earth_map.ymin,self._earth_map.ymax,iNy)
+        fXlin = np.linspace(self._earth_map.xmin, self._earth_map.xmax, iNx)
+        fYlin = np.linspace(self._earth_map.ymin, self._earth_map.ymax, iNy)
         fXMesh, fYMesh = np.meshgrid(fXlin, fYlin)
         fLonMesh, fLatMesh = self._earth_map(fXMesh, fYMesh, inverse=True)
         # define Elevation matrix
         fElev = self.elevation(fLonMesh, fLatMesh)
-        csElev = self._earth_map.contour(fXMesh,fYMesh,fElev, level, colors='black', linestyles='dotted', linewidths=0.5)
+        csElev = self._earth_map.contour(
+            fXMesh, fYMesh, fElev, level, colors='black', linestyles='dotted', linewidths=0.5)
         utils.trace('out')
         return csElev
     # end of drawelevation
@@ -715,19 +753,20 @@ class EarthPlot(FigureCanvas):
         utils.trace('in')
         # compute phi
         phi = np.arccos(np.cos(cst.DEG2RAD * stalat)
-              * np.cos(cst.DEG2RAD * (self._viewer.longitude() - stalon)))
+                        * np.cos(cst.DEG2RAD * (self._viewer.longitude() - stalon)))
 
         # compute elevation
-        elev = np.reshape([90 if phi == 0 else cst.RAD2DEG * np.arctan((np.cos(phi) - (cst.EARTH_RAD_EQUATOR_M/(cst.EARTH_RAD_EQUATOR_M+self._viewer.altitude())))/ np.sin(phi)) for phi in phi.flatten()], phi.shape)
+        elev = np.reshape([90 if phi == 0 else cst.RAD2DEG * np.arctan((np.cos(phi) - (cst.EARTH_RAD_EQUATOR_M/(
+            cst.EARTH_RAD_EQUATOR_M+self._viewer.altitude()))) / np.sin(phi)) for phi in phi.flatten()], phi.shape)
 
         # remove station out of view
-        elev = np.where(np.absolute(stalon - self._viewer.longitude()) < 90, elev, -1)
+        elev = np.where(np.absolute(
+            stalon - self._viewer.longitude()) < 90, elev, -1)
 
         utils.trace('out')
         # Return vector
         return elev
     # end of function elevation
-
 
     def get_file_key(self, filename):
         utils.trace('in')
@@ -783,18 +822,18 @@ class EarthPlot(FigureCanvas):
 
     # Zoom on the _earth_map
     def updatezoom(self):
-        self.llcrnrx   = self.az2x(self._zoom.min_azimuth)
-        self.llcrnry   = self.el2y(self._zoom.min_elevation)
-        self.urcrnrx   = self.az2x(self._zoom.max_azimuth)
-        self.urcrnry   = self.el2y(self._zoom.max_elevation)
+        self.llcrnrx = self.az2x(self._zoom.min_azimuth)
+        self.llcrnry = self.el2y(self._zoom.min_elevation)
+        self.urcrnrx = self.az2x(self._zoom.max_azimuth)
+        self.urcrnry = self.el2y(self._zoom.max_elevation)
         self.llcrnrlon = self._zoom.min_longitude
         self.llcrnrlat = self._zoom.min_latitude
         self.urcrnrlon = self._zoom.max_longitude
         self.urcrnrlat = self._zoom.max_latitude
-        self.centerx   = (self.llcrnrx + self.urcrnrx) / 2
-        self.centery   = (self.llcrnry + self.urcrnry) / 2
-        self.cntrlon   = (self.llcrnrlon + self.urcrnrlon) / 2
-        self.cntrlat   = (self.llcrnrlat + self.urcrnrlat) / 2
+        self.centerx = (self.llcrnrx + self.urcrnrx) / 2
+        self.centery = (self.llcrnry + self.urcrnry) / 2
+        self.cntrlon = (self.llcrnrlon + self.urcrnrlon) / 2
+        self.cntrlat = (self.llcrnrlat + self.urcrnrlat) / 2
     # end of method updatezoom
 
     def get_width(self):
@@ -829,12 +868,12 @@ class EarthPlot(FigureCanvas):
     def y2el(self, y):
         return np.arctan2(y, self._viewer.altitude()) * cst.RAD2DEG
 
-    def projection(self,proj: str = None):
+    def projection(self, proj: str = None):
         """This function allows access to attribute _projection.
         """
         utils.trace('in')
         if proj:
-            if proj=='nsper' or proj == 'cyl':
+            if proj == 'nsper' or proj == 'cyl':
                 self._projection = proj
             else:
                 raise ValueError("Projection is either 'nsper' or 'cyl'.")
@@ -852,7 +891,7 @@ class EarthPlot(FigureCanvas):
         utils.trace('out')
     # end of function set_resolution
 
-    def save(self,filename=None):
+    def save(self, filename=None):
         """Save the plot with given filename. If file name not provided,
         use last used name.
         """
@@ -872,14 +911,14 @@ class EarthPlot(FigureCanvas):
     #
     ###################################################################
 
-    def viewer(self, v = None):
+    def viewer(self, v=None):
         """Get _viewer attribute.
         """
         if v:
             self._viewer = v
         return self._viewer
 
-    def zoom(self, z = None):
+    def zoom(self, z=None):
         """Get _zoom attribute.
         """
         if z:
@@ -1038,7 +1077,6 @@ class EarthPlot(FigureCanvas):
         im.set_array(new_data)
         return im
     # end of method croppedbluemarble
-
 
     def earth_angular_diameter(self):
         """Compute Earth anguar diameter from spacecraft point of view dpending on the altitude.

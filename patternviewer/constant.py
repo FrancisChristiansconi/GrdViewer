@@ -15,16 +15,16 @@ CONTACT = 'christian.francesconi@ses.com'
 DEFAULT_ISOLEVEL_DBI = [-10, -8, -6, -4, -2, 0]
 
 # geostationary altitude
-ALTGEO = 35786000.0 # m
+ALTGEO = 35786000.0  # m
 
 # Earth radius at equator and pole
-EARTH_RAD_EQUATOR_M = 6378137.0000 # m
-EARTH_RAD_POLE_M = 6356752.3142 # m
-EARTH_RAD_BASEMAP = 6370997.0000 # m
+EARTH_RAD_EQUATOR_M = 6378137.0000  # m
+EARTH_RAD_POLE_M = 6356752.3142  # m
+EARTH_RAD_BASEMAP = 6370997.0000  # m
 
 # degrees to radians conversion
 DEG2RAD = np.pi / 180.0
-# radians to degrees conversion 
+# radians to degrees conversion
 RAD2DEG = 180.0 / np.pi
 
 # Default elevation contour
@@ -34,7 +34,8 @@ DEFAULT_ELEVATION = 10
 BOLDNESS = {'no line': 0,
             'light': 0.1,
             'medium': 0.3,
-            'heavy':0.5}
+            'heavy': 0.5}
+
 
 def getboldness(linewidth):
     """This function return a string key from a line width value.

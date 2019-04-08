@@ -19,6 +19,7 @@ import patternviewer.constant as cst
 import patternviewer.element.station as stn
 import patternviewer.utils as utils
 
+
 def main():
     utils.mute(True)
     # debug option, print all arguments
@@ -47,7 +48,7 @@ def main():
     F2_config['filename'] = F2_pattern_file
     F2_config['revert_x'] = False
     F2_config['revert_y'] = False
-    F2_config['rotate']  = True
+    F2_config['rotate'] = True
     F2_config['use_second_pol'] = True
     F2_config['sat_alt'] = cst.ALTGEO
     F2_config['sat_lon'] = -40.5
@@ -80,7 +81,8 @@ def main():
     # import data
     F2_pattern = Grd(conf=F2_config, parent=None)
     TM_pattern = Pat(conf=TM_config, parent=None)
-    stations_list = stn.get_station_from_file(filename=stations_file, earthplot=None)
+    stations_list = stn.get_station_from_file(
+        filename=stations_file, earthplot=None)
     F2_gain = {}
     TM_gain = {}
     azoffset = 0
@@ -101,7 +103,8 @@ def main():
         F2_gain[name][(azoffset, eloffset)] = F2_pattern.directivity(lon, lat)
         TM_gain[name][(azoffset, eloffset)] = TM_pattern.directivity(lon, lat)
         outfile.write('{0}: {1:0.2f}dBi {2:0.2f}dBi \n'.format(name,
-                                                               F2_gain[name][(azoffset, eloffset)],
+                                                               F2_gain[name][(
+                                                                   azoffset, eloffset)],
                                                                TM_gain[name][(azoffset, eloffset)]))
 
     # open file and read text data (azel offset)
@@ -151,14 +154,19 @@ def main():
             lon = conf['longitude']
             lat = conf['latitude']
             name = conf['tag']
-            F2_gain[name][(azoffset, eloffset)] = F2_pattern.directivity(lon, lat)
-            TM_gain[name][(azoffset, eloffset)] = TM_pattern.directivity(lon, lat)
-            F2_delta = F2_gain[name][(azoffset, eloffset)] - F2_gain[name][(0, 0)]
-            TM_delta = TM_gain[name][(azoffset, eloffset)] - TM_gain[name][(0, 0)]
+            F2_gain[name][(azoffset, eloffset)
+                          ] = F2_pattern.directivity(lon, lat)
+            TM_gain[name][(azoffset, eloffset)
+                          ] = TM_pattern.directivity(lon, lat)
+            F2_delta = F2_gain[name][(azoffset, eloffset)] - \
+                F2_gain[name][(0, 0)]
+            TM_delta = TM_gain[name][(azoffset, eloffset)] - \
+                TM_gain[name][(0, 0)]
             temp = temp + '{0:0.1f},{1:0.1f},'.format(F2_delta, TM_delta)
         outfile.write(temp[:-1] + '\n')
     outfile.close()
 # end of main function
+
 
 # Main execution
 if __name__ == '__main__':

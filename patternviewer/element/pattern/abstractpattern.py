@@ -6,14 +6,14 @@ Created on Wed Oct 24 15:56:00 2018
 """
 
 # Standard module import
-#==================================================================================================
+# ==================================================================================================
 # import os function
 import os
 # import math basic library
 import math
 
 # Third party module import
-#==================================================================================================
+# ==================================================================================================
 # import array/calculus utilities
 import numpy as np
 # import interpolation routine from scipy
@@ -30,14 +30,14 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.basemap import Basemap
 # PyQt5 widgets import
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, \
-                            QHBoxLayout, QVBoxLayout, QPushButton, QWidget, QFileDialog, QLabel, \
-                            QGridLayout, QCheckBox, QLineEdit
+    QHBoxLayout, QVBoxLayout, QPushButton, QWidget, QFileDialog, QLabel, \
+    QGridLayout, QCheckBox, QLineEdit
 from PyQt5.QtGui import QColor, QPalette
 # abstract class toolbox
 from abc import ABC, abstractmethod
 
 # Local module import
-#==================================================================================================
+# ==================================================================================================
 # debug
 import patternviewer.utils as utils
 from patternviewer.viewer import Viewer
@@ -49,14 +49,16 @@ from patternviewer.element.pattern.dialog import PatternDialog
 from patternviewer.element.element import Element
 
 # Class definition
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+
+
 class AbstractPattern(Element):
     """Abstract class representing an antenna pattern. This class define all the
     functions and methods mandatory for compatibility with the viewer features.
     """
 
 # Function and methods common to all
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
     def __init__(self, filename=None, conf=None, dialog=False, parent=None):
         """Constructor of abstract class Pattern do nothing.
         """
@@ -127,20 +129,22 @@ class AbstractPattern(Element):
 
         # read data file
         self._nb_sets, \
-        self._grid, \
-        self._x, \
-        self._y, \
-        self._E_mag_co, \
-        self._E_phs_co, \
-        self._E_mag_cr, \
-        self._E_phs_cr = self.read_file(conf['filename'])
+            self._grid, \
+            self._x, \
+            self._y, \
+            self._E_mag_co, \
+            self._E_phs_co, \
+            self._E_mag_cr, \
+            self._E_phs_cr = self.read_file(conf['filename'])
 
         # float[]: isolevel for display
         max_directivity = np.max(self.copol())
-        self._isolevel = np.array(cst.DEFAULT_ISOLEVEL_DBI) + int(max_directivity)
+        self._isolevel = np.array(
+            cst.DEFAULT_ISOLEVEL_DBI) + int(max_directivity)
 
         # matrix to be plotted
-        self._to_plot = np.zeros(shape=np.array(self._E_mag_co).shape, dtype=float)
+        self._to_plot = np.zeros(shape=np.array(
+            self._E_mag_co).shape, dtype=float)
 
         for k in range(self._nb_sets):
             self._longitude.append(np.zeros_like(self._x[k]))
@@ -160,36 +164,36 @@ class AbstractPattern(Element):
         # apply to all sets of data
         for set in range(self._nb_sets):
 
-            if self._x[set][0,1] > self._x[set][0,0] and self._y[set][1,0] > self._y[set][0,0]:
+            if self._x[set][0, 1] > self._x[set][0, 0] and self._y[set][1, 0] > self._y[set][0, 0]:
                 # already the good orientation
                 pass
-            elif self._x[set][0,1] < self._x[set][0,0] and self._y[set][1,0] > self._y[set][0,0]:
+            elif self._x[set][0, 1] < self._x[set][0, 0] and self._y[set][1, 0] > self._y[set][0, 0]:
                 # change only x-axis of the grid
-                self._x[set] = self._x[set][::-1,:]
-                self._y[set] = self._y[set][::-1,:]
-                self._E_mag_co[set] = self._E_mag_co[set][::-1,:]
-                self._E_phs_co[set] = self._E_phs_co[set][::-1,:]
+                self._x[set] = self._x[set][::-1, :]
+                self._y[set] = self._y[set][::-1, :]
+                self._E_mag_co[set] = self._E_mag_co[set][::-1, :]
+                self._E_phs_co[set] = self._E_phs_co[set][::-1, :]
                 if len(self._E_mag_cr):
-                    self._E_mag_cr[set] = self._E_mag_cr[set][::-1,:]
-                    self._E_phs_cr[set] = self._E_phs_cr[set][::-1,:]
-            elif self._x[set][0,1] < self._x[set][0,0] and self._y[set][1,0] < self._y[set][0,0]:
+                    self._E_mag_cr[set] = self._E_mag_cr[set][::-1, :]
+                    self._E_phs_cr[set] = self._E_phs_cr[set][::-1, :]
+            elif self._x[set][0, 1] < self._x[set][0, 0] and self._y[set][1, 0] < self._y[set][0, 0]:
                 # change x and y-axes of the grid
-                self._x[set] = self._x[set][::-1,::-1]
-                self._y[set] = self._y[set][::-1,::-1]
-                self._E_mag_co[set] = self._E_mag_co[set][::-1,::-1]
-                self._E_phs_co[set] = self._E_phs_co[set][::-1,::-1]
+                self._x[set] = self._x[set][::-1, ::-1]
+                self._y[set] = self._y[set][::-1, ::-1]
+                self._E_mag_co[set] = self._E_mag_co[set][::-1, ::-1]
+                self._E_phs_co[set] = self._E_phs_co[set][::-1, ::-1]
                 if len(self._E_mag_cr):
-                    self._E_mag_cr[set] = self._E_mag_cr[set][::-1,::-1]
-                    self._E_phs_cr[set] = self._E_phs_cr[set][::-1,::-1]
-            elif self._x[set][0,1] > self._x[set][0,0] and self._y[set][1,0] < self._y[set][0,0]:
+                    self._E_mag_cr[set] = self._E_mag_cr[set][::-1, ::-1]
+                    self._E_phs_cr[set] = self._E_phs_cr[set][::-1, ::-1]
+            elif self._x[set][0, 1] > self._x[set][0, 0] and self._y[set][1, 0] < self._y[set][0, 0]:
                 # change only y-axis of the grid
-                self._x[set] = self._x[set][:,::-1]
-                self._y[set] = self._y[set][:,::-1]
-                self._E_mag_co[set] = self._E_mag_co[set][:,::-1]
-                self._E_phs_co[set] = self._E_phs_co[set][:,::-1]
+                self._x[set] = self._x[set][:, ::-1]
+                self._y[set] = self._y[set][:, ::-1]
+                self._E_mag_co[set] = self._E_mag_co[set][:, ::-1]
+                self._E_phs_co[set] = self._E_phs_co[set][:, ::-1]
                 if len(self._E_mag_cr):
-                    self._E_mag_cr[set] = self._E_mag_cr[set][:,::-1]
-                    self._E_phs_cr[set] = self._E_phs_cr[set][:,::-1]
+                    self._E_mag_cr[set] = self._E_mag_cr[set][:, ::-1]
+                    self._E_phs_cr[set] = self._E_phs_cr[set][:, ::-1]
     # end of reshapedata function
 
     def generate_grid(self):
@@ -219,7 +223,8 @@ class AbstractPattern(Element):
             # boolean: rotate 180 degrees around sub sat
             self._rotate = self.set(self._conf, 'rotate', False)
             # boolean: use second polarisation as copol
-            self._use_second_pol = self.set(self._conf, 'use_second_pol', False)
+            self._use_second_pol = self.set(
+                self._conf, 'use_second_pol', False)
             # boolean: shrink the pattern at display
             self._shrink = self.set(self._conf, 'shrink', False)
             # float: absolute shrink along azimuth in degrees
@@ -244,8 +249,10 @@ class AbstractPattern(Element):
             for set in range(self._nb_sets):
                 if (self._rotate and not self._rotated) or \
                    (not self._rotate and self._rotated):
-                    x_offset = (np.max(self._x[set][:]) - np.min(self._x[set][:]))
-                    y_offset = (np.max(self._y[set][:][:]) - np.min(self._y[set][:][:]))
+                    x_offset = (
+                        np.max(self._x[set][:]) - np.min(self._x[set][:]))
+                    y_offset = (
+                        np.max(self._y[set][:][:]) - np.min(self._y[set][:][:]))
                     self._x[set] = -1*self._x[set]
                     self._y[set] = -1*self._y[set]
                     self._rotated = self._rotate
@@ -260,15 +267,15 @@ class AbstractPattern(Element):
 
             # reverse x and y axis if requested
             if self._revert_x:
-                self._to_plot = self._to_plot[::-1,:]
+                self._to_plot = self._to_plot[::-1, :]
             if self._revert_y:
-                self._to_plot = self._to_plot[:,::-1]
+                self._to_plot = self._to_plot[:, ::-1]
 
             self._isolevel = self.set(self._conf, 'isolevel')
             if self._isolevel is None:
                 max_directivity = np.max(self._to_plot)
                 self._isolevel = np.array(cst.DEFAULT_ISOLEVEL_DBI) + \
-                                 int(max_directivity + self._conversion_factor)
+                    int(max_directivity + self._conversion_factor)
 
         utils.trace('out')
         return self._conf
@@ -328,10 +335,11 @@ class AbstractPattern(Element):
         return self._satellite
     # end of function satellite
 
-    def getmax(self, set: int=0):
+    def getmax(self, set: int = 0):
         """Get max directivity value and coordinates.
         """
-        max_value = np.amax(self._to_plot[self._to_plot != np.inf]) + self._conversion_factor
+        max_value = np.amax(
+            self._to_plot[self._to_plot != np.inf]) + self._conversion_factor
         max_index = np.argmax(self._to_plot[self._to_plot != np.inf])
         max_longitude = self.longitude().flatten()[max_index]
         max_latitude = self.latitude().flatten()[max_index]
@@ -362,7 +370,7 @@ class AbstractPattern(Element):
         return marker, tag
     # end of method displaymax
 
-    def slope(self, set: int=0):
+    def slope(self, set: int = 0):
         """Return gradient of Co-polarisation pattern
         """
         utils.trace('in')
@@ -383,7 +391,7 @@ class AbstractPattern(Element):
         return self._E_grad_co
     # end of function slope
 
-    def interpolate_copol(self, az, el, set: int=0, spline=None):
+    def interpolate_copol(self, az, el, set: int = 0, spline=None):
         """Return interpolated value of the pattern.
         The spline object is also returned for reuse.
         """
@@ -412,17 +420,18 @@ class AbstractPattern(Element):
         x, y = self.azel2xy(az, el)
 
         # prepare results for return statement
-        a, b = np.reshape(spline.ev(x.flatten(), y.flatten()), np.array(az).shape), spline
+        a, b = np.reshape(spline.ev(x.flatten(), y.flatten()),
+                          np.array(az).shape), spline
 
         return a, b
     # end of function interpolate_copol
 
-    def interpolate_slope(self, az, el, set: int=0, spline=None):
+    def interpolate_slope(self, az, el, set: int = 0, spline=None):
         """return interpolated value of the pattern
         """
         utils.trace('in')
         if spline == None:
-            if self._x[set][0,0] == self._x[set][1,0]:
+            if self._x[set][0, 0] == self._x[set][1, 0]:
                 x = self._x[set][0, :]
                 y = self._y[set][:, 0]
                 z = self.slope(set).T
@@ -432,10 +441,10 @@ class AbstractPattern(Element):
                 z = self.slope(set)
             if x[0] > x[1]:
                 x = x[::-1]
-                z = z[::-1,:]
+                z = z[::-1, :]
             if y[0] > y[1]:
                 y = y[::-1]
-                z = z[:,::-1]
+                z = z[:, ::-1]
             z[np.where(np.isnan(z))] = -99
             z[np.where(np.isneginf(z))] = -99
             spline = interp.RectBivariateSpline(x, y, z)
@@ -444,13 +453,14 @@ class AbstractPattern(Element):
         x, y = self.azel2xy(az, el)
 
         # prepare results for return statement
-        a, b = np.reshape(spline.ev(x.flatten(), y.flatten()),np.array(az).shape), spline
+        a, b = np.reshape(spline.ev(x.flatten(), y.flatten()),
+                          np.array(az).shape), spline
 
         utils.trace('out')
         return a, b
     # end of function interpolate_slope
 
-    def shrink_copol(self, azshrink, elshrink, az_co=[], el_co=[], step=None, set: int=0):
+    def shrink_copol(self, azshrink, elshrink, az_co=[], el_co=[], step=None, set: int = 0):
         """Shrink pattern using an elliptical beam pointing error.
         This function compute the pattern with different pointing error and
         keep the minimum directivity for each station.
@@ -467,7 +477,8 @@ class AbstractPattern(Element):
         el_vec = np.arange(-elshrink, elshrink + el_step, el_step)
         az_grid, el_grid = np.meshgrid(az_vec, el_vec)
         # exclude points out of the ellipse
-        out_of_ellipse = np.nonzero((az_grid / azshrink) ** 2 + (el_grid / elshrink) ** 2 > 1)
+        out_of_ellipse = np.nonzero(
+            (az_grid / azshrink) ** 2 + (el_grid / elshrink) ** 2 > 1)
         az_grid[out_of_ellipse] = np.nan
         el_grid[out_of_ellipse] = np.nan
         # add points of the ellipse
@@ -513,10 +524,10 @@ class AbstractPattern(Element):
         # return result pattern
         return co
     # end of function shrink_copol
-#==================================================================================================
+# ==================================================================================================
 
 # grid conversion functions and getters
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
     def azel_grid(self, set: int = 0):
         """This function convert grid format to azimuth elevation.
         set is the data set to be used
@@ -524,11 +535,11 @@ class AbstractPattern(Element):
         def id(x, y):
             return x, y
 
-        convert = {1:ang.uv2azel, \
-                   2:ang.thetaphi2azel, \
-                   3:id, \
-                   4:ang.elovaz2azel, \
-                   5:ang.azovel2azel}
+        convert = {1: ang.uv2azel,
+                   2: ang.thetaphi2azel,
+                   3: id,
+                   4: ang.elovaz2azel,
+                   5: ang.azovel2azel}
 
         return convert[self.grid_type()](self._x[set], self._y[set])
     # end of function azel_grid
@@ -541,11 +552,11 @@ class AbstractPattern(Element):
         def id(x, y):
             return x, y
 
-        convert = {1:ang.azel2uv, \
-                   2:ang.azel2thetaphi, \
-                   3:id, \
-                   4:ang.azel2elovaz, \
-                   5:ang.azel2azovel}
+        convert = {1: ang.azel2uv,
+                   2: ang.azel2thetaphi,
+                   3: id,
+                   4: ang.azel2elovaz,
+                   5: ang.azel2azovel}
         return convert[self.grid_type()](az, el)
     # end of function azel2xy
 
@@ -563,11 +574,11 @@ class AbstractPattern(Element):
 
         x = self._satellite.altitude() * np.tan((az + az_offset) * cst.DEG2RAD)
         y = self._satellite.altitude() * np.tan((el + el_offset) * cst.DEG2RAD)
-        self.proj = prj.Proj(init='epsg:4326 +proj=nsper' + \
-                             ' +h=' + str(self._satellite.altitude()) + \
-                             ' +a=6378137.00 +b=6378137.00' + \
-                             ' +lon_0=' + str(self._satellite.longitude()) + \
-                             ' +lat_0=' + str(self._satellite.latitude()) + \
+        self.proj = prj.Proj(init='epsg:4326 +proj=nsper' +
+                             ' +h=' + str(self._satellite.altitude()) +
+                             ' +a=6378137.00 +b=6378137.00' +
+                             ' +lon_0=' + str(self._satellite.longitude()) +
+                             ' +lat_0=' + str(self._satellite.latitude()) +
                              ' +x_0=0 +y_0=0 +units=meters +no_defs')
         return self.proj(x, y, inverse=True)
     # end of function ll_grid
@@ -578,8 +589,8 @@ class AbstractPattern(Element):
         self._E_mag_co[set] = self._E_mag_co[set][::-1, :]
         self._E_phs_co[set] = self._E_phs_co[set][::-1, :]
         if len(self._E_mag_cr):
-            self._E_mag_cr[set] = self._E_mag_cr[set][::-1,:]
-            self._E_phs_cr[set] = self._E_phs_cr[set][::-1,:]
+            self._E_mag_cr[set] = self._E_mag_cr[set][::-1, :]
+            self._E_phs_cr[set] = self._E_phs_cr[set][::-1, :]
     # end of method revert_x
 
     def revert_y(self, set: int = 0):
@@ -620,11 +631,11 @@ class AbstractPattern(Element):
         """Return directivity for a vector of stations defined with longitude and latitude.
         """
         # get projection
-        self.proj = prj.Proj(init='epsg:4326 +proj=nsper' + \
-                             ' +h=' + str(self._satellite.altitude()) + \
-                             ' +a=6378137.00 +b=6378137.00' + \
-                             ' +lon_0=' + str(self._satellite.longitude()) + \
-                             ' +lat_0=' + str(self._satellite.latitude()) + \
+        self.proj = prj.Proj(init='epsg:4326 +proj=nsper' +
+                             ' +h=' + str(self._satellite.altitude()) +
+                             ' +a=6378137.00 +b=6378137.00' +
+                             ' +lon_0=' + str(self._satellite.longitude()) +
+                             ' +lat_0=' + str(self._satellite.latitude()) +
                              ' +x_0=0 +y_0=0 +units=meters +no_defs')
         # consider offset
         if self._offset:
@@ -636,19 +647,23 @@ class AbstractPattern(Element):
 
         # get az el vector
         x, y = self.proj(lon, lat, inverse=False)
-        az = cst.RAD2DEG * np.arctan2(x, self._satellite.altitude()) - az_offset
-        el = cst.RAD2DEG * np.arctan2(y, self._satellite.altitude()) - el_offset
+        az = cst.RAD2DEG * \
+            np.arctan2(x, self._satellite.altitude()) - az_offset
+        el = cst.RAD2DEG * \
+            np.arctan2(y, self._satellite.altitude()) - el_offset
 
         # get directivity vector
         gain, _ = self.interpolate_copol(az, el)
         return gain
     # end of function directivity
 
-#==================================================================================================
+# ==================================================================================================
 
 
 # plot or export to file methods
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+
+
     def plot(self):
         """Draw pattern on the earth plot from the provided grd.
         """
@@ -691,18 +706,19 @@ class AbstractPattern(Element):
             y = self._satellite.altitude() * np.tan((el_mesh + el_offset) * cst.DEG2RAD)
             # compute plot origin (Nadir of spacecraft)
             # get projection
-            self.proj = prj.Proj(init='epsg:4326 +proj=nsper' + \
-                                ' +h=' + str(self._satellite.altitude()) + \
-                                ' +a=6378137.00 +b=6378137.00' + \
-                                ' +lon_0=' + str(self._satellite.longitude()) + \
-                                ' +lat_0=' + str(self._satellite.latitude()) + \
-                                ' +x_0=0 +y_0=0 +units=meters +no_defs')
+            self.proj = prj.Proj(init='epsg:4326 +proj=nsper' +
+                                 ' +h=' + str(self._satellite.altitude()) +
+                                 ' +a=6378137.00 +b=6378137.00' +
+                                 ' +lon_0=' + str(self._satellite.longitude()) +
+                                 ' +lat_0=' + str(self._satellite.latitude()) +
+                                 ' +x_0=0 +y_0=0 +units=meters +no_defs')
             lon_mesh, lat_mesh = self.proj(x, y, inverse=True)
             x, y = map(lon_mesh, lat_mesh, inverse=False)
             x_origin, y_origin = 0, 0
             # get interpolated points on a regular grid
             to_plot, _ = self.interpolate_slope(az_mesh, el_mesh)
-            isolevelscale = range(self._slope_range[0], self._slope_range[1], 3)
+            isolevelscale = range(
+                self._slope_range[0], self._slope_range[1], 3)
             colorbarscale = self._slope_range
 
         # display either isolevel or color map of slopes
@@ -786,7 +802,8 @@ class AbstractPattern(Element):
             ax = self._earthplot._axes
             cbax = self._earthplot._clrbar_axes
             divider = make_axes_locatable(ax)
-            divider.set_horizontal([Size.AxesX(ax), Size.Fixed(0), Size.Fixed(0)])
+            divider.set_horizontal(
+                [Size.AxesX(ax), Size.Fixed(0), Size.Fixed(0)])
         elif self._plot[0] == 'contour':
             for element in self._plot[1].collections:
                 try:
@@ -839,8 +856,8 @@ class AbstractPattern(Element):
         ys = np.min(self.elevation(set)) * cst.DEG2RAD
         ye = np.max(self.elevation(set)) * cst.DEG2RAD
         if self._offset:
-            x_offset =  self._azimuth_offset * cst.DEG2RAD
-            y_offset =  self._elevation_offset * cst.DEG2RAD
+            x_offset = self._azimuth_offset * cst.DEG2RAD
+            y_offset = self._elevation_offset * cst.DEG2RAD
         else:
             x_offset = 0
             y_offset = 0
@@ -879,10 +896,10 @@ class AbstractPattern(Element):
         file.close()
         utils.trace('out')
     # end of function export_to_file
-#==================================================================================================
+# ==================================================================================================
 
 # Mandatory functions and methods to be implemented
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
     @abstractmethod
     def read_file(self, filename):
         """Read antenna pattern data from file filename.
@@ -915,7 +932,7 @@ class AbstractPattern(Element):
         #       not supported
         pass
     # end function grid_type
-#==================================================================================================
+# ==================================================================================================
 
 # end of class AbstractPattern
 

@@ -4,7 +4,7 @@ all the work is done.
 """
 
 # import standard modules
-#==================================================================================================
+# ==================================================================================================
 # import os
 import os
 # system module
@@ -12,13 +12,13 @@ import sys
 from sys import argv
 
 # import third party modules
-#==================================================================================================
+# ==================================================================================================
 # import configparser module to manage ini files
 import configparser
 # import PyQt5 and link with matplotlib
 from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, qApp, \
-                            QVBoxLayout, QHBoxLayout, QWidget, QFileDialog, \
-                            QLabel, QComboBox
+    QVBoxLayout, QHBoxLayout, QWidget, QFileDialog, \
+    QLabel, QComboBox
 # import QtCore and QCursor to handle mouse movement, position and event
 from PyQt5 import QtCore
 from PyQt5.QtGui import QCursor
@@ -26,7 +26,7 @@ from PyQt5.QtGui import QCursor
 import numpy as np
 
 # import local modules
-#==================================================================================================
+# ==================================================================================================
 # debug utilities
 import patternviewer.utils as utils
 # Earthplot objects
@@ -49,18 +49,22 @@ from patternviewer.element import polygon
 import patternviewer.constant as cst
 
 # static functions
-#==================================================================================================
+# ==================================================================================================
+
+
 def version():
     """Returns version of the software as a string.
     """
     return cst.VERSION
 # end of function version
 
+
 def contact():
     """Returns contact email of the software as a string.
     """
     return cst.CONTACT
 # end of function contact
+
 
 class GrdViewer(QMainWindow):
     """Class to generate a window with Earth display.
@@ -72,7 +76,7 @@ class GrdViewer(QMainWindow):
 
         # Parent constructor
         super().__init__()
-                
+
         # give an name to the windows
         self.title = 'Pattern viewer'
         self.setWindowTitle(self.title)
@@ -92,7 +96,7 @@ class GrdViewer(QMainWindow):
             filename = 'grdviewer.ini'
         else:
             filename = inifile
-        print(".ini file: {0:s}",format(inifile))
+        print(".ini file: {0:s}", format(inifile))
         # read .ini file
         self.config = configparser.ConfigParser()
         self.config.read(filename)
@@ -134,8 +138,6 @@ class GrdViewer(QMainWindow):
         vbox.addWidget(self.earth_plot)
         vbox.addLayout(statusbar)
 
-
-
         # self.centralwidget.addLayout(vbox)
         self.setCentralWidget(self.centralwidget)
         self.show()
@@ -150,9 +152,10 @@ class GrdViewer(QMainWindow):
         if np.isnan(lon) or np.isnan(lat):
             mouse_label_text = ''
         else:
-        # else display longitude latitude an if available antenna gain
+            # else display longitude latitude an if available antenna gain
             if gain is None:
-                mouse_label_text = '{0:0.2f}deg. E  {1:0.2f}deg. N'.format(lon, lat)
+                mouse_label_text = '{0:0.2f}deg. E  {1:0.2f}deg. N'.format(
+                    lon, lat)
             else:
                 mouse_label_text = '{0:0.2f}deg. E  {1:0.2f}deg. N {2:0.2f}dB'.format(lon,
                                                                                       lat,
@@ -340,13 +343,13 @@ class GrdViewer(QMainWindow):
         """
         dialbox = ViewerPosDialog(self.earth_plot.viewer(), self.earth_plot)
         dialbox.exec_()
-        
+
         # refresh satellite position display
         self.setviewerpos(self.earth_plot.viewer().longitude(),
                           self.earth_plot.viewer().latitude(),
                           self.earth_plot.viewer().altitude())
     # end of method viewer_dialog
-    
+
     def load_pattern(self):
         """Pops up dialog box to load Grd file and display it
         on the Earth plot.
@@ -358,7 +361,7 @@ class GrdViewer(QMainWindow):
         if len(file_name):
             for f in file_name:
                 try:
-                    pattern = self.earth_plot.load_pattern({'filename':f})
+                    pattern = self.earth_plot.load_pattern({'filename': f})
                 except:
                     print("Load pattern cancelled.")
             if pattern:
@@ -369,7 +372,7 @@ class GrdViewer(QMainWindow):
     def zoom_dialog(self):
         """Open dialog to set zoom of Earth plot.
         """
-        dialbox = ZoomDialog(self.earth_plot.zoom(), \
+        dialbox = ZoomDialog(self.earth_plot.zoom(),
                              self.earth_plot)
         dialbox.exec_()
     # end of method zoom_dialog
@@ -387,7 +390,8 @@ class GrdViewer(QMainWindow):
         filename, _ = stn.Dialog.getOpenFileName()
         if filename:
             # add the stations to the station list
-            self.earth_plot._stations.extend(stn.get_station_from_file(filename, self.earth_plot))
+            self.earth_plot._stations.extend(
+                stn.get_station_from_file(filename, self.earth_plot))
             # refresh display
             self.earth_plot.draw_elements()
     # end of method station_dialog
@@ -398,10 +402,11 @@ class GrdViewer(QMainWindow):
         filename, _ = QFileDialog.getOpenFileName()
         if filename:
             # get list of polygon and append it to the existing list
-            self.earth_plot._polygons.extend(polygon.getpolygons(self.earth_plot, filename))
+            self.earth_plot._polygons.extend(
+                polygon.getpolygons(self.earth_plot, filename))
             # refresh display
             self.earth_plot.draw_elements()
-    # end of method 
+    # end of method
 
     def toggleprojection(self, action):
         """Toggle between Geo and Cylindrical projection.
@@ -425,13 +430,14 @@ class GrdViewer(QMainWindow):
         resolution = self.earth_plot._resolution
         self.earth_plot.drawearth(proj=projection,
                                   resolution=resolution)
-        self.getmenuitem('View>Blue Marble').setChecked(self.earth_plot._bluemarble)
+        self.getmenuitem('View>Blue Marble').setChecked(
+            self.earth_plot._bluemarble)
         self.earth_plot.draw_axis()
         self.earth_plot.draw()
         # end of method toggle_bluemarble
 
     def clearplot(self):
-        """Clear the Earth map plot 
+        """Clear the Earth map plot
         """
         # remove pattern menu items
         for f in self.earth_plot._patterns:
@@ -447,7 +453,7 @@ class GrdViewer(QMainWindow):
         self.earth_plot.draw_elements()
         self.earth_plot.draw()
     # end of function clearplot
-    
+
     def set_earth_resolution(self, action):
         """Call back to call for EarthPlot set_resolution function.
         """
@@ -516,13 +522,14 @@ class GrdViewer(QMainWindow):
         """
         utils.trace('in')
         defaultfilename = 'plot.PNG'
-        dialogbox = QFileDialog(caption='Save As ...', directory=self.earth_plot.rootdir)
+        dialogbox = QFileDialog(caption='Save As ...',
+                                directory=self.earth_plot.rootdir)
         dialogbox.selectFile(defaultfilename)
         filename, _ = dialogbox.getSaveFileName()
         self.earth_plot.save(filename)
         utils.trace('out')
     # end of callback saveas
-    
+
     def save(self):
         """Callback to save the Earth plot with default/previously given file name.
         """
@@ -554,17 +561,18 @@ class GrdViewer(QMainWindow):
                     name = basename + '>' + item.text()
                 item_dictionary[name] = item
                 try:
-                    item_dictionary.update(self.getmenuitemlist(item.menu(), name))
+                    item_dictionary.update(
+                        self.getmenuitemlist(item.menu(), name))
                 except:
                     pass
         return item_dictionary
 
 
-# End of Class GrdViewer   
+# End of Class GrdViewer
 
 
 # Main execution
-if __name__ == '__main__':   
+if __name__ == '__main__':
     # Create main window
     MAIN_WINDOW = QApplication(argv)
     if len(argv) > 1:

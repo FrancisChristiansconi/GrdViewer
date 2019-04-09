@@ -8,14 +8,14 @@
             "name": "Python:  Debug GrdViewer (Debug Console)",
             "type": "python",
             "request": "launch",
-            "program": "C:\\Users\\cfrance\\Dev\\Python\\PayPat\\grdviewer.py",
+            "program": "C:\\Users\\cfrance\\Dev\\Python\\GrdViewer\\grdviewer.py",
             "console": "none"
         },
         {
             "name": "Python:  Debug LATAM offset generator (Debug Console)",
             "type": "python",
             "request": "launch",
-            "program": "C:\\Users\\cfrance\\Dev\\Python\\PayPat\\latamfmstest.py",
+            "program": "C:\\Users\\cfrance\\Dev\\Python\\GrdViewer\\latamfmstest.py",
             "console": "none",
             "args": [
                 "P:\\ASTRIUM\\Astra_2EFG5B_-_SES6\\FMSLATAM\\Ground Stations location\\SES6\\SES06.sta",

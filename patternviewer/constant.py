@@ -6,7 +6,7 @@ import numpy as np
 
 
 # Software version
-VERSION = '1.1.3Beta'
+VERSION = 'develop'
 
 # Contact mail address
 CONTACT = 'christian.francesconi@ses.com'
@@ -42,20 +42,23 @@ def getboldness(linewidth):
     The string keys are the ones of the dictionary BOLDNESS defined in constant.py.
     """
     # if provided a string check if numeric or already boldness string
-    if type(linewidth) is str:
+    boldstring = ''
+    if isinstance(linewidth, str):
         if not linewidth.isnumeric():
-            return linewidth
+            boldstring = linewidth
     # else process as a float linewidth value
         else:
             width = float(linewidth)
     else:
         width = linewidth
     if width == 0:
-        return 'no line'
-    elif width < 0.2:
-        return 'light'
-    elif width < 0.4:
-        return 'medium'
+        boldstring = 'no line'
+    if width < 0.2:
+        boldstring = 'light'
+    if width < 0.4:
+        boldstring = 'medium'
     else:
-        return 'heavy'
+        boldstring = 'heavy'
+    # unique point of exit
+    return boldstring
 # end of function getboldness

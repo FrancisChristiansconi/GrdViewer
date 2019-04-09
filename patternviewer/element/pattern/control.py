@@ -27,7 +27,6 @@ class PatternControler():
     a dialog box and a menu.
     """
 
-
     def __init__(self, parent, filename):
         """Initialize a pattern controler.
         parent is the earthplot which is used to display the pattern
@@ -54,7 +53,8 @@ class PatternControler():
         elif self.ispat():
             self._pattern = Pat(conf=self._config, parent=self)
         else:
-            raise Exception('The file provided is not a grd file or a pat file.')
+            raise Exception(
+                'The file provided is not a grd file or a pat file.')
 
         # get Menu Pattern reference
         self._pattern_menu = self._mainwindow.menupattern
@@ -197,11 +197,13 @@ class PatternControler():
         # Get filename for exporting file
         filename, _ = QFileDialog.getSaveFileName(self._mainwindow,
                                                   'Select file',
-                                                  os.path.join(directory, default_filename),
+                                                  os.path.join(
+                                                      directory, default_filename),
                                                   'PAT (*.pat)')
         # get pattern to export
         if filename:
-            self._pattern.export_to_file(filename, shrunk=self._pattern._shrink)
+            self._pattern.export_to_file(
+                filename, shrunk=self._pattern._shrink)
         utils.trace('out')
     # end of function export_pattern
 

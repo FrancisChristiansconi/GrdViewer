@@ -10,18 +10,13 @@ import os
 # import Matplotlib and Base_earth_map
 from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
-import matplotlib as mpl
-from matplotlib.ticker import FuncFormatter
 from matplotlib.figure import Figure
-from matplotlib import cm
-from mpl_toolkits.axes_grid1 import make_axes_locatable
-from matplotlib.transforms import Bbox
 from matplotlib.patches import Rectangle
-
-# import PyQt5 and link with matplotlib
-from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, QFileDialog
-from PyQt5 import QtCore
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+
+# import PyQt5
+from PyQt5.QtWidgets import QSizePolicy
+from PyQt5 import QtCore
 
 # import numpy for arrays and mathematical operations
 import numpy as np
@@ -29,13 +24,11 @@ import numpy as np
 # local module
 import patternviewer.utils as utils
 from patternviewer.element.pattern.control import PatternControler
-from patternviewer.element.pattern.dialog import PatternDialog
 from patternviewer.element import station as stn
 # import patternviewer.element.station as stn
 import patternviewer.element.elevation as elv
 from patternviewer.viewer import Viewer
 from patternviewer.zoom import Zoom
-import patternviewer.angles
 
 # import constant file
 import patternviewer.constant as cst
@@ -217,7 +210,8 @@ class EarthPlot(FigureCanvas):
                                         for s in conf['level'].split(',')]
                     conf['Color surface'] = config.getboolean(pattern_section, 'Color surface',
                                                               fallback=False)
-                    pattern = self.load_pattern(conf=conf)
+
+                    self.loadpattern(conf=conf)
 
                     self.settitle(conf['title'])
 
@@ -507,10 +501,10 @@ class EarthPlot(FigureCanvas):
         action = {'escape': self.key_press_esc}
         try:
             action[event.key](event)
-        except:
+        except KEyError:
             pass
 
-    def key_press_esc(self, event):
+    def key_press_esc(self, _):
         # abort mouse drag and zoom
         if self.zoomposorigin is not None:
             self.zoomposorigin = None
@@ -782,7 +776,7 @@ class EarthPlot(FigureCanvas):
         return file_key
     # end of function get_file_key
 
-    def load_pattern(self, conf=None):
+    def loadpattern(self, conf=None):
         """Load and display a grd file.
         """
         utils.trace('in')
@@ -796,7 +790,7 @@ class EarthPlot(FigureCanvas):
         conf['key'] = file_key
         try:
             pattern = PatternControler(parent=self, filename=filename)
-        except FileNotFoundError as err:
+        except FileNotFoundError:
             print('Pattern file ' + filename + ' not found')
             return None
         if not 'sat_lon' in conf:

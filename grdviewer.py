@@ -19,9 +19,6 @@ import configparser
 from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, qApp, \
     QVBoxLayout, QHBoxLayout, QWidget, QFileDialog, \
     QLabel, QComboBox
-# import QtCore and QCursor to handle mouse movement, position and event
-from PyQt5 import QtCore
-from PyQt5.QtGui import QCursor
 # numerical help
 import numpy as np
 
@@ -31,8 +28,6 @@ import numpy as np
 import patternviewer.utils as utils
 # Earthplot objects
 import patternviewer.earthplot as plc
-# Antenna pattern configuration dialog
-from patternviewer.element.pattern.dialog import PatternDialog
 # elevation curves dialog
 from patternviewer.element.elevation import ElevDialog
 # import from viewer module
@@ -124,18 +119,18 @@ class GrdViewer(QMainWindow):
         statusbar.addWidget(self._patterncombobox)
 
         # Add map
-        self.earth_plot = plc.EarthPlot(parent=self.centralwidget,
+        self._earthplot = plc.EarthPlot(parent=self.centralwidget,
                                         config=self.config)
 
         # set viewer pos from EarthPlot config
-        self.setviewerpos(self.earth_plot.viewer().longitude(),
-                          self.earth_plot.viewer().latitude(),
-                          self.earth_plot.viewer().altitude())
+        self.setviewerpos(self._earthplot.viewer().longitude(),
+                          self._earthplot.viewer().latitude(),
+                          self._earthplot.viewer().altitude())
 
         # place test field in a vertical box layout
         vbox = QVBoxLayout(self.centralwidget)
         vbox.addWidget(self._menubar)
-        vbox.addWidget(self.earth_plot)
+        vbox.addWidget(self._earthplot)
         vbox.addLayout(statusbar)
 
         # self.centralwidget.addLayout(vbox)
@@ -307,7 +302,7 @@ class GrdViewer(QMainWindow):
         # load pattern item
         load_pattern_action = QAction('Load Grd', self)
         self.menupattern.addAction(load_pattern_action)
-        load_pattern_action.triggered.connect(self.load_pattern)
+        load_pattern_action.triggered.connect(self.loadpattern)
 
         # Add Misc menu
         self._menumisc = menubar.addMenu('Misc.')
@@ -318,7 +313,7 @@ class GrdViewer(QMainWindow):
         # load stations file
         add_station_action = QAction('Add stations file', self)
         self._menumisc.addAction(add_station_action)
-        add_station_action.triggered.connect(self.station_dialog)
+        add_station_action.triggered.connect(self.loadstations)
         # load polygons file
         add_poly_action = QAction('Add polygons file', self)
         self._menumisc.addAction(add_poly_action)
@@ -341,39 +336,62 @@ class GrdViewer(QMainWindow):
         """This method pops up the viewer setting dialog widget.
         Viewer coordinates are given in LLA.
         """
-        dialbox = ViewerPosDialog(self.earth_plot.viewer(), self.earth_plot)
+        dialbox = ViewerPosDialog(self._earthplot.viewer(), self._earthplot)
         dialbox.exec_()
 
         # refresh satellite position display
-        self.setviewerpos(self.earth_plot.viewer().longitude(),
-                          self.earth_plot.viewer().latitude(),
-                          self.earth_plot.viewer().altitude())
+        self.setviewerpos(self._earthplot.viewer().longitude(),
+                          self._earthplot.viewer().latitude(),
+                          self._earthplot.viewer().altitude())
     # end of method viewer_dialog
 
-    def load_pattern(self):
+    def loadpattern(self):
         """Pops up dialog box to load Grd file and display it
         on the Earth plot.
         """
         utils.trace('in')
         # Get filename
-        file_name, _ = QFileDialog.getOpenFileNames()
+        filenames, _ = QFileDialog.getOpenFileNames()
         # if file name provided open the customised dialog box
-        if len(file_name):
-            for f in file_name:
-                try:
-                    pattern = self.earth_plot.load_pattern({'filename': f})
-                except:
-                    print("Load pattern cancelled.")
+        if not filenames == []:
+            for filename in filenames:
+                pattern = self._earthplot.loadpattern({'filename': filename})
             if pattern:
-                self.earth_plot.draw_elements()
+                self._earthplot.draw_elements()
         utils.trace('out')
     # end of method load_pattern
+
+    def loadpolygon(self):
+        """Open dialog to get polygon to draw.
+        """
+        filenames, _ = QFileDialog.getOpenFileNames()
+        if not filenames == []:
+            for filename in filenames:
+                # get list of polygon and append it to the existing list
+                self._earthplot._polygons.extend(
+                    polygon.getpolygons(self._earthplot, filename))
+            # refresh display
+            self._earthplot.draw_elements()
+    # end of method
+
+    def loadstations(self):
+        """Open dialog to get stations to draw.
+        """
+        filenames, _ = QFileDialog.getOpenFileNames()
+        if not filenames == []:
+            for filename in filenames:
+                # add the stations to the station list
+                self._earthplot._stations.extend(
+                    stn.get_station_from_file(filename, self._earthplot))
+            # refresh display
+            self._earthplot.draw_elements()
+    # end of method station_dialog
 
     def zoom_dialog(self):
         """Open dialog to set zoom of Earth plot.
         """
-        dialbox = ZoomDialog(self.earth_plot.zoom(),
-                             self.earth_plot)
+        dialbox = ZoomDialog(self._earthplot.zoom(),
+                             self._earthplot)
         dialbox.exec_()
     # end of method zoom_dialog
 
@@ -384,74 +402,50 @@ class GrdViewer(QMainWindow):
         dialbox.exec_()
     # end of method elevation_dialog
 
-    def station_dialog(self):
-        """Open dialog to get stations to draw.
-        """
-        filename, _ = stn.Dialog.getOpenFileName()
-        if filename:
-            # add the stations to the station list
-            self.earth_plot._stations.extend(
-                stn.get_station_from_file(filename, self.earth_plot))
-            # refresh display
-            self.earth_plot.draw_elements()
-    # end of method station_dialog
-
-    def loadpolygon(self):
-        """Open dialog to get polygon to draw.
-        """
-        filename, _ = QFileDialog.getOpenFileName()
-        if filename:
-            # get list of polygon and append it to the existing list
-            self.earth_plot._polygons.extend(
-                polygon.getpolygons(self.earth_plot, filename))
-            # refresh display
-            self.earth_plot.draw_elements()
-    # end of method
-
     def toggleprojection(self, action):
         """Toggle between Geo and Cylindrical projection.
         """
         if action.text() == 'Geo':
-            self.earth_plot.projection('nsper')
+            self._earthplot.projection('nsper')
             self.getmenuitem('View>Projection>Geo').setChecked(True)
             self.getmenuitem('View>Projection>Cylindrical').setChecked(False)
         elif action.text() == 'Cylindrical':
-            self.earth_plot.projection('cyl')
+            self._earthplot.projection('cyl')
             self.getmenuitem('View>Projection>Geo').setChecked(False)
             self.getmenuitem('View>Projection>Cylindrical').setChecked(True)
-        self.earth_plot.draw_elements()
+        self._earthplot.draw_elements()
     # end of method toggleprojection
 
     def toggle_bluemarble(self):
         """Toggle display of Earth picture Blue Marble.
         """
-        self.earth_plot._bluemarble = not self.earth_plot._bluemarble
-        projection = self.earth_plot._projection
-        resolution = self.earth_plot._resolution
-        self.earth_plot.drawearth(proj=projection,
+        self._earthplot._bluemarble = not self._earthplot._bluemarble
+        projection = self._earthplot._projection
+        resolution = self._earthplot._resolution
+        self._earthplot.drawearth(proj=projection,
                                   resolution=resolution)
         self.getmenuitem('View>Blue Marble').setChecked(
-            self.earth_plot._bluemarble)
-        self.earth_plot.draw_axis()
-        self.earth_plot.draw()
+            self._earthplot._bluemarble)
+        self._earthplot.draw_axis()
+        self._earthplot.draw()
         # end of method toggle_bluemarble
 
     def clearplot(self):
         """Clear the Earth map plot
         """
         # remove pattern menu items
-        for f in self.earth_plot._patterns:
-            menu = self.earth_plot._patterns[f]._pattern_sub_menu
+        for pattern in self._earthplot._patterns:
+            menu = self._earthplot._patterns[pattern]._pattern_sub_menu
             menu_action = menu.menuAction()
             menu.parent().removeAction(menu_action)
-        self.earth_plot._patterns.clear()
-        self.earth_plot._stations.clear()
-        self.earth_plot._elev.clear()
-        self.earth_plot.zoom(Zoom())
-        self.earth_plot.viewer(Viewer())
-        self.earth_plot.draw_axis()
-        self.earth_plot.draw_elements()
-        self.earth_plot.draw()
+        self._earthplot._patterns.clear()
+        self._earthplot._stations.clear()
+        self._earthplot._elev.clear()
+        self._earthplot.zoom(Zoom())
+        self._earthplot.viewer(Viewer())
+        self._earthplot.draw_axis()
+        self._earthplot.draw_elements()
+        self._earthplot.draw()
     # end of function clearplot
 
     def set_earth_resolution(self, action):
@@ -462,7 +456,7 @@ class GrdViewer(QMainWindow):
         for act in action_dictionary:
             action_dictionary[act].setChecked(False)
         action.setChecked(True)
-        self.earth_plot.set_resolution(action.text()[0].lower())
+        self._earthplot.set_resolution(action.text()[0].lower())
     # end of set_earth_resolution
 
     def set_coastlines(self, action):
@@ -474,7 +468,7 @@ class GrdViewer(QMainWindow):
         for act in action_dictionary:
             action_dictionary[act].setChecked(False)
         action.setChecked(True)
-        self.earth_plot.set_coastlines(action.text(), True)
+        self._earthplot.set_coastlines(action.text(), True)
         utils.trace('out')
     # end of method set_coastlines
 
@@ -487,7 +481,7 @@ class GrdViewer(QMainWindow):
         for act in action_dictionary:
             action_dictionary[act].setChecked(False)
         action.setChecked(True)
-        self.earth_plot.set_countries(action.text(), True)
+        self._earthplot.set_countries(action.text(), True)
         utils.trace('out')
     # end of method set_countries
 
@@ -500,7 +494,7 @@ class GrdViewer(QMainWindow):
         for act in action_dictionary:
             action_dictionary[act].setChecked(False)
         action.setChecked(True)
-        self.earth_plot.set_parallels(action.text(), True)
+        self._earthplot.set_parallels(action.text(), True)
         utils.trace('out')
     # end of method set_parallels
 
@@ -513,7 +507,7 @@ class GrdViewer(QMainWindow):
         for act in action_dictionary:
             action_dictionary[act].setChecked(False)
         action.setChecked(True)
-        self.earth_plot.set_meridians(action.text(), True)
+        self._earthplot.set_meridians(action.text(), True)
         utils.trace('out')
     # end of method set_meridians
 
@@ -523,17 +517,17 @@ class GrdViewer(QMainWindow):
         utils.trace('in')
         defaultfilename = 'plot.PNG'
         dialogbox = QFileDialog(caption='Save As ...',
-                                directory=self.earth_plot.rootdir)
+                                directory=self._earthplot.rootdir)
         dialogbox.selectFile(defaultfilename)
         filename, _ = dialogbox.getSaveFileName()
-        self.earth_plot.save(filename)
+        self._earthplot.save(filename)
         utils.trace('out')
     # end of callback saveas
 
     def save(self):
         """Callback to save the Earth plot with default/previously given file name.
         """
-        self.earth_plot.save()
+        self._earthplot.save()
     # end of callback save
 
     def get_centralwidget(self):
@@ -548,13 +542,15 @@ class GrdViewer(QMainWindow):
         menu_dictionary = self.getmenuitemlist(self._menubar)
         try:
             return menu_dictionary[item]
-        except:
+        except KeyError:
             return None
 
     def getmenuitemlist(self, menu, basename=''):
+        """Recursive function used to generate a list of menu items.
+        """
         item_dictionary = {}
         for item in menu.actions():
-            if type(item) == QAction:
+            if isinstance(item, QAction):
                 if basename == '':
                     name = item.text()
                 else:
@@ -563,7 +559,8 @@ class GrdViewer(QMainWindow):
                 try:
                     item_dictionary.update(
                         self.getmenuitemlist(item.menu(), name))
-                except:
+                except AttributeError:
+                    # catch AttributeError exception
                     pass
         return item_dictionary
 
@@ -576,10 +573,10 @@ if __name__ == '__main__':
     # Create main window
     MAIN_WINDOW = QApplication(argv)
     if len(argv) > 1:
-        inifile = argv[1]
+        INIFILE = argv[1]
     else:
-        inifile = None
-    APP = GrdViewer(inifile)
+        INIFILE = None
+    APP = GrdViewer(INIFILE)
 
     # Start main loop
     sys.exit(MAIN_WINDOW.exec_())

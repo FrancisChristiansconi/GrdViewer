@@ -63,7 +63,7 @@ class Elevation(Element):
         # define Elevation matrix
         elevgrid = self.elevation(longrid, latgrid)
         self._plot = emap.contour(xgrid, ygrid, elevgrid,
-                                  self._config['levels'],
+                                  self._config['elevation'],
                                   colors=self._config['colors'],
                                   linestyles=self._config['linestyles'],
                                   linewidths=self._config['linewidths'])
@@ -83,7 +83,7 @@ class Elevation(Element):
             self._config.update(config)
             self._config['linewidths'] = float(
                 self.set(self._config, 'linewidths'))
-            self._config['levels'] = [
+            self._config['elevation'] = [
                 float(s) for s in self._config['elevation'].split(',')]
         return self._config
 
@@ -148,14 +148,14 @@ class ElevDialog(QDialog):
     def addcontour(self):
         self.close()
         config = {}
-        config['level'] = float(self.fieldelev.text())
-        self._eplt._elev['Elev' + self.fieldelev.text()] = Elevation(parent=self._eplt,
+        config['elevation'] = float(self.fieldelev.text())
+        self._eplt._elev['Elev[' + self.fieldelev.text() + ']'] = Elevation(parent=self._eplt,
                                                                      config=config)
         self._eplt.draw_elements()
 
     def removecontour(self):
         self.close()
-        self._eplt._elev['Elev' + self.fieldelev.text()].clearplot()
-        del self._eplt._elev['Elev' + self.fieldelev.text()]
+        self._eplt._elev['Elev[' + self.fieldelev.text() + ']'].clearplot()
+        del self._eplt._elev['Elev[' + self.fieldelev.text() + ']']
         self._eplt.draw()
         # self._eplt.draw_elements()

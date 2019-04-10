@@ -9,14 +9,14 @@
             "type": "python",
             "request": "launch",
             "program": "C:\\Users\\cfrance\\Dev\\Python\\GrdViewer\\grdviewer.py",
-            "console": "none"
+            "console": "integratedTerminal"
         },
         {
             "name": "Python:  Debug LATAM offset generator (Debug Console)",
             "type": "python",
             "request": "launch",
             "program": "C:\\Users\\cfrance\\Dev\\Python\\GrdViewer\\latamfmstest.py",
-            "console": "none",
+            "console": "integratedTerminal",
             "args": [
                 "P:\\ASTRIUM\\Astra_2EFG5B_-_SES6\\FMSLATAM\\Ground Stations location\\SES6\\SES06.sta",
                 "C:\\Temp\\FMSLATAM\\azel.txt",
@@ -30,7 +30,7 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
-            "console": "none"
+            "console": "integratedTerminal"
         },
         {
             "name": "Python: Attach",

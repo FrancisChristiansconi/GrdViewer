@@ -502,7 +502,7 @@ class EarthPlot(FigureCanvas):
         action = {'escape': self.key_press_esc}
         try:
             action[event.key](event)
-        except KEyError:
+        except KeyError:
             pass
 
     def key_press_esc(self, _):

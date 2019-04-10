@@ -4,7 +4,7 @@
 # import third party modules
 # ==================================================================================================
 # PyQt5 widgets import
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFileDialog, QDialog
 # matplotlib import
 from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
@@ -189,6 +189,38 @@ class StationControler():
         """Constructor of class StationControler. It takes as parameter a reference to an instance
         of class Station.
         """
+        pass
+
+class StationWidget(QDialog):
+    """This widget is used to configure a station object.
+    """
+
+    def __init__(self, station: Station):
+        """Create a dedicated widget from a Station instance.
+        """
+
+        # Call to parent constructor
+        super().__init__()
+
+        # store reference to station instance and config dictionary
+        self._station = station
+        self._stationconfig = station.configure()
+
+        # build the widget
+        self.buildgui()
+        self.show()
+
+    def buildgui(self):
+        """Build and initialize widget from station config"""
+
+            # longitude
+            self._lonfield = QlineEdit(self, self.set(self._stationconfig, 'longitude'))
+            # latitude
+            self._latfield = QlineEdit(self, self.set(self._stationconfig, 'latitude'))
+            # marker size
+            # fontsize
+            # display BPE and BPE value
+            # BPE circle linewidth
         pass
 
 

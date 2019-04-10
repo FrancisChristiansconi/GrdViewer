@@ -300,7 +300,7 @@ class GrdViewer(QMainWindow):
         # Add display pattern Menu
         self.menupattern = menubar.addMenu('Pattern')
         # load pattern item
-        load_pattern_action = QAction('Load Grd', self)
+        load_pattern_action = QAction('Load pattern file', self)
         self.menupattern.addAction(load_pattern_action)
         load_pattern_action.triggered.connect(self.loadpattern)
 
@@ -312,6 +312,9 @@ class GrdViewer(QMainWindow):
         disp_elev_action.triggered.connect(self.elevation_dialog)
         # load stations file
         add_station_action = QAction('Add stations file', self)
+        self._menumisc.addAction(add_station_action)
+        add_station_action.triggered.connect(self.loadstations)
+        add_station_action = QAction('Add station', self)
         self._menumisc.addAction(add_station_action)
         add_station_action.triggered.connect(self.loadstations)
         # load polygons file

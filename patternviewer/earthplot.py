@@ -242,7 +242,7 @@ class EarthPlot(FigureCanvas):
                 # load stations from sta file
                 elevation = elv.Elevation(parent=self)
                 elevation.configure(config._sections[elevation_section])
-                self._elev['Elev' + elevation.configure()['elevation']
+                self._elev['Elev' + str(elevation.configure()['elevation'])
                            ] = elevation
                 # check for next station section
                 elevation_index += 1
@@ -486,6 +486,7 @@ class EarthPlot(FigureCanvas):
             self.zoompatch.remove()
             self.zoompatch = None
             self.draw_elements()
+            self.draw_axis()
     # end of method mouse_release_event
 
     def mouse_press_drag(self, event):

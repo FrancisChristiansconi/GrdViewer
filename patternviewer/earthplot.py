@@ -240,10 +240,15 @@ class EarthPlot(FigureCanvas):
             elevation_section = 'ELEVATION' + str(elevation_index)
             while elevation_section in config:
                 # load stations from sta file
-                elevation = elv.Elevation(parent=self)
-                elevation.configure(config._sections[elevation_section])
-                self._elev['Elev' + str(elevation.configure()['elevation'])
-                           ] = elevation
+                elevationlist = [
+                    float(s) for s in config._sections[elevation_section]['elevation'].split(',')]
+                for elevation_value in elevationlist:
+                    conf = config._sections[elevation_section]
+                    conf['elevation'] = elevation_value
+                    elevation = elv.Elevation(parent=self)
+                    elevation.configure(conf)
+                    self._elev['Elev[' + str(elevation_value) + ']'
+                               ] = elevation
                 # check for next station section
                 elevation_index += 1
                 elevation_section = 'ELEVATION' + str(elevation_index)

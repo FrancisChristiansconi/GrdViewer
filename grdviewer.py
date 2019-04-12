@@ -90,8 +90,8 @@ class GrdViewer(QMainWindow):
         if inifile is None:
             filename = 'grdviewer.ini'
         else:
-            filename = inifile
-        print(".ini file: {0:s}", format(inifile))
+            filename = inifile 
+        print(".ini file: {0:s}".format(filename))
         # read .ini file
         self.config = configparser.ConfigParser()
         self.config.read(filename)

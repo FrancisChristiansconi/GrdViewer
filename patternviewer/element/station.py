@@ -213,14 +213,14 @@ class StationWidget(QDialog):
     def buildgui(self):
         """Build and initialize widget from station config"""
 
-            # longitude
-            self._lonfield = QlineEdit(self, self.set(self._stationconfig, 'longitude'))
-            # latitude
-            self._latfield = QlineEdit(self, self.set(self._stationconfig, 'latitude'))
-            # marker size
-            # fontsize
-            # display BPE and BPE value
-            # BPE circle linewidth
+        # longitude
+        self._lonfield = QlineEdit(self, self.set(self._stationconfig, 'longitude'))
+        # latitude
+        self._latfield = QlineEdit(self, self.set(self._stationconfig, 'latitude'))
+        # marker size
+        # fontsize
+        # display BPE and BPE value
+        # BPE circle linewidth
         pass
 
 

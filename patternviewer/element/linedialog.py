@@ -110,8 +110,8 @@ class LineDialog(QDialog):
         conf['linestyles'] = self.combolinestyle.currentText()
         # call to parent configure method
         self._parent.configure(config=conf)
-        self._parent._parent.clearplot()
-        self._parent._parent.plot()
+        self._parent.clearplot()
+        self._parent.plot()
     # end of method config
 
     def configandclose(self):

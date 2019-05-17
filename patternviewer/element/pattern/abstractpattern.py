@@ -794,33 +794,34 @@ class AbstractPattern(Element):
 
     def clearplot(self):
         utils.trace('in')
-        if self._plot[0] == 'surface':
-            self._plot[1].remove()
-            figure = self._plot[3]
-            if len(figure.axes) > 1:
-                figure.delaxes(figure.axes[1])
-            ax = self._earthplot._axes
-            cbax = self._earthplot._clrbar_axes
-            divider = make_axes_locatable(ax)
-            divider.set_horizontal(
-                [Size.AxesX(ax), Size.Fixed(0), Size.Fixed(0)])
-        elif self._plot[0] == 'contour':
-            for element in self._plot[1].collections:
-                try:
-                    element.remove()
-                except ValueError:
-                    print(element)
-            if len(self._plot) > 2:
-                try:
-                    self._plot[2][0].remove()
-                except TypeError:
-                    print("None element cannot be removed")
-                try:
-                    self._plot[3].remove()
-                except AttributeError:
-                    print("None element have no attribute remove")
-                for element in self._plot[4]:
-                    element.remove()
+        if self._plot is not None:
+            if self._plot[0] == 'surface':
+                self._plot[1].remove()
+                figure = self._plot[3]
+                if len(figure.axes) > 1:
+                    figure.delaxes(figure.axes[1])
+                ax = self._earthplot._axes
+                cbax = self._earthplot._clrbar_axes
+                divider = make_axes_locatable(ax)
+                divider.set_horizontal(
+                    [Size.AxesX(ax), Size.Fixed(0), Size.Fixed(0)])
+            elif self._plot[0] == 'contour':
+                for element in self._plot[1].collections:
+                    try:
+                        element.remove()
+                    except ValueError:
+                        print(element)
+                if len(self._plot) > 2:
+                    try:
+                        self._plot[2][0].remove()
+                    except TypeError:
+                        print("None element cannot be removed")
+                    try:
+                        self._plot[3].remove()
+                    except AttributeError:
+                        print("None element have no attribute remove")
+                    for element in self._plot[4]:
+                        element.remove()
         self._plot = None
         utils.trace('out')
 

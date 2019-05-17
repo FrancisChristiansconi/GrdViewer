@@ -46,6 +46,7 @@ def getboldness(linewidth):
     if isinstance(linewidth, str):
         if not linewidth.isnumeric():
             boldstring = linewidth
+            return
     # else process as a float linewidth value
         else:
             width = float(linewidth)

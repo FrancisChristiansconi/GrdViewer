@@ -111,7 +111,8 @@ class LineDialog(QDialog):
         # call to parent configure method
         self._parent.configure(config=conf)
         self._parent.clearplot()
-        self._parent.plot()
+        if self._parent._plot is not None:
+            self._parent.plot()
     # end of method config
 
     def configandclose(self):

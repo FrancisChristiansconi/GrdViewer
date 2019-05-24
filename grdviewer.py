@@ -76,11 +76,7 @@ class GrdViewer(QMainWindow):
         self.title = 'Pattern viewer'
         self.setWindowTitle(self.title)
 
-        # # window dimension
-        # self.width  = 8     # inches
-        # self.height = 6     # inches
-        # self.dpi    = 300   # dot per inch
-        # self.resize(self.width*self.dpi, self.height*self.dpi)
+        # Do not remember why these are initialized here
         self.revert_x_axis = False
         self.revert_y_axis = False
         self.second_polarisation = False
@@ -90,7 +86,7 @@ class GrdViewer(QMainWindow):
         if inifile is None:
             filename = 'grdviewer.ini'
         else:
-            filename = inifile 
+            filename = inifile
         print(".ini file: {0:s}".format(filename))
         # read .ini file
         self.config = configparser.ConfigParser()
@@ -152,18 +148,16 @@ class GrdViewer(QMainWindow):
                 mouse_label_text = '{0:0.2f}deg. E  {1:0.2f}deg. N'.format(
                     lon, lat)
             else:
-                mouse_label_text = '{0:0.2f}deg. E  {1:0.2f}deg. N {2:0.2f}dB'.format(lon,
-                                                                                      lat,
-                                                                                      gain)
+                mouse_label_text = '{0:0.2f}deg. E ' \
+                    '{1:0.2f}deg. N {2:0.2f}dB'.format(lon, lat, gain)
         self._mouse_pos_label.setText(mouse_label_text)
     # end of method setmousepos
 
     def setviewerpos(self, lon, lat, alt):
         """Set viewer position in status bar.
         """
-        viewer_label_text = 'Viewer: {0:0.2f}deg. E {1:0.2f}deg. N  {2:0.2f}m.'.format(lon,
-                                                                                       lat,
-                                                                                       alt)
+        viewer_label_text = 'Viewer: {0:0.2f}deg. E ' \
+            '{1:0.2f}deg. N  {2:0.2f}m.'.format(lon, lat, alt)
         self._viewer_label.setText(viewer_label_text)
     # end of method setviewerpos
 

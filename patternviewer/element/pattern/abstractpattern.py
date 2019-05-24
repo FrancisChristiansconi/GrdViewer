@@ -215,7 +215,7 @@ class AbstractPattern(Element):
             # boolean: display slope (True) or isolevel (False)
             self._display_slope = self.set(self._conf, 'display_slope', False)
             # float[]: range of slope displayed
-            self._slope_range = self.set(self._conf, 'slopes', [3, 20])
+            self._slope_range = self.set(self._conf, 'slopes', [3, 30])
             # boolean: use x axis reverted
             self._revert_x = self.set(self._conf, 'revert_x', False)
             # boolean: use y axis reverted
@@ -769,9 +769,10 @@ class AbstractPattern(Element):
             cmap.set_over('white', max(colorbarscale))
             cmap.set_under('white', min(colorbarscale))
 
-            pcm_pattern = map.pcolormesh(x + x_origin, y + y_origin, to_plot,
-                                         vmin=min(colorbarscale), vmax=max(colorbarscale),
-                                         cmap=cmap, alpha=0.5)
+            pcm_pattern = map.pcolormesh(lon_mesh, lat_mesh, to_plot,
+                                         vmin=min(colorbarscale),
+                                         vmax=max(colorbarscale),
+                                         cmap=cmap, alpha=1, latlon=True)
 
             # add color bar
             if cbar:

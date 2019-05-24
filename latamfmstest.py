@@ -104,8 +104,11 @@ def main():
         TM_gain[name][(azoffset, eloffset)] = TM_pattern.directivity(lon, lat)
         outfile.write('{0}: {1:0.2f}dBi {2:0.2f}dBi \n'.format(name,
                                                                F2_gain[name][(
-                                                                   azoffset, eloffset)],
-                                                               TM_gain[name][(azoffset, eloffset)]))
+                                                                   azoffset,
+                                                                   eloffset)],
+                                                               TM_gain[name][(
+                                                                   azoffset,
+                                                                   eloffset)]))
 
     # open file and read text data (azel offset)
     file = open(azel_file, "r")

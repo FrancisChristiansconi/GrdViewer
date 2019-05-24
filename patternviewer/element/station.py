@@ -13,8 +13,10 @@ import numpy as np
 
 # import local modules
 # ==================================================================================================
-from patternviewer import earthplot as eplt     # Earth Plot class definition
-from patternviewer.element.element import Element  # Astract  mother class Element
+# Earth Plot class definition
+from patternviewer import earthplot as eplt
+# Astract mother class Element
+from patternviewer.element.element import Element
 
 
 class Station(Element):
@@ -70,7 +72,8 @@ class Station(Element):
             circle = None
             if self._config['bpe']:
                 circle = plt.Circle((xsta, ysta), radius,
-                                    color=self._config['circle color'], fill=False,
+                                    color=self._config['circle color'],
+                                    fill=False,
                                     linewidth=self._config['linewidth'],
                                     linestyle=self._config['linestyle'])
                 earthmap.ax.add_artist(circle)
@@ -79,8 +82,8 @@ class Station(Element):
                                      self._config['marker size'],
                                      marker=self._config['marker'],
                                      color=self._config['marker color'])
-            # add station tag, position is computed from plot size and desired relative position
-            # wrt. station coordinates
+            # add station tag, position is computed from plot size and
+            # desired relative position wrt. station coordinates
             plot_width = self._parent.get_width()
             plot_height = self._parent.get_height()
             x_offset = plot_width / 200
@@ -186,10 +189,11 @@ class StationControler():
     """
 
     def __init(self, station):
-        """Constructor of class StationControler. It takes as parameter a reference to an instance
-        of class Station.
+        """Constructor of class StationControler. It takes as parameter
+        a reference to an instance of class Station.
         """
         pass
+
 
 class StationWidget(QDialog):
     """This widget is used to configure a station object.
@@ -214,9 +218,11 @@ class StationWidget(QDialog):
         """Build and initialize widget from station config"""
 
         # longitude
-        self._lonfield = QlineEdit(self, self.set(self._stationconfig, 'longitude'))
+        self._lonfield = QlineEdit(self, self.set(self._stationconfig,
+                                                  'longitude'))
         # latitude
-        self._latfield = QlineEdit(self, self.set(self._stationconfig, 'latitude'))
+        self._latfield = QlineEdit(self, self.set(self._stationconfig,
+                                                  'latitude'))
         # marker size
         # fontsize
         # display BPE and BPE value

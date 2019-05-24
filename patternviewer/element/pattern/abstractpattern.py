@@ -29,9 +29,9 @@ import matplotlib.pyplot as plt
 # import Basemap of mpltoolkit
 from mpl_toolkits.basemap import Basemap
 # PyQt5 widgets import
-from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, \
-    QHBoxLayout, QVBoxLayout, QPushButton, QWidget, QFileDialog, QLabel, \
-    QGridLayout, QCheckBox, QLineEdit
+from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, \
+    qApp, QDialog, QHBoxLayout, QVBoxLayout, QPushButton, QWidget, \
+    QFileDialog, QLabel, QGridLayout, QCheckBox, QLineEdit
 from PyQt5.QtGui import QColor, QPalette
 # abstract class toolbox
 from abc import ABC, abstractmethod
@@ -164,10 +164,12 @@ class AbstractPattern(Element):
         # apply to all sets of data
         for set in range(self._nb_sets):
 
-            if self._x[set][0, 1] > self._x[set][0, 0] and self._y[set][1, 0] > self._y[set][0, 0]:
+            if self._x[set][0, 1] > self._x[set][0, 0]
+            and self._y[set][1, 0] > self._y[set][0, 0]:
                 # already the good orientation
                 pass
-            elif self._x[set][0, 1] < self._x[set][0, 0] and self._y[set][1, 0] > self._y[set][0, 0]:
+            elif self._x[set][0, 1] < self._x[set][0, 0]
+            and self._y[set][1, 0] > self._y[set][0, 0]:
                 # change only x-axis of the grid
                 self._x[set] = self._x[set][::-1, :]
                 self._y[set] = self._y[set][::-1, :]
@@ -176,7 +178,8 @@ class AbstractPattern(Element):
                 if len(self._E_mag_cr):
                     self._E_mag_cr[set] = self._E_mag_cr[set][::-1, :]
                     self._E_phs_cr[set] = self._E_phs_cr[set][::-1, :]
-            elif self._x[set][0, 1] < self._x[set][0, 0] and self._y[set][1, 0] < self._y[set][0, 0]:
+            elif self._x[set][0, 1] < self._x[set][0, 0]
+            and self._y[set][1, 0] < self._y[set][0, 0]:
                 # change x and y-axes of the grid
                 self._x[set] = self._x[set][::-1, ::-1]
                 self._y[set] = self._y[set][::-1, ::-1]
@@ -185,7 +188,8 @@ class AbstractPattern(Element):
                 if len(self._E_mag_cr):
                     self._E_mag_cr[set] = self._E_mag_cr[set][::-1, ::-1]
                     self._E_phs_cr[set] = self._E_phs_cr[set][::-1, ::-1]
-            elif self._x[set][0, 1] > self._x[set][0, 0] and self._y[set][1, 0] < self._y[set][0, 0]:
+            elif self._x[set][0, 1] > self._x[set][0, 0]
+            and self._y[set][1, 0] < self._y[set][0, 0]:
                 # change only y-axis of the grid
                 self._x[set] = self._x[set][:, ::-1]
                 self._y[set] = self._y[set][:, ::-1]
@@ -197,7 +201,8 @@ class AbstractPattern(Element):
     # end of reshapedata function
 
     def generate_grid(self):
-        """Generate longitude/latitude and azimuth/elevation grid from native format grid.
+        """Generate longitude/latitude and azimuth/elevation grid from
+        native format grid.
         """
         for k in range(self._nb_sets):
             self._longitude[k], self._latitude[k] = self.ll_grid(k)
@@ -206,7 +211,8 @@ class AbstractPattern(Element):
 
     def configure(self, config=None):
         utils.trace('in')
-        # if config dictionary is provided, merge it to this instance dictionary
+        # if config dictionary is provided, merge it to this instance
+        # dictionary
         if config is not None:
             # merge to this instance dictionary
             self._conf.update(config)
@@ -252,7 +258,8 @@ class AbstractPattern(Element):
                     x_offset = (
                         np.max(self._x[set][:]) - np.min(self._x[set][:]))
                     y_offset = (
-                        np.max(self._y[set][:][:]) - np.min(self._y[set][:][:]))
+                        np.max(self._y[set][:][:]) -
+                        np.min(self._y[set][:][:]))
                     self._x[set] = -1*self._x[set]
                     self._y[set] = -1*self._y[set]
                     self._rotated = self._rotate
@@ -292,11 +299,13 @@ class AbstractPattern(Element):
         else:
             self._to_plot = self.cross()
             if self._to_plot is None:
-                print('set_to_plot: No crosspol data available. Stick to copol.')
+                print('set_to_plot: No crosspol data available. ' +
+                      'Stick to copol.')
                 self._to_plot = self.copol()
         # if shrink option
         if self._shrink:
-            # shrink_copol uses interpolate_copol function that uses _to_plot attribute
+            # shrink_copol uses interpolate_copol function that
+            # uses _to_plot attribute
             self._to_plot = self.shrink_copol(self._azshrink, self._elshrink)
 
         utils.trace('out')
@@ -396,7 +405,7 @@ class AbstractPattern(Element):
         The spline object is also returned for reuse.
         """
 
-        if spline == None:
+        if spline is None:
             if self._x[set][0, 0] == self._x[set][1, 0]:
                 x = self._x[set][0, :]
                 y = self._y[set][:, 0]
@@ -430,7 +439,7 @@ class AbstractPattern(Element):
         """return interpolated value of the pattern
         """
         utils.trace('in')
-        if spline == None:
+        if spline is None:
             if self._x[set][0, 0] == self._x[set][1, 0]:
                 x = self._x[set][0, :]
                 y = self._y[set][:, 0]
@@ -460,14 +469,15 @@ class AbstractPattern(Element):
         return a, b
     # end of function interpolate_slope
 
-    def shrink_copol(self, azshrink, elshrink, az_co=[], el_co=[], step=None, set: int = 0):
+    def shrink_copol(self, azshrink, elshrink, az_co=[], el_co=[],
+                     step=None, set: int = 0):
         """Shrink pattern using an elliptical beam pointing error.
         This function compute the pattern with different pointing error and
         keep the minimum directivity for each station.
         """
         utils.trace('in')
         # Create azel meshgrid (rectangular grid)
-        if step == None:
+        if step is None:
             az_step = azshrink / 10
             el_step = elshrink / 10
         else:
@@ -493,9 +503,11 @@ class AbstractPattern(Element):
         y_ellipse = elshrink * np.sin(theta)
 
         # concatenate ellipse filling grid and circumference points
-        az_depointing = np.concatenate(([f for f in az_grid.flatten() if not np.isnan(f)],
+        az_depointing = np.concatenate(([f for f in az_grid.flatten()
+                                         if not np.isnan(f)],
                                         x_ellipse))
-        el_depointing = np.concatenate(([f for f in el_grid.flatten() if not np.isnan(f)],
+        el_depointing = np.concatenate(([f for f in el_grid.flatten()
+                                         if not np.isnan(f)],
                                         y_ellipse))
 
         # interpolate copol into a step accurate grid
@@ -628,7 +640,8 @@ class AbstractPattern(Element):
     # end of function latitude
 
     def directivity(self, lon, lat):
-        """Return directivity for a vector of stations defined with longitude and latitude.
+        """Return directivity for a vector of stations defined with
+        longitude and latitude.
         """
         # get projection
         self.proj = prj.Proj(init='epsg:4326 +proj=nsper' +
@@ -662,20 +675,16 @@ class AbstractPattern(Element):
 
 # plot or export to file methods
 # --------------------------------------------------------------------------------------------------
-
-
     def plot(self):
         """Draw pattern on the earth plot from the provided grd.
         """
         utils.trace('in')
-
         map = self._earthplot.get_earthmap()
         viewer = self._earthplot._viewer
         figure = self._earthplot._figure
         axes = self._earthplot._axes
         cbar = self._earthplot._clrbar
         cbar_axes = self._earthplot._clrbar_axes
-
         # choose data to plot
         if not self._display_slope:
             x, y = map(self.longitude(), self.latitude())
@@ -700,17 +709,22 @@ class AbstractPattern(Element):
             else:
                 az_offset = 0
                 el_offset = 0
-
             # convert grid to plot coordinates
-            x = self._satellite.altitude() * np.tan((az_mesh + az_offset) * cst.DEG2RAD)
-            y = self._satellite.altitude() * np.tan((el_mesh + el_offset) * cst.DEG2RAD)
+            x = self._satellite.altitude() *
+            np.tan((az_mesh + az_offset) * cst.DEG2RAD)
+
+            y = self._satellite.altitude() *
+            np.tan((el_mesh + el_offset) * cst.DEG2RAD)
+
             # compute plot origin (Nadir of spacecraft)
             # get projection
             self.proj = prj.Proj(init='epsg:4326 +proj=nsper' +
                                  ' +h=' + str(self._satellite.altitude()) +
                                  ' +a=6378137.00 +b=6378137.00' +
-                                 ' +lon_0=' + str(self._satellite.longitude()) +
-                                 ' +lat_0=' + str(self._satellite.latitude()) +
+                                 ' +lon_0=' +
+                                 str(self._satellite.longitude()) +
+                                 ' +lat_0=' +
+                                 str(self._satellite.latitude()) +
                                  ' +x_0=0 +y_0=0 +units=meters +no_defs')
             lon_mesh, lat_mesh = self.proj(x, y, inverse=True)
             x, y = map(lon_mesh, lat_mesh, inverse=False)
@@ -720,12 +734,11 @@ class AbstractPattern(Element):
             isolevelscale = range(
                 self._slope_range[0], self._slope_range[1], 3)
             colorbarscale = self._slope_range
-
         # display either isolevel or color map of slopes
         if not self._conf['Color surface']:
             # try to display isolevel
-            # if wrong pol is chosen, isolevel value might not be found, hence an exception is thrown
-            # and has to be caught
+            # if wrong pol is chosen, isolevel value might not be found,
+            # hence an exception is thrown and has to be caught.
             try:
                 # get linestyles for contour plot
                 if 'linestyles' in self._conf:
@@ -737,8 +750,8 @@ class AbstractPattern(Element):
                     linewidths = self._conf['linewidths']
                 else:
                     linewidths = 0.2
-
-                # if shrink pattern option is selected, use shrink_copol function
+                # if shrink pattern option is selected,
+                # use shrink_copol function
                 cs_pattern = map.contour(x + x_origin, y + y_origin,
                                          to_plot,
                                          isolevelscale,
@@ -749,12 +762,12 @@ class AbstractPattern(Element):
                 else:
                     cs_marker = None
                     cs_tag = None
-                    # no call to displaymax because it has no meaning when shrinking the pattern
-
+                    # no call to displaymax because it has no meaning
+                    # when shrinking the pattern
                 # add isolevels labels
                 cs_label = figure.axes[0].clabel(cs_pattern, isolevelscale,
-                                                 inline=True, fmt='%1.1f', fontsize=2)
-
+                                                 inline=True, fmt='%1.1f',
+                                                 fontsize=2)
                 # Set return value
                 self._plot = 'contour', cs_pattern, cs_marker, cs_tag, cs_label
 
@@ -826,7 +839,8 @@ class AbstractPattern(Element):
         self._plot = None
         utils.trace('out')
 
-    def export_to_file(self, filename: str, shrunk: bool = False, set: int = 0):
+    def export_to_file(self, filename: str, shrunk: bool = False,
+                       set: int = 0):
         """Export this pattern to .pat file.
         filename is the target filename
         shrunk is a boolean specifying if the output pattern should be shrunk
@@ -843,14 +857,14 @@ class AbstractPattern(Element):
 
         # format of file
         ny, nx = self._x[set].shape
-        file.write("  " + str(self._nb_sets) + ", "
-                   + "0" + ", "
-                   + "1" + ", "
-                   + str(3) + ", "
-                   + str(nx) + ", "
-                   + str(ny) + ", "
-                   + "0" + ", "
-                   + "1" + "\n")
+        file.write("  " + str(self._nb_sets) + ", " +
+                   "0" + ", " +
+                   "1" + ", " +
+                   str(3) + ", " +
+                   str(nx) + ", " +
+                   str(ny) + ", " +
+                   "0" + ", " +
+                   "1" + "\n")
 
         # limits of grid
         xs = np.min(self.azimuth(set)) * cst.DEG2RAD
@@ -863,11 +877,11 @@ class AbstractPattern(Element):
         else:
             x_offset = 0
             y_offset = 0
-        file.write("  " + str(xs + x_offset) + ", "
-                        + str(ys + y_offset) + ", "
-                        + str(xe + x_offset) + ", "
-                        + str(ye + y_offset) + "\n")
-
+        file.write("  " +
+                   str(xs + x_offset) + ", " +
+                   str(ys + y_offset) + ", " +
+                   str(xe + x_offset) + ", " +
+                   str(ye + y_offset) + "\n")
         x = np.linspace(xs, xe, nx)
         y = np.linspace(ys, ye, ny)
         x, y = np.meshgrid(x, y)
@@ -884,7 +898,8 @@ class AbstractPattern(Element):
 
         # write pattern data
         if shrunk:
-            co_to_write = self.shrink_copol(azshrink=self._azshrink, elshrink=self._elshrink,
+            co_to_write = self.shrink_copol(azshrink=self._azshrink,
+                                            elshrink=self._elshrink,
                                             az_co=x, el_co=y, set=set)
         else:
             co_to_write, _ = self.interpolate_copol(x, y, set)

@@ -17,13 +17,8 @@ from sys import argv
 import configparser
 # import PyQt5 and link with matplotlib
 from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, qApp, \
-<<<<<<< HEAD
     QVBoxLayout, QHBoxLayout, QWidget, QFileDialog, \
     QLabel, QComboBox
-=======
-                            QVBoxLayout, QHBoxLayout, QWidget, QFileDialog, \
-                            QLabel, QComboBox
->>>>>>> refactoring
 # numerical help
 import numpy as np
 
@@ -81,7 +76,11 @@ class GrdViewer(QMainWindow):
         self.title = 'Pattern viewer'
         self.setWindowTitle(self.title)
 
-        # Do not remember why these are initialized here
+        # # window dimension
+        # self.width  = 8     # inches
+        # self.height = 6     # inches
+        # self.dpi    = 300   # dot per inch
+        # self.resize(self.width*self.dpi, self.height*self.dpi)
         self.revert_x_axis = False
         self.revert_y_axis = False
         self.second_polarisation = False
@@ -92,11 +91,7 @@ class GrdViewer(QMainWindow):
             filename = 'grdviewer.ini'
         else:
             filename = inifile
-<<<<<<< HEAD
-        print(".ini file: {0:s}".format(filename))
-=======
-        print(".ini file: " + str(inifile))
->>>>>>> refactoring
+        print(".ini file: {0:s}", format(inifile))
         # read .ini file
         self.config = configparser.ConfigParser()
         self.config.read(filename)
@@ -157,16 +152,18 @@ class GrdViewer(QMainWindow):
                 mouse_label_text = '{0:0.2f}deg. E  {1:0.2f}deg. N'.format(
                     lon, lat)
             else:
-                mouse_label_text = '{0:0.2f}deg. E ' \
-                    '{1:0.2f}deg. N {2:0.2f}dB'.format(lon, lat, gain)
+                mouse_label_text = '{0:0.2f}deg. E  {1:0.2f}deg. N {2:0.2f}dB'.format(lon,
+                                                                                      lat,
+                                                                                      gain)
         self._mouse_pos_label.setText(mouse_label_text)
     # end of method setmousepos
 
     def setviewerpos(self, lon, lat, alt):
         """Set viewer position in status bar.
         """
-        viewer_label_text = 'Viewer: {0:0.2f}deg. E ' \
-            '{1:0.2f}deg. N  {2:0.2f}m.'.format(lon, lat, alt)
+        viewer_label_text = 'Viewer: {0:0.2f}deg. E {1:0.2f}deg. N  {2:0.2f}m.'.format(lon,
+                                                                                       lat,
+                                                                                       alt)
         self._viewer_label.setText(viewer_label_text)
     # end of method setviewerpos
 
@@ -314,9 +311,9 @@ class GrdViewer(QMainWindow):
         self._menumisc.addAction(disp_elev_action)
         disp_elev_action.triggered.connect(self.elevation_dialog)
         # load stations file
-        add_station_action = QAction('Add stations file', self)
-        self._menumisc.addAction(add_station_action)
-        add_station_action.triggered.connect(self.loadstations)
+        add_stations_action = QAction('Add stations file', self)
+        self._menumisc.addAction(add_stations_action)
+        add_stations_action.triggered.connect(self.loadstations)
         add_station_action = QAction('Add station', self)
         self._menumisc.addAction(add_station_action)
         add_station_action.triggered.connect(self.loadstations)
@@ -351,11 +348,7 @@ class GrdViewer(QMainWindow):
                           self._earthplot.viewer().altitude())
     # end of method viewer_dialog
 
-<<<<<<< HEAD
     def loadpattern(self):
-=======
-    def load_pattern(self):
->>>>>>> refactoring
         """Pops up dialog box to load Grd file and display it
         on the Earth plot.
         """
@@ -363,18 +356,9 @@ class GrdViewer(QMainWindow):
         # Get filename
         filenames, _ = QFileDialog.getOpenFileNames()
         # if file name provided open the customised dialog box
-<<<<<<< HEAD
         if not filenames == []:
             for filename in filenames:
                 pattern = self._earthplot.loadpattern({'filename': filename})
-=======
-        if filenames is not '':
-            for filename in filenames:
-                try:
-                    pattern = self.earth_plot.load_pattern({'filename':filename})
-                except Exception as e:
-                    print("Load pattern cancelled.")
->>>>>>> refactoring
             if pattern:
                 self._earthplot.draw_elements()
         utils.trace('out')
@@ -421,31 +405,6 @@ class GrdViewer(QMainWindow):
         dialbox.exec_()
     # end of method elevation_dialog
 
-<<<<<<< HEAD
-=======
-    def station_dialog(self):
-        """Open dialog to get stations to draw.
-        """
-        filename, _ = stn.Dialog.getOpenFileName()
-        if filename:
-            # add the stations to the station list
-            self.earth_plot._stations.extend(stn.get_station_from_file(filename, self.earth_plot))
-            # refresh display
-            self.earth_plot.draw_elements()
-    # end of method station_dialog
-
-    def loadpolygon(self):
-        """Open dialog to get polygon to draw.
-        """
-        filename, _ = QFileDialog.getOpenFileName()
-        if filename:
-            # get list of polygon and append it to the existing list
-            self.earth_plot._polygons.extend(polygon.getpolygons(self.earth_plot, filename))
-            # refresh display
-            self.earth_plot.draw_elements()
-    # end of method
-
->>>>>>> refactoring
     def toggleprojection(self, action):
         """Toggle between Geo and Cylindrical projection.
         """
@@ -478,13 +437,8 @@ class GrdViewer(QMainWindow):
         """Clear the Earth map plot
         """
         # remove pattern menu items
-<<<<<<< HEAD
         for pattern in self._earthplot._patterns:
             menu = self._earthplot._patterns[pattern]._pattern_sub_menu
-=======
-        for controler in self.earth_plot._patterns:
-            menu = self.earth_plot._patterns[controler]._pattern_sub_menu
->>>>>>> refactoring
             menu_action = menu.menuAction()
             menu.parent().removeAction(menu_action)
         self._earthplot._patterns.clear()
@@ -595,14 +549,7 @@ class GrdViewer(QMainWindow):
             return None
 
     def getmenuitemlist(self, menu, basename=''):
-<<<<<<< HEAD
         """Recursive function used to generate a list of menu items.
-=======
-        """This recursive function returns a dictionary of menu items which keys
-        are the items names.
-        Each submenu level up to the item itself is given in the key,
-        levels separated by character '>'
->>>>>>> refactoring
         """
         item_dictionary = {}
         for item in menu.actions():
@@ -613,15 +560,10 @@ class GrdViewer(QMainWindow):
                     name = basename + '>' + item.text()
                 item_dictionary[name] = item
                 try:
-<<<<<<< HEAD
                     item_dictionary.update(
                         self.getmenuitemlist(item.menu(), name))
                 except AttributeError:
                     # catch AttributeError exception
-=======
-                    item_dictionary.update(self.getmenuitemlist(item.menu(), name))
-                except AttributeError:
->>>>>>> refactoring
                     pass
         return item_dictionary
 
@@ -633,19 +575,11 @@ class GrdViewer(QMainWindow):
 if __name__ == '__main__':
     # Create main window
     MAIN_WINDOW = QApplication(argv)
-    # if .ini file is passed as argument use it to initialize application
     if len(argv) > 1:
-<<<<<<< HEAD
         INIFILE = argv[1]
     else:
         INIFILE = None
     APP = GrdViewer(INIFILE)
-=======
-        FILE = argv[1]
-    else:
-        FILE = None
-    APP = GrdViewer(FILE)
->>>>>>> refactoring
 
     # Start main loop
     sys.exit(MAIN_WINDOW.exec_())

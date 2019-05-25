@@ -259,13 +259,13 @@ def get_station_from_file(filename: str, earthplot=None):
                     beam_point_err = float(tokens[5])
                     station = Station(parent=earthplot)
                     station.configure({'longitude': lon,
-                                    'latitude': lat,
-                                    'tag': tag,
-                                    'name': name,
-                                    'bpe': beam_point_err,
-                                    'tagpos': tagpos})
+                                       'latitude': lat,
+                                       'tag': tag,
+                                       'name': name,
+                                       'bpe': beam_point_err,
+                                       'tagpos': tagpos})
                     stations.append(station)
-    except FileNotFoundError as fnf:
+    except FileNotFoundError:
         print('station.py: {} not found'.format(filename))
 
     return stations

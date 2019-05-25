@@ -12,7 +12,8 @@ from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg \
+    import FigureCanvasQTAgg as FigureCanvas
 
 # import PyQt5
 from PyQt5.QtWidgets import QSizePolicy
@@ -111,7 +112,8 @@ class EarthPlot(FigureCanvas):
                                           'map resolution',
                                           fallback=self._resolution).lower()
             self._app.getmenuitem(
-                item='View>Map resolution>' + self._resolution).setChecked(True)
+                item='View>Map resolution>' +
+                self._resolution).setChecked(True)
             self._resolution = self._resolution[0]
             self._projection = config.get(
                 'DEFAULT', 'projection', fallback='nsper')
@@ -140,7 +142,8 @@ class EarthPlot(FigureCanvas):
             self._countries = config.get(
                 'DEFAULT', 'countries', fallback='light')
             self._app.getmenuitem(
-                item='View>Country borders>' + self._countries).setChecked(True)
+                item='View>Country borders>' +
+                self._countries).setChecked(True)
             self._parallels = config.get(
                 'DEFAULT', 'parallels', fallback='light')
             self._app.getmenuitem(
@@ -182,30 +185,41 @@ class EarthPlot(FigureCanvas):
                     conf = {}
                     conf['filename'] = config.get(pattern_section, 'file')
                     conf['sat_lon'] = config.getfloat(pattern_section,
-                                                      'longitude', fallback=0.0)
+                                                      'longitude',
+                                                      fallback=0.0)
                     conf['sat_lat'] = config.getfloat(pattern_section,
-                                                      'latitude', fallback=0.0)
+                                                      'latitude',
+                                                      fallback=0.0)
                     conf['sat_alt'] = config.getfloat(pattern_section,
-                                                      'altitude', fallback=cst.ALTGEO)
+                                                      'altitude',
+                                                      fallback=cst.ALTGEO)
                     conf['title'] = config.get(pattern_section,
-                                               'title', fallback='Default title')
+                                               'title',
+                                               fallback='Default title')
                     conf['level'] = config.get(pattern_section,
-                                               'level', fallback='25, 30, 35, 38, 40')
+                                               'level',
+                                               fallback='25, 30, 35, 38, 40')
                     conf['revert_x'] = config.getboolean(pattern_section,
-                                                         'revert x-axis', fallback=False)
+                                                         'revert x-axis',
+                                                         fallback=False)
                     conf['revert_y'] = config.getboolean(pattern_section,
-                                                         'revert y-axis', fallback=False)
+                                                         'revert y-axis',
+                                                         fallback=False)
                     conf['rotate'] = config.getboolean(pattern_section,
-                                                       'rotate', fallback=False)
+                                                       'rotate',
+                                                       fallback=False)
                     conf['use_second_pol'] = config.getboolean(pattern_section,
                                                                'second polarisation',
                                                                fallback=False)
                     conf['display_slope'] = config.getboolean(pattern_section,
-                                                              'slope', fallback=False)
+                                                              'slope',
+                                                              fallback=False)
                     conf['shrink'] = config.getboolean(pattern_section,
-                                                       'shrink', fallback=False)
+                                                       'shrink',
+                                                       fallback=False)
                     conf['azshrink'] = config.getfloat(pattern_section,
-                                                       'azimuth shrink', fallback=0.0)
+                                                       'azimuth shrink',
+                                                       fallback=0.0)
                     conf['elshrink'] = config.getfloat(pattern_section,
                                                        'elevation shrink', fallback=0.0)
                     conf['offset'] = config.getboolean(pattern_section,

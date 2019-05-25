@@ -152,18 +152,20 @@ class GrdViewer(QMainWindow):
                 mouse_label_text = '{0:0.2f}deg. E  {1:0.2f}deg. N'.format(
                     lon, lat)
             else:
-                mouse_label_text = '{0:0.2f}deg. E  {1:0.2f}deg. N {2:0.2f}dB'.format(lon,
-                                                                                      lat,
-                                                                                      gain)
+                mouse_label_text = \
+                    '{0:0.2f}deg. E  {1:0.2f}deg. N {2:0.2f}dB'.format(lon,
+                                                                       lat,
+                                                                       gain)
         self._mouse_pos_label.setText(mouse_label_text)
     # end of method setmousepos
 
     def setviewerpos(self, lon, lat, alt):
         """Set viewer position in status bar.
         """
-        viewer_label_text = 'Viewer: {0:0.2f}deg. E {1:0.2f}deg. N  {2:0.2f}m.'.format(lon,
-                                                                                       lat,
-                                                                                       alt)
+        viewer_label_text = \
+            'Viewer: {0:0.2f}deg. E {1:0.2f}deg. N  {2:0.2f}m.'.format(lon,
+                                                                       lat,
+                                                                       alt)
         self._viewer_label.setText(viewer_label_text)
     # end of method setviewerpos
 
@@ -528,7 +530,8 @@ class GrdViewer(QMainWindow):
     # end of callback saveas
 
     def save(self):
-        """Callback to save the Earth plot with default/previously given file name.
+        """Callback to save the Earth plot with default/previously
+        given file name.
         """
         self._earthplot.save()
     # end of callback save

@@ -34,9 +34,12 @@ def trace(message=''):
                 message = message + ':' + \
                     '{0:0.2f} sec.'.format(time.time() - timedic[key])
                 level -= 1
-                temp = level * indent + filename + '>>' + procname + '>>' + message
+                temp = level * indent + \
+                    filename + '>>' + \
+                    procname + '>>' + message
             except KeyError:
-                temp = 'utils.trace: No corresponding "in" tag in the function.'
+                temp = \
+                    'utils.trace: No corresponding "in" tag in the function.'
 
     if not muted:
         print(temp)

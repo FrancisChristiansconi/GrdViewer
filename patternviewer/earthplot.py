@@ -208,12 +208,14 @@ class EarthPlot(FigureCanvas):
                     conf['rotate'] = config.getboolean(pattern_section,
                                                        'rotate',
                                                        fallback=False)
-                    conf['use_second_pol'] = config.getboolean(pattern_section,
-                                                               'second polarisation',
-                                                               fallback=False)
-                    conf['display_slope'] = config.getboolean(pattern_section,
-                                                              'slope',
-                                                              fallback=False)
+                    conf['use_second_pol'] = \
+                        config.getboolean(pattern_section,
+                                          'second polarisation',
+                                          fallback=False)
+                    conf['display_slope'] = \
+                        config.getboolean(pattern_section,
+                                          'slope',
+                                          fallback=False)
                     conf['shrink'] = config.getboolean(pattern_section,
                                                        'shrink',
                                                        fallback=False)
@@ -785,12 +787,19 @@ class EarthPlot(FigureCanvas):
         """
         utils.trace('in')
         # compute phi
-        phi = np.arccos(np.cos(cst.DEG2RAD * stalat)
-                        * np.cos(cst.DEG2RAD * (self._viewer.longitude() - stalon)))
+        phi = np.arccos(np.cos(cst.DEG2RAD * stalat) *
+                        np.cos(cst.DEG2RAD *
+                               (self._viewer.longitude() - stalon)))
 
         # compute elevation
-        elev = np.reshape([90 if phi == 0 else cst.RAD2DEG * np.arctan((np.cos(phi) - (cst.EARTH_RAD_EQUATOR_M/(
-            cst.EARTH_RAD_EQUATOR_M+self._viewer.altitude()))) / np.sin(phi)) for phi in phi.flatten()], phi.shape)
+        elev = np.reshape([90 if phi == 0 else
+                           cst.RAD2DEG *
+                           np.arctan((np.cos(phi) -
+                                      (cst.EARTH_RAD_EQUATOR_M /
+                                       (cst.EARTH_RAD_EQUATOR_M +
+                                        self._viewer.altitude()))) /
+                                     np.sin(phi))
+                           for phi in phi.flatten()], phi.shape)
 
         # remove station out of view
         elev = np.where(np.absolute(
@@ -832,7 +841,7 @@ class EarthPlot(FigureCanvas):
         except FileNotFoundError:
             print('Pattern file ' + filename + ' not found')
             return None
-        if not 'sat_lon' in conf:
+        if 'sat_lon' not in conf:
             dialog = True
             conf['sat_lon'] = self._viewer.longitude()
             conf['sat_lat'] = self._viewer.latitude()

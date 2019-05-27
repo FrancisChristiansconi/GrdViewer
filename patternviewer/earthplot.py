@@ -12,7 +12,8 @@ from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg \
+    import FigureCanvasQTAgg as FigureCanvas
 
 # import PyQt5
 from PyQt5.QtWidgets import QSizePolicy
@@ -111,7 +112,8 @@ class EarthPlot(FigureCanvas):
                                           'map resolution',
                                           fallback=self._resolution).lower()
             self._app.getmenuitem(
-                item='View>Map resolution>' + self._resolution).setChecked(True)
+                item='View>Map resolution>' +
+                self._resolution).setChecked(True)
             self._resolution = self._resolution[0]
             self._projection = config.get(
                 'DEFAULT', 'projection', fallback='nsper')
@@ -140,7 +142,8 @@ class EarthPlot(FigureCanvas):
             self._countries = config.get(
                 'DEFAULT', 'countries', fallback='light')
             self._app.getmenuitem(
-                item='View>Country borders>' + self._countries).setChecked(True)
+                item='View>Country borders>' +
+                self._countries).setChecked(True)
             self._parallels = config.get(
                 'DEFAULT', 'parallels', fallback='light')
             self._app.getmenuitem(
@@ -182,47 +185,69 @@ class EarthPlot(FigureCanvas):
                     conf = {}
                     conf['filename'] = config.get(pattern_section, 'file')
                     conf['sat_lon'] = config.getfloat(pattern_section,
-                                                      'longitude', fallback=0.0)
+                                                      'longitude',
+                                                      fallback=0.0)
                     conf['sat_lat'] = config.getfloat(pattern_section,
-                                                      'latitude', fallback=0.0)
+                                                      'latitude',
+                                                      fallback=0.0)
                     conf['sat_alt'] = config.getfloat(pattern_section,
-                                                      'altitude', fallback=cst.ALTGEO)
+                                                      'altitude',
+                                                      fallback=cst.ALTGEO)
                     conf['title'] = config.get(pattern_section,
-                                               'title', fallback='Default title')
+                                               'title',
+                                               fallback='Default title')
                     conf['level'] = config.get(pattern_section,
-                                               'level', fallback='25, 30, 35, 38, 40')
+                                               'level',
+                                               fallback='25, 30, 35, 38, 40')
                     conf['revert_x'] = config.getboolean(pattern_section,
-                                                         'revert x-axis', fallback=False)
+                                                         'revert x-axis',
+                                                         fallback=False)
                     conf['revert_y'] = config.getboolean(pattern_section,
-                                                         'revert y-axis', fallback=False)
+                                                         'revert y-axis',
+                                                         fallback=False)
                     conf['rotate'] = config.getboolean(pattern_section,
-                                                       'rotate', fallback=False)
-                    conf['use_second_pol'] = config.getboolean(pattern_section,
-                                                               'second polarisation',
-                                                               fallback=False)
-                    conf['display_slope'] = config.getboolean(pattern_section,
-                                                              'slope', fallback=False)
+                                                       'rotate',
+                                                       fallback=False)
+                    conf['use_second_pol'] = \
+                        config.getboolean(pattern_section,
+                                          'second polarisation',
+                                          fallback=False)
+                    conf['display_slope'] = \
+                        config.getboolean(pattern_section,
+                                          'slope',
+                                          fallback=False)
                     conf['shrink'] = config.getboolean(pattern_section,
-                                                       'shrink', fallback=False)
+                                                       'shrink',
+                                                       fallback=False)
                     conf['azshrink'] = config.getfloat(pattern_section,
-                                                       'azimuth shrink', fallback=0.0)
+                                                       'azimuth shrink',
+                                                       fallback=0.0)
                     conf['elshrink'] = config.getfloat(pattern_section,
-                                                       'elevation shrink', fallback=0.0)
+                                                       'elevation shrink',
+                                                       fallback=0.0)
                     conf['offset'] = config.getboolean(pattern_section,
-                                                       'offset', fallback=False)
+                                                       'offset',
+                                                       fallback=False)
                     conf['azoffset'] = config.getfloat(pattern_section,
-                                                       'azimuth offset', fallback=0.0)
+                                                       'azimuth offset',
+                                                       fallback=0.0)
                     conf['eloffset'] = config.getfloat(pattern_section,
-                                                       'elevation offset', fallback=0.0)
+                                                       'elevation offset',
+                                                       fallback=0.0)
                     conf['cf'] = config.getfloat(pattern_section,
-                                                 'conversion factor', fallback=0.0)
+                                                 'conversion factor',
+                                                 fallback=0.0)
                     conf['linestyles'] = config.get(pattern_section,
-                                                    'linestyles', fallback='solid')
-                    conf['linewidths'] = cst.BOLDNESS[config.get(pattern_section,
-                                                                 'linewidths', fallback='medium')]
+                                                    'linestyles',
+                                                    fallback='solid')
+                    conf['linewidths'] = \
+                        cst.BOLDNESS[config.get(pattern_section,
+                                                'linewidths',
+                                                fallback='medium')]
                     conf['isolevel'] = [float(s)
                                         for s in conf['level'].split(',')]
-                    conf['Color surface'] = config.getboolean(pattern_section, 'Color surface',
+                    conf['Color surface'] = config.getboolean(pattern_section,
+                                                              'Color surface',
                                                               fallback=False)
 
                     self.loadpattern(conf=conf)
@@ -255,7 +280,9 @@ class EarthPlot(FigureCanvas):
             while elevation_section in config:
                 # load stations from sta file
                 elevationlist = [
-                    float(s) for s in config._sections[elevation_section]['elevation'].split(',')]
+                    float(s) for s in
+                    config._sections[
+                        elevation_section]['elevation'].split(',')]
                 for elevation_value in elevationlist:
                     conf = config._sections[elevation_section]
                     conf['elevation'] = elevation_value
@@ -329,7 +356,9 @@ class EarthPlot(FigureCanvas):
         # if start of zoom is defined set final position
         if self.zoomposorigin is not None:
             mousex, mousey = self. get_mouse_xy(xevent, yevent, bbox)
-            self.zoomposfinal = mouseaz, mouseel, mouselon, mouselat, mousex, mousey
+            self.zoomposfinal = mouseaz, mouseel, \
+                mouselon, mouselat, \
+                mousex, mousey
             # update and draw patch
             self.zoompatch.set_x(min(mousex, self.zoomposorigin[4]))
             self.zoompatch.set_y(min(mousey, self.zoomposorigin[5]))
@@ -463,7 +492,8 @@ class EarthPlot(FigureCanvas):
 
     def mouse_press_zoom(self, event):
         """On event mouse_press, this method is called by matplotlib environment.
-        It's role is to store the first angle of the rectangular zoom on Earth display.
+        It's role is to store the first angle of the rectangular zoom on
+        Earth display.
         """
         xevent = event.x
         yevent = event.y
@@ -483,8 +513,12 @@ class EarthPlot(FigureCanvas):
         # if original and final position are defined, zoom the plot
         if self.zoomposorigin is not None and\
            self.zoomposfinal is not None:
-            azorigin, elorigin, lonorigin, latorigin, xorigin, yorigin = self.zoomposorigin
-            azfinal, elfinal, lonfinal, latfinal, xfinal, yfinal = self.zoomposfinal
+            azorigin, elorigin, \
+                lonorigin, latorigin, \
+                xorigin, yorigin = self.zoomposorigin
+            azfinal, elfinal, \
+                lonfinal, latfinal, \
+                xfinal, yfinal = self.zoomposfinal
             xzoom = abs(xfinal - xorigin) / self.get_width()
             yzoom = abs(yfinal - yorigin) / self.get_height()
             # authorize zooming if bigger than 5% of each axis dimension
@@ -566,8 +600,6 @@ class EarthPlot(FigureCanvas):
                     self._figure.delaxes(self._figure.axes[i])
 
         # draw all Elevation contour
-        # if self._elev:
-        #     self.drawelevation([self._elev[key].angle() for key in self._elev])
         for element in self._elev:
             self._elev[element].plot()
 
@@ -598,26 +630,30 @@ class EarthPlot(FigureCanvas):
             azticks = np.arange(self._zoom.min_azimuth,
                                 self._zoom.max_azimuth + 0.1, 2)
             self._axes.set_xticks(self.az2x(azticks) +
-                                  self._earth_map(self._viewer.longitude(), self._viewer.latitude())[0])
+                                  self._earth_map(self._viewer.longitude(),
+                                                  self._viewer.latitude())[0])
             self._axes.set_xticklabels('{0:0.1f}'.format(f) for f in azticks)
             # compute and add y-axis ticks
             elticks = np.arange(self._zoom.min_elevation,
                                 self._zoom.max_elevation + 0.1, 2)
             self._axes.set_yticks(self.el2y(elticks) +
-                                  self._earth_map(self._viewer.longitude(), self._viewer.latitude())[1])
+                                  self._earth_map(self._viewer.longitude(),
+                                                  self._viewer.latitude())[1])
             self._axes.set_yticklabels('{0:0.1f}'.format(f) for f in elticks)
         elif self._projection == 'cyl':
             self._axes.set_xlabel('Longitude (deg)')
             self._axes.set_ylabel('Latitude (deg)')
             lonticks = np.arange(
-                int(self._zoom.min_longitude / 10) * 10, self._zoom.max_longitude + 0.1, 20)
+                int(self._zoom.min_longitude / 10) * 10,
+                self._zoom.max_longitude + 0.1, 20)
             lonticks_converted, _ = np.array(self._earth_map(
                 lonticks, np.ones(lonticks.shape) * self._zoom.min_latitude))
             self._axes.set_xticks(lonticks_converted)
             self._axes.set_xticklabels('{0:0.1f}'.format(f) for f in lonticks)
             # compute and add y-axis ticks
             latticks = np.arange(
-                int(self._zoom.min_latitude / 10) * 10, self._zoom.max_latitude + 0.1, 20)
+                int(self._zoom.min_latitude / 10) * 10,
+                self._zoom.max_latitude + 0.1, 20)
             _, latticks_converted = np.array(self._earth_map(
                 np.ones(latticks.shape) * self._zoom.min_longitude, latticks))
             self._axes.set_yticks(latticks_converted)
@@ -763,7 +799,8 @@ class EarthPlot(FigureCanvas):
         # define Elevation matrix
         fElev = self.elevation(fLonMesh, fLatMesh)
         csElev = self._earth_map.contour(
-            fXMesh, fYMesh, fElev, level, colors='black', linestyles='dotted', linewidths=0.5)
+            fXMesh, fYMesh, fElev, level,
+            colors='black', linestyles='dotted', linewidths=0.5)
         utils.trace('out')
         return csElev
     # end of drawelevation
@@ -773,12 +810,19 @@ class EarthPlot(FigureCanvas):
         """
         utils.trace('in')
         # compute phi
-        phi = np.arccos(np.cos(cst.DEG2RAD * stalat)
-                        * np.cos(cst.DEG2RAD * (self._viewer.longitude() - stalon)))
+        phi = np.arccos(np.cos(cst.DEG2RAD * stalat) *
+                        np.cos(cst.DEG2RAD *
+                               (self._viewer.longitude() - stalon)))
 
         # compute elevation
-        elev = np.reshape([90 if phi == 0 else cst.RAD2DEG * np.arctan((np.cos(phi) - (cst.EARTH_RAD_EQUATOR_M/(
-            cst.EARTH_RAD_EQUATOR_M+self._viewer.altitude()))) / np.sin(phi)) for phi in phi.flatten()], phi.shape)
+        elev = np.reshape([90 if phi == 0 else
+                           cst.RAD2DEG *
+                           np.arctan((np.cos(phi) -
+                                      (cst.EARTH_RAD_EQUATOR_M /
+                                       (cst.EARTH_RAD_EQUATOR_M +
+                                        self._viewer.altitude()))) /
+                                     np.sin(phi))
+                           for phi in phi.flatten()], phi.shape)
 
         # remove station out of view
         elev = np.where(np.absolute(
@@ -798,7 +842,8 @@ class EarthPlot(FigureCanvas):
             file_index = file_index + 1
             file_key = f + ' ' + str(file_index)
         if file_index == 50:
-            print('Max repetition of same file reached. Index 50 will be overwritten')
+            print('Max repetition of same file reached.' +
+                  ' Index 50 will be overwritten')
         utils.trace('out')
         return file_key
     # end of function get_file_key
@@ -820,7 +865,7 @@ class EarthPlot(FigureCanvas):
         except FileNotFoundError:
             print('Pattern file ' + filename + ' not found')
             return None
-        if not 'sat_lon' in conf:
+        if 'sat_lon' not in conf:
             dialog = True
             conf['sat_lon'] = self._viewer.longitude()
             conf['sat_lat'] = self._viewer.latitude()
@@ -1094,13 +1139,15 @@ class EarthPlot(FigureCanvas):
         x1_des = x_destination[-1]
         y0_des = y_destination[0]
         y1_des = y_destination[-1]
-        new_data[y0_des:y1_des, x0_des:x1_des] = data[y0_src:y1_src, x0_src:x1_src]
+        new_data[y0_des:y1_des, x0_des:x1_des] = \
+            data[y0_src:y1_src, x0_src:x1_src]
         im.set_array(new_data)
         return im
     # end of method croppedbluemarble
 
     def earth_angular_diameter(self):
-        """Compute Earth anguar diameter from spacecraft point of view dpending on the altitude.
+        """Compute Earth anguar diameter from spacecraft point of view
+        depending on the altitude.
         """
         sat_height = cst.EARTH_RAD_BASEMAP + self._viewer.altitude()
         d = 2 * np.arcsin(cst.EARTH_RAD_BASEMAP / sat_height) * cst.RAD2DEG

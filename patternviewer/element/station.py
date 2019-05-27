@@ -239,31 +239,34 @@ def get_station_from_file(filename: str, earthplot=None):
     # initialize return list
     stations = []
     # open file and read text data
-    file = open(filename, "r")
-    # read all lines in a table
-    lines = file.readlines()
-    # close file
-    file.close()
+    try:
+        file = open(filename, "r")
+        # read all lines in a table
+        lines = file.readlines()
+        # close file
+        file.close()
 
-    # split data and add them to Station list
-    for line in lines:
-        if not line[0] == "#":
-            tokens = line.split(',')
-            if len(tokens) > 1:
-                name = tokens[0]
-                tag = tokens[1]
-                lon = float(tokens[2])
-                lat = float(tokens[3])
-                tagpos = tokens[4]
-                beam_point_err = float(tokens[5])
-                station = Station(parent=earthplot)
-                station.configure({'longitude': lon,
-                                   'latitude': lat,
-                                   'tag': tag,
-                                   'name': name,
-                                   'bpe': beam_point_err,
-                                   'tagpos': tagpos})
-                stations.append(station)
+        # split data and add them to Station list
+        for line in lines:
+            if not line[0] == "#":
+                tokens = line.split(',')
+                if len(tokens) > 1:
+                    name = tokens[0]
+                    tag = tokens[1]
+                    lon = float(tokens[2])
+                    lat = float(tokens[3])
+                    tagpos = tokens[4]
+                    beam_point_err = float(tokens[5])
+                    station = Station(parent=earthplot)
+                    station.configure({'longitude': lon,
+                                       'latitude': lat,
+                                       'tag': tag,
+                                       'name': name,
+                                       'bpe': beam_point_err,
+                                       'tagpos': tagpos})
+                    stations.append(station)
+    except FileNotFoundError:
+        print('station.py: {} not found'.format(filename))
 
     return stations
 # end of function get_station_from_file

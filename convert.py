@@ -10,19 +10,19 @@ from patternviewer.element.pattern.pat import Pat
 import patternviewer.constant as cst
 
 # input directory
-input_dir = 'P:\\Antenna_models\\SES6\\Andes\\grd_files_predictions'
+INPUTDIR = 'P:\\Antenna_models\\SES6\\Andes\\grd_files_predictions'
 
 # output directory
-output_dir = 'C:\Temp\shrunk_pattern'
+OUTPUTDIR = 'C:\\Temp\\shrunk_pattern'
 
 
 # get grd files
-os.chdir(input_dir)
+os.chdir(INPUTDIR)
 files = glob.glob('*.grd')
 
 for f in files:
-    input_file = os.path.join(input_dir, f)
-    output_file = os.path.join(output_dir, f[:-3] + 'pat')
+    input_file = os.path.join(INPUTDIR, f)
+    output_file = os.path.join(OUTPUTDIR, f[:-3] + 'pat')
     second_pol = False
     if output_file[-5] == 'H':
         second_pol = True

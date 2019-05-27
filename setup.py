@@ -9,4 +9,3 @@ setup(name='patternviewer',
       license='None',
       packages=['patternviewer'],
       zip_safe=False)
-      

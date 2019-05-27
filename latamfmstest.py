@@ -26,7 +26,8 @@ def main():
     print(argv)
 
     # stations file
-    # stations_file = 'P:\\ASTRIUM\\Astra_2EFG5B_-_SES6\\FMSLATAM\\Ground Stations location\\SES6\\SES06.sta'
+    # stations_file = 'P:\\ASTRIUM\\Astra_2EFG5B_-_SES6\\FMSLATAM\\' + \
+    #                 'Ground Stations location\\SES6\\SES06.sta'
     stations_file = argv[1]
 
     # depointing file
@@ -34,9 +35,12 @@ def main():
     azel_file = argv[2]
 
     # input directory
-    # input_dir = 'P:\\ASTRIUM\\Astra_2EFG5B_-_SES6\\FMSLATAM\\SES6 patterns\\Reference patterns'
-    # F2_pattern_file = os.path.join(input_dir,'SES6_Brazil_36_Tx_11680.00_V.grd')
-    # TM_pattern_file = os.path.join(input_dir,'SES 6_TM_FIST_102_1170050_V.pat')
+    # input_dir = 'P:\\ASTRIUM\\Astra_2EFG5B_-_SES6\\FMSLATAM\\' + \
+    #             'SES6 patterns\\Reference patterns'
+    # F2_pattern_file = os.path.join(input_dir,
+    #                                'SES6_Brazil_36_Tx_11680.00_V.grd')
+    # TM_pattern_file = os.path.join(input_dir,
+    #                                'SES 6_TM_FIST_102_1170050_V.pat')
     F2_pattern_file = argv[3]
     TM_pattern_file = argv[4]
 

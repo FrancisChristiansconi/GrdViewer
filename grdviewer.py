@@ -76,7 +76,11 @@ class GrdViewer(QMainWindow):
         self.title = 'Pattern viewer'
         self.setWindowTitle(self.title)
 
-        # Do not remember why these are initialized here
+        # # window dimension
+        # self.width  = 8     # inches
+        # self.height = 6     # inches
+        # self.dpi    = 300   # dot per inch
+        # self.resize(self.width*self.dpi, self.height*self.dpi)
         self.revert_x_axis = False
         self.revert_y_axis = False
         self.second_polarisation = False
@@ -148,16 +152,20 @@ class GrdViewer(QMainWindow):
                 mouse_label_text = '{0:0.2f}deg. E  {1:0.2f}deg. N'.format(
                     lon, lat)
             else:
-                mouse_label_text = '{0:0.2f}deg. E ' \
-                    '{1:0.2f}deg. N {2:0.2f}dB'.format(lon, lat, gain)
+                mouse_label_text = \
+                    '{0:0.2f}deg. E  {1:0.2f}deg. N {2:0.2f}dB'.format(lon,
+                                                                       lat,
+                                                                       gain)
         self._mouse_pos_label.setText(mouse_label_text)
     # end of method setmousepos
 
     def setviewerpos(self, lon, lat, alt):
         """Set viewer position in status bar.
         """
-        viewer_label_text = 'Viewer: {0:0.2f}deg. E ' \
-            '{1:0.2f}deg. N  {2:0.2f}m.'.format(lon, lat, alt)
+        viewer_label_text = \
+            'Viewer: {0:0.2f}deg. E {1:0.2f}deg. N  {2:0.2f}m.'.format(lon,
+                                                                       lat,
+                                                                       alt)
         self._viewer_label.setText(viewer_label_text)
     # end of method setviewerpos
 
@@ -305,9 +313,9 @@ class GrdViewer(QMainWindow):
         self._menumisc.addAction(disp_elev_action)
         disp_elev_action.triggered.connect(self.elevation_dialog)
         # load stations file
-        add_station_action = QAction('Add stations file', self)
-        self._menumisc.addAction(add_station_action)
-        add_station_action.triggered.connect(self.loadstations)
+        add_stations_action = QAction('Add stations file', self)
+        self._menumisc.addAction(add_stations_action)
+        add_stations_action.triggered.connect(self.loadstations)
         add_station_action = QAction('Add station', self)
         self._menumisc.addAction(add_station_action)
         add_station_action.triggered.connect(self.loadstations)
@@ -522,7 +530,8 @@ class GrdViewer(QMainWindow):
     # end of callback saveas
 
     def save(self):
-        """Callback to save the Earth plot with default/previously given file name.
+        """Callback to save the Earth plot with default/previously
+        given file name.
         """
         self._earthplot.save()
     # end of callback save
@@ -572,7 +581,6 @@ class GrdViewer(QMainWindow):
 if __name__ == '__main__':
     # Create main window
     MAIN_WINDOW = QApplication(argv)
-    # if .ini file is passed as argument use it to initialize application
     if len(argv) > 1:
         INIFILE = argv[1]
     else:

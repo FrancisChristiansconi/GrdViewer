@@ -189,7 +189,8 @@ class PatternDialog(QDialog):
             self.cf_field.setText(str(self._pattern._conversion_factor))
 
         # Add Ok/Cancel buttons
-        lines_button = QPushButton('Lines', self)
+        self.lines_button = QPushButton('Lines', self)
+        self.lines_button.setEnabled(False)
         apply_button = QPushButton('Apply', self)
         ok_button = QPushButton('OK', self)
         cancel_button = QPushButton('Cancel', self)
@@ -197,7 +198,7 @@ class PatternDialog(QDialog):
         # Place Ok/Cancel button in an horizontal box layout
         hbox2 = QHBoxLayout()
         hbox2.addStretch(1)
-        hbox2.addWidget(lines_button)
+        hbox2.addWidget(self.lines_button)
         hbox2.addWidget(apply_button)
         hbox2.addWidget(ok_button)
         hbox2.addWidget(cancel_button)
@@ -209,7 +210,7 @@ class PatternDialog(QDialog):
         self.setLayout(vbox)
 
         # connect buttons to actions
-        lines_button.clicked.connect(self.setlines)
+        self.lines_button.clicked.connect(self.setlines)
         apply_button.clicked.connect(self.set_pattern_conf)
         ok_button.clicked.connect(lambda: self.set_pattern_conf(close=True))
         cancel_button.clicked.connect(self.close)
@@ -345,6 +346,9 @@ class PatternDialog(QDialog):
 
         # update plot from GUI input
         self._control.plot()
+
+        # ungrey Lines button
+        self.lines_button.setEnabled(True)
 
         if close:
             self.close()

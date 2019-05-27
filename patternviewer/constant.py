@@ -39,14 +39,15 @@ BOLDNESS = {'no line': 0,
 
 def getboldness(linewidth):
     """This function return a string key from a line width value.
-    The string keys are the ones of the dictionary BOLDNESS defined in constant.py.
+    The string keys are the ones of the dictionary BOLDNESS defined
+    in constant.py.
     """
     # if provided a string check if numeric or already boldness string
     boldstring = ''
     if isinstance(linewidth, str):
         if not linewidth.isnumeric():
             boldstring = linewidth
-            return
+            return boldstring
     # else process as a float linewidth value
         else:
             width = float(linewidth)

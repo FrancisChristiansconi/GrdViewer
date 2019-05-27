@@ -543,7 +543,10 @@ class GrdViewer(QMainWindow):
             return None
 
     def getmenuitemlist(self, menu, basename=''):
-        """Recursive function used to generate a list of menu items.
+        """This recursive function returns a dictionary of menu items which keys
+        are the items names.
+        Each submenu level up to the item itself is given in the key,
+        levels separated by character '>'
         """
         item_dictionary = {}
         for item in menu.actions():
@@ -569,6 +572,7 @@ class GrdViewer(QMainWindow):
 if __name__ == '__main__':
     # Create main window
     MAIN_WINDOW = QApplication(argv)
+    # if .ini file is passed as argument use it to initialize application
     if len(argv) > 1:
         INIFILE = argv[1]
     else:

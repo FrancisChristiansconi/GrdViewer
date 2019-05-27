@@ -83,6 +83,20 @@ class EarthPlot(FigureCanvas):
         self._parallels_col = None
         self._meridians_col = None
 
+        # initialize PPlot limits
+        self.llcrnrx = None
+        self.llcrnry = None
+        self.urcrnrx = None
+        self.urcrnry = None
+        self.llcrnrlon = None
+        self.llcrnrlat = None
+        self.urcrnrlon = None
+        self.urcrnrlat = None
+        self.centerx = None
+        self.centery = None
+        self.cntrlon = None
+        self.cntrlat = None
+
         # if a config has been provided by caller
         if config:
             # get font size with fallback = 5
@@ -314,13 +328,13 @@ class EarthPlot(FigureCanvas):
 
         # if start of zoom is defined set final position
         if self.zoomposorigin is not None:
-            x, y = self. get_mouse_xy(xevent, yevent, bbox)
-            self.zoomposfinal = mouseaz, mouseel, mouselon, mouselat, x, y
+            mousex, mousey = self. get_mouse_xy(xevent, yevent, bbox)
+            self.zoomposfinal = mouseaz, mouseel, mouselon, mouselat, mousex, mousey
             # update and draw patch
-            self.zoompatch.set_x(min(x, self.zoomposorigin[4]))
-            self.zoompatch.set_y(min(y, self.zoomposorigin[5]))
-            self.zoompatch.set_width(abs(x - self.zoomposorigin[4]))
-            self.zoompatch.set_height(abs(y - self.zoomposorigin[5]))
+            self.zoompatch.set_x(min(mousex, self.zoomposorigin[4]))
+            self.zoompatch.set_y(min(mousey, self.zoomposorigin[5]))
+            self.zoompatch.set_width(abs(mousex - self.zoomposorigin[4]))
+            self.zoompatch.set_height(abs(mousey - self.zoomposorigin[5]))
             self.draw()
 
         if self.dragorigin is not None:
@@ -448,6 +462,9 @@ class EarthPlot(FigureCanvas):
     # end of method mouse_set_viewer
 
     def mouse_press_zoom(self, event):
+        """On event mouse_press, this method is called by matplotlib environment.
+        It's role is to store the first angle of the rectangular zoom on Earth display.
+        """
         xevent = event.x
         yevent = event.y
         bbox = event.canvas.figure.axes[0].bbox
@@ -504,6 +521,8 @@ class EarthPlot(FigureCanvas):
         self.dragorigin = None
 
     def key_press(self, event):
+        """Handle key_press event.
+        """
         action = {'escape': self.key_press_esc}
         try:
             action[event.key](event)
@@ -511,6 +530,8 @@ class EarthPlot(FigureCanvas):
             pass
 
     def key_press_esc(self, _):
+        """Handle Escape pressed event.
+        """
         # abort mouse drag and zoom
         if self.zoomposorigin is not None:
             self.zoomposorigin = None

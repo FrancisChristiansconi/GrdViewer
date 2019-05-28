@@ -1,7 +1,7 @@
 # folders
-./data/
-./out/
-./src/__pycache__/
+/data/
+/out/
+/__pycache__/
 
 # files
-./src/__pycache__/*.pyc
+/__pycache__/*.pyc

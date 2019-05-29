@@ -188,12 +188,43 @@ class StationControler():
     """Enable control over a Station instance.
     """
 
-    def __init(self, station):
+    def __init(self, parent, station):
         """Constructor of class StationControler. It takes as parameter
         a reference to an instance of class Station.
         """
+        # reference of the parent EarthPlot
+        self._earthplot = parent
+
+        # reference of the Central Widget
+        self._centralwidget = parent.get_centralwidget()
+
+        # Reference to the Main Window
+        self._app = self._centralwidget.parent()
+
+    def add_menu_items(self, station_key):
+        """Add Pattern menu elements to exploit current pattern.
+        """
+        utils.trace('in')
+        # get Pattern menu reference and add sub menu for current pattern
+        stations_menu = self._app.getmenuitem('Misc>Stations')
+        # add Remove action
+        remove_station_action = QAction('Remove', self._app)
+        remove_station_action.triggered.connect(self.remove_station)
+        stations_menu.addAction(remove_station_action)
+        # add Edit action
+        edit_station_action = QAction('Edit', self._app)
+        stations_menu.addAction(edit_station_action)
+        edit_station_action.triggered.connect(self.edit_station)
+
+        utils.trace('out')
+        # return submenu
+        return stations_menu
+
+    def remove_station(self):
         pass
 
+    def edit_station(self):
+        pass
 
 class StationWidget(QDialog):
     """This widget is used to configure a station object.

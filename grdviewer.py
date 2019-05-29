@@ -313,11 +313,12 @@ class GrdViewer(QMainWindow):
         self._menumisc.addAction(disp_elev_action)
         disp_elev_action.triggered.connect(self.elevation_dialog)
         # load stations file
+        stations_menu = self._menumisc.addMenu('Stations')
         add_stations_action = QAction('Add stations file', self)
-        self._menumisc.addAction(add_stations_action)
+        stations_menu.addAction(add_stations_action)
         add_stations_action.triggered.connect(self.loadstations)
         add_station_action = QAction('Add station', self)
-        self._menumisc.addAction(add_station_action)
+        stations_menu.addAction(add_station_action)
         add_station_action.triggered.connect(self.loadstations)
         # load polygons file
         add_poly_action = QAction('Add polygons file', self)

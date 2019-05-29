@@ -164,12 +164,12 @@ class AbstractPattern(Element):
         # apply to all sets of data
         for set in range(self._nb_sets):
 
-            if self._x[set][0, 1] > self._x[set][0, 0] and \
-                self._y[set][1, 0] > self._y[set][0, 0]:
+            if (self._x[set][0, 1] > self._x[set][0, 0] and
+                self._y[set][1, 0] > self._y[set][0, 0]):
                 # already the good orientation
                 pass
-            elif self._x[set][0, 1] < self._x[set][0, 0] and \
-                self._y[set][1, 0] > self._y[set][0, 0]:
+            elif (self._x[set][0, 1] < self._x[set][0, 0] and
+                  self._y[set][1, 0] > self._y[set][0, 0]):
                 # change only x-axis of the grid
                 self._x[set] = self._x[set][::-1, :]
                 self._y[set] = self._y[set][::-1, :]
@@ -178,8 +178,8 @@ class AbstractPattern(Element):
                 if len(self._E_mag_cr):
                     self._E_mag_cr[set] = self._E_mag_cr[set][::-1, :]
                     self._E_phs_cr[set] = self._E_phs_cr[set][::-1, :]
-            elif self._x[set][0, 1] < self._x[set][0, 0] and \
-                self._y[set][1, 0] < self._y[set][0, 0]:
+            elif (self._x[set][0, 1] < self._x[set][0, 0] and
+                  self._y[set][1, 0] < self._y[set][0, 0]):
                 # change x and y-axes of the grid
                 self._x[set] = self._x[set][::-1, ::-1]
                 self._y[set] = self._y[set][::-1, ::-1]
@@ -188,8 +188,8 @@ class AbstractPattern(Element):
                 if len(self._E_mag_cr):
                     self._E_mag_cr[set] = self._E_mag_cr[set][::-1, ::-1]
                     self._E_phs_cr[set] = self._E_phs_cr[set][::-1, ::-1]
-            elif self._x[set][0, 1] > self._x[set][0, 0] and \
-                self._y[set][1, 0] < self._y[set][0, 0]:
+            elif (self._x[set][0, 1] > self._x[set][0, 0] and
+                  self._y[set][1, 0] < self._y[set][0, 0]):
                 # change only y-axis of the grid
                 self._x[set] = self._x[set][:, ::-1]
                 self._y[set] = self._y[set][:, ::-1]

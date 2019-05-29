@@ -5,9 +5,10 @@
 import sys
 
 # PyQt5 widgets import
-from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, QLineEdit, \
-    QHBoxLayout, QVBoxLayout, QPushButton, QWidget, QFileDialog, QLabel, \
-    QGridLayout, QCheckBox, QComboBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, \
+    QAction, qApp, QDialog, QLineEdit, QHBoxLayout, QVBoxLayout, \
+    QPushButton, QWidget, QFileDialog, QLabel, QGridLayout, \
+    QCheckBox, QComboBox
 from PyQt5.QtGui import QColor, QPalette
 
 # Import local modules
@@ -29,7 +30,8 @@ class LineDialog(QDialog):
         # parent is the object or list of object to modify
         self._parent = parent
 
-        # dictionary containing the configuration of the object to be configured
+        # dictionary containing the configuration of
+        # the object to be configured
         self._config = {}
 
         self.initgui()

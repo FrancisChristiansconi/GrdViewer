@@ -4,7 +4,8 @@
 # import third party modules
 # ==================================================================================================
 # PyQt5 widgets import
-from PyQt5.QtWidgets import QFileDialog, QDialog
+from PyQt5.QtWidgets import QFileDialog, QDialog, QAction, QLineEdit, QLabel, \
+                            QCheckBox, QComboBox, QGridLayout, QPushButton
 # matplotlib import
 from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
@@ -13,6 +14,8 @@ import numpy as np
 
 # import local modules
 # ==================================================================================================
+# import traceback utilities
+import patternviewer.utils as utils
 # Earth Plot class definition
 from patternviewer import earthplot as eplt
 # Astract mother class Element
@@ -166,7 +169,7 @@ class Dialog(QFileDialog):
     """Customised dialog box to open a file and load station list.
     """
 
-    def __init__(self):
+    def __init__(self, station=None):
         # Parent constructor
         super().__init__()
 
@@ -177,18 +180,15 @@ class Dialog(QFileDialog):
         self.setModal(True)
         self.show()
     # end of constructor
+
 # End of Customized QDialog StationDialog
-
-# TODO implement class View to reconfigure a station
-
-# TODO implement class Control to handle station element
 
 
 class StationControler():
     """Enable control over a Station instance.
     """
 
-    def __init(self, parent, station):
+    def __init__(self, parent, station):
         """Constructor of class StationControler. It takes as parameter
         a reference to an instance of class Station.
         """
@@ -201,30 +201,45 @@ class StationControler():
         # Reference to the Main Window
         self._app = self._centralwidget.parent()
 
+        # store station reference
+        self._station = station
+
     def add_menu_items(self, station_key):
         """Add Pattern menu elements to exploit current pattern.
         """
         utils.trace('in')
         # get Pattern menu reference and add sub menu for current pattern
-        stations_menu = self._app.getmenuitem('Misc>Stations')
+        stns_menu = self._app.getmenuitem('Misc.>Stations').menu()
+        stn_name = self._station.configure()['name']
+        stn_menu = stns_menu.addMenu(stn_name)
         # add Remove action
-        remove_station_action = QAction('Remove', self._app)
-        remove_station_action.triggered.connect(self.remove_station)
-        stations_menu.addAction(remove_station_action)
+        rem_action = QAction('Remove', self._app)
+        rem_action.triggered.connect(self.remove_station)
+        stn_menu.addAction(rem_action)
         # add Edit action
-        edit_station_action = QAction('Edit', self._app)
-        stations_menu.addAction(edit_station_action)
-        edit_station_action.triggered.connect(self.edit_station)
+        edit_action = QAction('Edit', self._app)
+        stn_menu.addAction(edit_action)
+        edit_action.triggered.connect(self.edit_station)
 
         utils.trace('out')
         # return submenu
-        return stations_menu
+        return stn_menu
 
     def remove_station(self):
         pass
 
     def edit_station(self):
-        pass
+        dialog = StationWidget(self._station)
+
+    def plot(self):
+        self._station.plot()
+
+    def clearplot(self):
+        self._station.clearplot()
+
+    def configure(self, config):
+        self._station.configure(config)
+
 
 class StationWidget(QDialog):
     """This widget is used to configure a station object.
@@ -242,23 +257,47 @@ class StationWidget(QDialog):
         self._stationconfig = station.configure()
 
         # build the widget
-        self.buildgui()
+        self.buildgui(station)
         self.show()
+        self.exec_()
 
-    def buildgui(self):
+    def buildgui(self, station=None):
         """Build and initialize widget from station config"""
 
-        # longitude
-        self._lonfield = QlineEdit(self, self.set(self._stationconfig,
-                                                  'longitude'))
-        # latitude
-        self._latfield = QlineEdit(self, self.set(self._stationconfig,
-                                                  'latitude'))
-        # marker size
-        # fontsize
-        # display BPE and BPE value
-        # BPE circle linewidth
-        pass
+        layout = QGridLayout(parent=self)
+
+        visible_chk = QCheckBox(parent=self, text='Visible')
+        visible_chk.setChecked(True)
+        layout.addWidget(visible_chk, 1, 1)
+        name_lbl = QLabel(parent=self, text='Name')
+        name_fld = QLineEdit(parent=self)
+        layout.addWidget(name_lbl, 2, 1)
+        layout.addWidget(name_fld, 2, 2)
+        tag_lbl = QLabel(parent=self, text='Tag')
+        tag_fld = QLineEdit(parent=self)
+        tag_pos_lbl = QLabel(parent=self, text='Tag position')
+        tag_pos_cmb = QComboBox(parent=self)
+        tag_pos_cmb.addItems(['',
+                              'upleft',
+                              'upright',
+                              'downleft',
+                              'downright'])
+        longitude_lbl = QLabel(parent=self, text='Longitude')
+        longitude_fld = QLineEdit(parent=self, text='0.0')
+        latitude_lbl = QLabel(parent=self, text='Latitude')
+        latitude_fld = QLineEdit(parent=self, text='0.0')
+        bpe_chk = QCheckBox(parent=self, text='BPE circle')
+        bpe_fld = QLineEdit(parent=self, text='0.25')
+
+        # Ok/Cancel buttons
+        ok_btn = QPushButton(parent=self, text='OK')
+        cancel_btn = QPushButton(parent=self, text='Cancel')
+        layout.addWidget(ok_btn, 10, 1)
+        layout.addwidget(cancel_btn, 10, 2)
+
+        if station is not None:
+            name_fld.setText(station.configure()['name'])
+            tag_fld.setText(station.configure()['tag'])
 
 
 # Static methods and functions
@@ -295,7 +334,12 @@ def get_station_from_file(filename: str, earthplot=None):
                                        'name': name,
                                        'bpe': beam_point_err,
                                        'tagpos': tagpos})
-                    stations.append(station)
+                    stncontroler = StationControler(parent=earthplot,
+                                                    station=station)
+                    stncontroler.add_menu_items(station.configure()['tag'])
+                    stations.append(stncontroler)
+
+
     except FileNotFoundError:
         print('station.py: {} not found'.format(filename))
 

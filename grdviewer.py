@@ -362,8 +362,8 @@ class GrdViewer(QMainWindow):
         if not filenames == []:
             for filename in filenames:
                 pattern = self._earthplot.loadpattern({'filename': filename})
-            if pattern:
-                self._earthplot.draw_elements()
+            # if pattern:
+            #     self._earthplot.draw_elements()
         utils.trace('out')
     # end of method load_pattern
 

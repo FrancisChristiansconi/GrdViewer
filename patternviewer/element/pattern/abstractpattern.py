@@ -731,8 +731,9 @@ class AbstractPattern(Element):
             x_origin, y_origin = 0, 0
             # get interpolated points on a regular grid
             to_plot, _ = self.interpolate_slope(az_mesh, el_mesh)
-            isolevelscale = range(
-                self._slope_range[0], self._slope_range[1], 3)
+            isolevelscale = np.arange(np.floor(self._slope_range[0]),
+                                      np.ceil(self._slope_range[1]),
+                                      3)
             colorbarscale = self._slope_range
         # display either isolevel or color map of slopes
         if not self._conf['Color surface']:

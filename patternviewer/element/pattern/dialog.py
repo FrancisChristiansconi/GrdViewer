@@ -131,6 +131,7 @@ class PatternDialog(QDialog):
         self.chkxpol = QCheckBox('Use crosspol data', parent=self)
         self.chkxpol.stateChanged.connect(self.refresh_isolevel)
         self.chkslope = QCheckBox('Display Slope', parent=self)
+        self.chkslope.stateChanged.connect(self.chk_display_slope_changed)
         self.chksurf = QCheckBox('Color surface', parent=self)
         optionbox = QGridLayout(None)
         optionbox.addWidget(self.chkxpol, 1, 1)
@@ -330,14 +331,17 @@ class PatternDialog(QDialog):
         if config['offset']:
             config['azoffset'] = float(self.az_offset_field.text())
             config['eloffset'] = float(self.el_offset_field.text())
-        config['isolevel'] = [float(s)
-                              for s in self.isolevel_field.text().split(',')]
+        if self.chkslope.isChecked():
+            config['slopes'] = [float(s)
+                                for s in self.isolevel_field.text().split(',')]
+        else:
+            config['isolevel'] = [float(s)
+                                  for s in self.isolevel_field.text().split(',')]
         config['cf'] = float(self.cf_field.text())
         config['Color surface'] = self.chksurf.isChecked()
 
         self._pattern.configure(config=config)
 
-        # self._pattern._isolevel = [float(s) for s in self.isolevel_field.text().split(',')]
         self.earth_plot.settitle(self.title_field.text())
 
         self._pattern._conversion_factor = float(self.cf_field.text())
@@ -370,6 +374,18 @@ class PatternDialog(QDialog):
         self.az_offset_field.setEnabled(self.chk_offset.isChecked())
         self.el_offset_field.setEnabled(self.chk_offset.isChecked())
     # end of callback
+
+    def chk_display_slope_changed(self):
+        """Callback changing the range displayed in case
+        the display slope option is checked.
+        """
+        utils.trace()
+        if self.chkslope.isChecked():
+            self.isolevel_field.setText('{},{}'.format(
+                self._pattern._slope_range[0],
+                self._pattern._slope_range[1]))
+        else:
+            self.isolevel_field.setText(self.get_isolevel())
 
     def setlines(self):
         linedlg = LineDialog(self._pattern)

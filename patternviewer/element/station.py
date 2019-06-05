@@ -339,7 +339,6 @@ def get_station_from_file(filename: str, earthplot=None):
                     stncontroler.add_menu_items(station.configure()['tag'])
                     stations.append(stncontroler)
 
-
     except FileNotFoundError:
         print('station.py: {} not found'.format(filename))
 

@@ -1,4 +1,5 @@
-"""This file contains definition of class PatternDialog. It's the GUI for Pattern (re)configuration.
+"""This file contains definition of class PatternDialog.
+It's the GUI for Pattern (re)configuration.
 """
 
 # import standard modules
@@ -10,7 +11,8 @@ import sys
 # import third party modules
 # --------------------------------------------------------------------------------------------------
 # import of PyQt5 for all GUI elements
-from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, \
+from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, \
+    QAction, qApp, QDialog, \
     QLineEdit, QHBoxLayout, QVBoxLayout, QPushButton, QWidget, \
     QFileDialog, QLabel, QGridLayout, QCheckBox, QGridLayout
 from PyQt5.QtGui import QColor, QPalette
@@ -38,8 +40,10 @@ class PatternDialog(QDialog):
 
     def __init__(self, filename: str = None, parent=None, control=None):
         """Constructor for PatternDialog class.
-        filename: str is the path to the file containing data of antenna pattern
-        parent is the EarthPlot instance which will display the antenna pattern
+        filename is the path to the file containing data of
+            antenna pattern
+        parent is the EarthPlot instance which will display
+            the antenna pattern
         control is the antenna pattern controler instance
         """
         utils.trace()
@@ -223,8 +227,10 @@ class PatternDialog(QDialog):
     # end of __init__
 
     def configure(self, pattern):
-        """This method configure the fields of the dialog with the pattern configuration values.
-        pattern is the antenna pattern object which provide the configuration for this GUI
+        """This method configure the fields of the dialog with
+        the pattern configuration values.
+        pattern is the antenna pattern object which provide
+        the configuration for this GUI
         """
         utils.trace('in')
         try:
@@ -265,7 +271,7 @@ class PatternDialog(QDialog):
         """Return string formatted isolevel list. Each value separated with comma.
         pattern is the antenna pattern
         """
-        if self._pattern == None:
+        if self._pattern is None:
             return ",".join(str(x) for x in cst.DEFAULT_ISOLEVEL_DBI)
         else:
             return ",".join(str(x) for x in self._pattern.get_isolevel())
@@ -336,7 +342,8 @@ class PatternDialog(QDialog):
                                 for s in self.isolevel_field.text().split(',')]
         else:
             config['isolevel'] = [float(s)
-                                  for s in self.isolevel_field.text().split(',')]
+                                  for s in
+                                  self.isolevel_field.text().split(',')]
         config['cf'] = float(self.cf_field.text())
         config['Color surface'] = self.chksurf.isChecked()
 

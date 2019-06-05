@@ -260,8 +260,8 @@ class AbstractPattern(Element):
                     y_offset = (
                         np.max(self._y[set][:][:]) -
                         np.min(self._y[set][:][:]))
-                    self._x[set] = -1*self._x[set]
-                    self._y[set] = -1*self._y[set]
+                    self._x[set] = -1 * self._x[set]
+                    self._y[set] = -1 * self._y[set]
                     self._rotated = self._rotate
 
             # reshape the grid to correspond to interpolation standard

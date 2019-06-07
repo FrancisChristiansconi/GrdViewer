@@ -688,11 +688,12 @@ class AbstractPattern(Element):
         # choose data to plot
         if not self._display_slope:
             x, y = map(self.longitude(), self.latitude())
+            lon_mesh, lat_mesh = self.longitude(), self.latitude()
             x_origin, y_origin = 0, 0
             to_plot = self._to_plot + self._conversion_factor
             isolevelscale = self._isolevel
             maxgain, _, _ = self.getmax()
-            colorbarscale = min(self._isolevel), round(maxgain + 1)
+            colorbarscale = np.amin(self._isolevel), np.ceil(maxgain)
         else:
             # define regular grid and azimuth/elevation
             nx, ny = 1001, 1001
@@ -727,7 +728,7 @@ class AbstractPattern(Element):
                                  str(self._satellite.latitude()) +
                                  ' +x_0=0 +y_0=0 +units=meters +no_defs')
             lon_mesh, lat_mesh = self.proj(x, y, inverse=True)
-            x, y = map(lon_mesh, lat_mesh, inverse=False)
+            # x, y = map(lon_mesh, lat_mesh, inverse=False)
             x_origin, y_origin = 0, 0
             # get interpolated points on a regular grid
             to_plot, _ = self.interpolate_slope(az_mesh, el_mesh)
@@ -780,13 +781,17 @@ class AbstractPattern(Element):
         else:
             # display color mesh
             cmap = plt.get_cmap('jet')
-            cmap.set_over('white', max(colorbarscale))
-            cmap.set_under('white', min(colorbarscale))
+            cmap.set_over('white', np.amax(colorbarscale))
+            cmap.set_under('white', np.amin(colorbarscale))
 
             pcm_pattern = map.pcolormesh(lon_mesh, lat_mesh, to_plot,
-                                         vmin=min(colorbarscale),
-                                         vmax=max(colorbarscale),
+                                         vmin=np.amin(colorbarscale),
+                                         vmax=np.amax(colorbarscale),
                                          cmap=cmap, alpha=1, latlon=True)
+            # pcm_pattern = map.pcolormesh(x, y, to_plot,
+            #                              vmin=np.amin(colorbarscale),
+            #                              vmax=np.amax(colorbarscale),
+            #                              cmap=cmap, alpha=1, latlon=False)
 
             # add color bar
             if cbar:

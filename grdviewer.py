@@ -73,7 +73,7 @@ class GrdViewer(QMainWindow):
         super().__init__()
 
         # give an name to the windows
-        self.title = 'Pattern viewer'
+        self.title = 'GrdViewer ' + version()
         self.setWindowTitle(self.title)
 
         # # window dimension

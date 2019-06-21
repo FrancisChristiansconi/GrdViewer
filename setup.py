@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='patternviewer',
-      version='1.1.3',
+      version='develop',
       description='executable grd and pat file manager with GUI',
       url='',
       author='C. Francesconi',

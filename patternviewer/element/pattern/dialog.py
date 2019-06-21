@@ -233,7 +233,12 @@ class PatternDialog(QDialog):
         self.lon_field.setText(str(pattern.satellite().longitude()))
         self.lat_field.setText(str(pattern.satellite().latitude()))
         self.alt_field.setText(str(pattern.satellite().altitude()))
-        self.isolevel_field.setText(self.get_isolevel())
+        if pattern._display_slope:
+            low = np.amin(pattern.configure()['slopes'])
+            high = np.amax(pattern.configure()['slopes'])
+            self.isolevel_field.setText('{},{}'.format(low, high))
+        else:
+            self.isolevel_field.setText(self.get_isolevel())
         self.chk_revert_x.setChecked(pattern._revert_x)
         self.chk_revert_y.setChecked(pattern._revert_y)
         self.chk_rotate.setChecked(pattern._rotated)

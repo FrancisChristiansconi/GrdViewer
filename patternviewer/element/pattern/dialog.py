@@ -165,6 +165,9 @@ class PatternDialog(QDialog):
 
         # add offset sub form
         self.chk_offset = QCheckBox('Offset', parent=self)
+        self.offset_button = QPushButton('Lon/Lat', parent=self)
+        self.offset_button.setCheckable(True)
+        self.offset_button.toggle()
         self.az_offset_label = QLabel('Az.', parent=self)
         self.az_offset_field = QLineEdit('0.0', parent=self)
         self.el_offset_label = QLabel('El.', parent=self)
@@ -177,10 +180,14 @@ class PatternDialog(QDialog):
         hbox_shrink.addWidget(self.az_offset_field, 1, 8)
         hbox_shrink.addWidget(self.el_offset_label, 1, 9)
         hbox_shrink.addWidget(self.el_offset_field, 1, 10)
+        hbox_shrink.addWidget(self.offset_button, 1, 11)
         # hbox_shrink.addStretch(1)
         vbox.addLayout(hbox_shrink)
         self.chk_offset.stateChanged.connect(self.chk_offset_state_changed)
         self.chk_offset_state_changed()
+        self.offset_button.clicked.connect(self.offset_button_state_changed)
+        self.offset_button.setChecked(False)
+        self.offset_button_state_changed()
 
         # set fields value
         if filename:
@@ -261,6 +268,10 @@ class PatternDialog(QDialog):
         if pattern._offset:
             self.az_offset_field.setText(str(pattern._azimuth_offset))
             self.el_offset_field.setText(str(pattern._elevation_offset))
+        self.offset_button.setChecked(pattern.set(pattern.configure(),
+                                                  'azeloffset',
+                                                  True))
+        self.offset_button_state_changed()
 
         # disable use second pol option if second pol not available
         if len(pattern._E_mag_cr):
@@ -342,6 +353,7 @@ class PatternDialog(QDialog):
         if config['offset']:
             config['azoffset'] = float(self.az_offset_field.text())
             config['eloffset'] = float(self.el_offset_field.text())
+        config['azeloffset'] = self.offset_button.isChecked()
         if self.chkslope.isChecked():
             config['slopes'] = [float(s)
                                 for s in self.isolevel_field.text().split(',')]
@@ -386,6 +398,16 @@ class PatternDialog(QDialog):
         self.az_offset_field.setEnabled(self.chk_offset.isChecked())
         self.el_offset_field.setEnabled(self.chk_offset.isChecked())
     # end of callback
+
+    def offset_button_state_changed(self):
+        if not self.offset_button.isChecked():
+            self.offset_button.setText('Az/El')
+            self.az_offset_label.setText('Lon')
+            self.el_offset_label.setText('Lat')
+        else:
+            self.offset_button.setText('Lon/Lat')
+            self.az_offset_label.setText('Az')
+            self.el_offset_label.setText('El')
 
     def chk_display_slope_changed(self):
         """Callback changing the range displayed in case

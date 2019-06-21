@@ -228,6 +228,9 @@ class EarthPlot(FigureCanvas):
                     conf['offset'] = config.getboolean(pattern_section,
                                                        'offset',
                                                        fallback=False)
+                    conf['azeloffset'] = config.getboolean(pattern_section,
+                                                           'azeloffset',
+                                                           fallback=True)
                     conf['azoffset'] = config.getfloat(pattern_section,
                                                        'azimuth offset',
                                                        fallback=0.0)

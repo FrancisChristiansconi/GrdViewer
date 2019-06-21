@@ -578,14 +578,16 @@ class AbstractPattern(Element):
         """
         az, el = self.azel_grid(set)
         if self._offset:
-            az_offset = self._azimuth_offset
-            el_offset = self._elevation_offset
+            if self.set(self.configure(), 'azeloffset', True):
+                az_offset = self._azimuth_offset
+                el_offset = self._elevation_offset
+            else:
+                az_offset, el_offset = \
+                    self.compute_azel_boresight(self._azimuth_offset,
+                                                self._elevation_offset)
         else:
             az_offset = 0
             el_offset = 0
-
-        # TODO remove that and do it properly
-        az_offset, el_offset = self.compute_azel_boresight(8, 45)
 
         x = self._satellite.altitude() * np.tan((az + az_offset) * cst.DEG2RAD)
         y = self._satellite.altitude() * np.tan((el + el_offset) * cst.DEG2RAD)
@@ -616,10 +618,10 @@ class AbstractPattern(Element):
                                  ' +lat_0=' + str(self._satellite.latitude()) +
                                  ' +x_0=0 +y_0=0 +units=meters +no_defs')
             x, y = self.proj(lon, lat, inverse=False)
-            az = cst.RAD2DEG * \
-                np.arctan2(x, self._satellite.altitude()) - self._azimuth_offset
-            el = cst.RAD2DEG * \
-                np.arctan2(y, self._satellite.altitude()) - self._elevation_offset
+            az = (cst.RAD2DEG *
+                  np.arctan2(x, self._satellite.altitude()))
+            el = (cst.RAD2DEG *
+                  np.arctan2(y, self._satellite.altitude()))
         return az, el
 
     def revert_x(self, set=0):

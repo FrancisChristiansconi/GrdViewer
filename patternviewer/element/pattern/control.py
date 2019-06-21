@@ -23,8 +23,8 @@ from patternviewer.element.pattern.grd import Grd
 
 
 class PatternControler():
-    """A pattern controler is an attribute of and EarthPlot that links together a pattern,
-    a dialog box and a menu.
+    """A pattern controler is an attribute of and EarthPlot that
+    links together a pattern, a dialog box and a menu.
     """
 
     def __init__(self, parent, filename):
@@ -195,11 +195,13 @@ class PatternControler():
         origin_filename = os.path.basename(self._config['filename'])
         default_filename = origin_filename[:-4] + '.pat'
         # Get filename for exporting file
-        filename, _ = QFileDialog.getSaveFileName(self._mainwindow,
-                                                  'Select file',
-                                                  os.path.join(
-                                                      directory, default_filename),
-                                                  'PAT (*.pat)')
+        filename, _ = \
+            QFileDialog.getSaveFileName(self._mainwindow,
+                                        'Select file',
+                                        os.path.join(
+                                            directory,
+                                            default_filename),
+                                        'PAT (*.pat)')
         # get pattern to export
         if filename:
             self._pattern.export_to_file(

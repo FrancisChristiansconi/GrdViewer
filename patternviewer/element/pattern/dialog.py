@@ -1,4 +1,5 @@
-"""This file contains definition of class PatternDialog. It's the GUI for Pattern (re)configuration.
+"""This file contains definition of class PatternDialog.
+It's the GUI for Pattern (re)configuration.
 """
 
 # import standard modules
@@ -10,7 +11,8 @@ import sys
 # import third party modules
 # --------------------------------------------------------------------------------------------------
 # import of PyQt5 for all GUI elements
-from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, qApp, QDialog, \
+from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, \
+    QAction, qApp, QDialog, \
     QLineEdit, QHBoxLayout, QVBoxLayout, QPushButton, QWidget, \
     QFileDialog, QLabel, QGridLayout, QCheckBox, QGridLayout
 from PyQt5.QtGui import QColor, QPalette
@@ -38,8 +40,10 @@ class PatternDialog(QDialog):
 
     def __init__(self, filename: str = None, parent=None, control=None):
         """Constructor for PatternDialog class.
-        filename: str is the path to the file containing data of antenna pattern
-        parent is the EarthPlot instance which will display the antenna pattern
+        filename is the path to the file containing data of
+            antenna pattern
+        parent is the EarthPlot instance which will display
+            the antenna pattern
         control is the antenna pattern controler instance
         """
         utils.trace()
@@ -131,6 +135,7 @@ class PatternDialog(QDialog):
         self.chkxpol = QCheckBox('Use crosspol data', parent=self)
         self.chkxpol.stateChanged.connect(self.refresh_isolevel)
         self.chkslope = QCheckBox('Display Slope', parent=self)
+        self.chkslope.stateChanged.connect(self.chk_display_slope_changed)
         self.chksurf = QCheckBox('Color surface', parent=self)
         optionbox = QGridLayout(None)
         optionbox.addWidget(self.chkxpol, 1, 1)
@@ -222,8 +227,10 @@ class PatternDialog(QDialog):
     # end of __init__
 
     def configure(self, pattern):
-        """This method configure the fields of the dialog with the pattern configuration values.
-        pattern is the antenna pattern object which provide the configuration for this GUI
+        """This method configure the fields of the dialog with
+        the pattern configuration values.
+        pattern is the antenna pattern object which provide
+        the configuration for this GUI
         """
         utils.trace('in')
         try:
@@ -269,7 +276,7 @@ class PatternDialog(QDialog):
         """Return string formatted isolevel list. Each value separated with comma.
         pattern is the antenna pattern
         """
-        if self._pattern == None:
+        if self._pattern is None:
             return ",".join(str(x) for x in cst.DEFAULT_ISOLEVEL_DBI)
         else:
             return ",".join(str(x) for x in self._pattern.get_isolevel())
@@ -335,14 +342,18 @@ class PatternDialog(QDialog):
         if config['offset']:
             config['azoffset'] = float(self.az_offset_field.text())
             config['eloffset'] = float(self.el_offset_field.text())
-        config['isolevel'] = [float(s)
-                              for s in self.isolevel_field.text().split(',')]
+        if self.chkslope.isChecked():
+            config['slopes'] = [float(s)
+                                for s in self.isolevel_field.text().split(',')]
+        else:
+            config['isolevel'] = [float(s)
+                                  for s in
+                                  self.isolevel_field.text().split(',')]
         config['cf'] = float(self.cf_field.text())
         config['Color surface'] = self.chksurf.isChecked()
 
         self._pattern.configure(config=config)
 
-        # self._pattern._isolevel = [float(s) for s in self.isolevel_field.text().split(',')]
         self.earth_plot.settitle(self.title_field.text())
 
         self._pattern._conversion_factor = float(self.cf_field.text())
@@ -375,6 +386,18 @@ class PatternDialog(QDialog):
         self.az_offset_field.setEnabled(self.chk_offset.isChecked())
         self.el_offset_field.setEnabled(self.chk_offset.isChecked())
     # end of callback
+
+    def chk_display_slope_changed(self):
+        """Callback changing the range displayed in case
+        the display slope option is checked.
+        """
+        utils.trace()
+        if self.chkslope.isChecked():
+            self.isolevel_field.setText('{},{}'.format(
+                self._pattern._slope_range[0],
+                self._pattern._slope_range[1]))
+        else:
+            self.isolevel_field.setText(self.get_isolevel())
 
     def setlines(self):
         linedlg = LineDialog(self._pattern)

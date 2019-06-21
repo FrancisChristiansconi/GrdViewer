@@ -165,7 +165,7 @@ class AbstractPattern(Element):
         for set in range(self._nb_sets):
 
             if (self._x[set][0, 1] > self._x[set][0, 0] and
-                self._y[set][1, 0] > self._y[set][0, 0]):
+                    self._y[set][1, 0] > self._y[set][0, 0]):
                 # already the good orientation
                 pass
             elif (self._x[set][0, 1] < self._x[set][0, 0] and
@@ -605,7 +605,7 @@ class AbstractPattern(Element):
         of the pattern grid.
         """
         if (lon == self._satellite.longitude() and
-            lat == self._satellite.latitude()):
+                lat == self._satellite.latitude()):
             az = 0.0
             el = 0.0
         else:
@@ -704,6 +704,7 @@ class AbstractPattern(Element):
 
 # plot or export to file methods
 # --------------------------------------------------------------------------------------------------
+
     def plot(self):
         """Draw pattern on the earth plot from the provided grd.
         """

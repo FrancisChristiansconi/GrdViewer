@@ -573,7 +573,7 @@ class AbstractPattern(Element):
     # end of function azel2xy
 
     def ll_grid(self, set: int = 0):
-        """ Return (longitude, latitude) grid converted from (az, el) grid.
+        """Return (longitude, latitude) grid converted from (az, el) grid.
         set is the data set to be used
         """
         az, el = self.azel_grid(set)
@@ -583,6 +583,9 @@ class AbstractPattern(Element):
         else:
             az_offset = 0
             el_offset = 0
+
+        # TODO remove that and do it properly
+        az_offset, el_offset = self.compute_azel_boresight(8, 45)
 
         x = self._satellite.altitude() * np.tan((az + az_offset) * cst.DEG2RAD)
         y = self._satellite.altitude() * np.tan((el + el_offset) * cst.DEG2RAD)
@@ -594,6 +597,30 @@ class AbstractPattern(Element):
                              ' +x_0=0 +y_0=0 +units=meters +no_defs')
         return self.proj(x, y, inverse=True)
     # end of function ll_grid
+
+    def compute_azel_boresight(self, lon=0.0, lat=0.0):
+        """Compute the az and el offsets for a given non-null boresight
+        of the pattern grid.
+        """
+        if (lon == self._satellite.longitude() and
+            lat == self._satellite.latitude()):
+            az = 0.0
+            el = 0.0
+        else:
+            # get projection object
+            self.proj = prj.Proj(init='epsg:4326 +proj=nsper' +
+                                 ' +h=' + str(self._satellite.altitude()) +
+                                 ' +a=6378137.00 +b=6378137.00' +
+                                 ' +lon_0=' +
+                                 str(self._satellite.longitude()) +
+                                 ' +lat_0=' + str(self._satellite.latitude()) +
+                                 ' +x_0=0 +y_0=0 +units=meters +no_defs')
+            x, y = self.proj(lon, lat, inverse=False)
+            az = cst.RAD2DEG * \
+                np.arctan2(x, self._satellite.altitude()) - self._azimuth_offset
+            el = cst.RAD2DEG * \
+                np.arctan2(y, self._satellite.altitude()) - self._elevation_offset
+        return az, el
 
     def revert_x(self, set=0):
         """Revert pattern along x axis.

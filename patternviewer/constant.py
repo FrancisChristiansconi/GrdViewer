@@ -6,7 +6,7 @@ import numpy as np
 
 
 # Software version
-VERSION = 'DEV-GV-300'
+VERSION = 'develop'
 
 # Contact mail address
 CONTACT = 'christian.francesconi@ses.com'

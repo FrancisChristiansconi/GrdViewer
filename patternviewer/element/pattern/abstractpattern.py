@@ -307,6 +307,10 @@ class AbstractPattern(Element):
             # shrink_copol uses interpolate_copol function that
             # uses _to_plot attribute
             self._to_plot = self.shrink_copol(self._azshrink, self._elshrink)
+        elif self.set(self.configure(), 'expand', False):
+            # expand_copol uses interpolate_copol function that
+            # uses _to_plot attribute
+            self._to_plot = self.expand_copol(self._azshrink, self._elshrink)
 
         utils.trace('out')
 
@@ -469,7 +473,7 @@ class AbstractPattern(Element):
         return a, b
     # end of function interpolate_slope
 
-    def shrink_copol(self, azshrink, elshrink, az_co=[], el_co=[],
+    def shrinkextend(self, shrink, azshrink, elshrink, az_co=[], el_co=[],
                      step=None, set: int = 0):
         """Shrink pattern using an elliptical beam pointing error.
         This function compute the pattern with different pointing error and
@@ -522,20 +526,51 @@ class AbstractPattern(Element):
         # create interpolation object, and create shrunk pattern
         _, spline = self.interpolate_copol(az_co[0], el_co[0], set)
 
-        def depoint(az_co, el_co):
+        def depointmin(az_co, el_co):
             depointed_copol, _ = self.interpolate_copol(az_co + az_depointing,
                                                         el_co + el_depointing,
                                                         set, spline)
             depointed_copol = depointed_copol[~np.isnan(depointed_copol)]
             return np.min(depointed_copol)
 
-        co = np.vectorize(depoint)(az_co, el_co)
+        def depointmax(az_co, el_co):
+            depointed_copol, _ = self.interpolate_copol(az_co + az_depointing,
+                                                        el_co + el_depointing,
+                                                        set, spline)
+            depointed_copol = depointed_copol[~np.isnan(depointed_copol)]
+            return np.max(depointed_copol)
+
+        if shrink is True:
+            co = np.vectorize(depointmin)(az_co, el_co)
+        else:
+            co = np.vectorize(depointmax)(az_co, el_co)
         co = np.reshape(co, self.azimuth().shape)
 
         utils.trace('out')
         # return result pattern
         return co
+    # end of function shrinkextend_copol
+
+    def shrink_copol(self, azshrink, elshrink, az_co=[], el_co=[],
+                     step=None, set: int = 0):
+        """Shrink pattern using an elliptical beam pointing error.
+        This function compute the pattern with different pointing error and
+        keep the minimum directivity for each station.
+        """
+        shrink = True
+        return self.shrinkextend(shrink, azshrink, elshrink, az_co, el_co,
+                                 step, set)
     # end of function shrink_copol
+
+    def expand_copol(self, azshrink, elshrink, az_co=[], el_co=[],
+                     step=None, set: int = 0):
+        """Expand pattern using an elliptical beam pointing error.
+        This function compute the pattern with different pointing error and
+        keep the maximum directivity for each station.
+        """
+        shrink = False
+        return self.shrinkextend(shrink, azshrink, elshrink, az_co, el_co,
+                                 step, set)
 # ==================================================================================================
 
 # grid conversion functions and getters
@@ -596,7 +631,7 @@ class AbstractPattern(Element):
                              ' +a=6378137.00 +b=6378137.00' +
                              ' +lon_0=' + str(self._satellite.longitude()) +
                              ' +lat_0=' + str(self._satellite.latitude()) +
-                             ' +x_0=0 +y_0=0 +units=meters +no_defs')
+                             ' +x_0=0 +y_0=0 +units=m +no_defs')
         return self.proj(x, y, inverse=True)
     # end of function ll_grid
 
@@ -616,7 +651,7 @@ class AbstractPattern(Element):
                                  ' +lon_0=' +
                                  str(self._satellite.longitude()) +
                                  ' +lat_0=' + str(self._satellite.latitude()) +
-                                 ' +x_0=0 +y_0=0 +units=meters +no_defs')
+                                 ' +x_0=0 +y_0=0 +units=m +no_defs')
             x, y = self.proj(lon, lat, inverse=False)
             az = (cst.RAD2DEG *
                   np.arctan2(x, self._satellite.altitude()))
@@ -678,7 +713,7 @@ class AbstractPattern(Element):
                              ' +a=6378137.00 +b=6378137.00' +
                              ' +lon_0=' + str(self._satellite.longitude()) +
                              ' +lat_0=' + str(self._satellite.latitude()) +
-                             ' +x_0=0 +y_0=0 +units=meters +no_defs')
+                             ' +x_0=0 +y_0=0 +units=m +no_defs')
         # consider offset
         if self._offset:
             az_offset = self._azimuth_offset
@@ -756,7 +791,7 @@ class AbstractPattern(Element):
                                  str(self._satellite.longitude()) +
                                  ' +lat_0=' +
                                  str(self._satellite.latitude()) +
-                                 ' +x_0=0 +y_0=0 +units=meters +no_defs')
+                                 ' +x_0=0 +y_0=0 +units=m +no_defs')
             lon_mesh, lat_mesh = self.proj(x, y, inverse=True)
             # x, y = map(lon_mesh, lat_mesh, inverse=False)
             x_origin, y_origin = 0, 0
@@ -818,10 +853,6 @@ class AbstractPattern(Element):
                                          vmin=np.amin(colorbarscale),
                                          vmax=np.amax(colorbarscale),
                                          cmap=cmap, alpha=1, latlon=True)
-            # pcm_pattern = map.pcolormesh(x, y, to_plot,
-            #                              vmin=np.amin(colorbarscale),
-            #                              vmax=np.amax(colorbarscale),
-            #                              cmap=cmap, alpha=1, latlon=False)
 
             # add color bar
             if cbar:

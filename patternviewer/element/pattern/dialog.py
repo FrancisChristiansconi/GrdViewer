@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, \
     QLineEdit, QHBoxLayout, QVBoxLayout, QPushButton, QWidget, \
     QFileDialog, QLabel, QGridLayout, QCheckBox, QGridLayout
 from PyQt5.QtGui import QColor, QPalette
+from PyQt5 import QtCore
 # import numpy
 import numpy as np
 # ==================================================================================================
@@ -143,26 +144,6 @@ class PatternDialog(QDialog):
         optionbox.addWidget(self.chksurf, 1, 3)
         vbox.addLayout(optionbox)
 
-        # add shrink sub form
-        self.chkshrink = QCheckBox('Shrink', parent=self)
-        self.azshrklbl = QLabel('Az.', parent=self)
-        self.azfield = QLineEdit('0.25', parent=self)
-        self.elshrklbl = QLabel('El.', parent=self)
-        self.elfield = QLineEdit('0.25', parent=self)
-        self.azfield.setFixedWidth(50)
-        self.elfield.setFixedWidth(50)
-        # self.elfield.setFixedWidth(50)
-        hbox_shrink = QGridLayout(None)
-        hbox_shrink.addWidget(self.chkshrink, 1, 1)
-        hbox_shrink.addWidget(self.azshrklbl, 1, 2)
-        hbox_shrink.addWidget(self.azfield, 1, 3)
-        hbox_shrink.addWidget(self.elshrklbl, 1, 4)
-        hbox_shrink.addWidget(self.elfield, 1, 5)
-        # hbox_shrink.addStretch(1)
-        # vbox.addLayout(hbox_shrink)
-        self.chkshrink.stateChanged.connect(self.chkshrinkstatechanged)
-        self.chkshrinkstatechanged()
-
         # add offset sub form
         self.chk_offset = QCheckBox('Offset', parent=self)
         self.offset_button = QPushButton('Lon/Lat', parent=self)
@@ -172,22 +153,70 @@ class PatternDialog(QDialog):
         self.az_offset_field = QLineEdit('0.0', parent=self)
         self.el_offset_label = QLabel('El.', parent=self)
         self.el_offset_field = QLineEdit('0.0', parent=self)
-        self.az_offset_field.setFixedWidth(50)
-        self.el_offset_field.setFixedWidth(50)
-        # hbox_shrink = QHBoxLayout(None)
-        hbox_shrink.addWidget(self.chk_offset, 1, 6)
-        hbox_shrink.addWidget(self.az_offset_label, 1, 7)
-        hbox_shrink.addWidget(self.az_offset_field, 1, 8)
-        hbox_shrink.addWidget(self.el_offset_label, 1, 9)
-        hbox_shrink.addWidget(self.el_offset_field, 1, 10)
-        hbox_shrink.addWidget(self.offset_button, 1, 11)
-        # hbox_shrink.addStretch(1)
-        vbox.addLayout(hbox_shrink)
+        self.az_offset_label.setFixedWidth(40)
+        self.el_offset_label.setFixedWidth(40)
+        self.az_offset_label.setAlignment(QtCore.Qt.AlignRight |
+                                          QtCore.Qt.AlignVCenter)
+        self.el_offset_label.setAlignment(QtCore.Qt.AlignRight |
+                                          QtCore.Qt.AlignVCenter)
+        self.az_offset_field.setFixedWidth(80)
+        self.el_offset_field.setFixedWidth(80)
+        self.az_offset_field.setAlignment(QtCore.Qt.AlignRight |
+                                          QtCore.Qt.AlignVCenter)
+        self.el_offset_field.setAlignment(QtCore.Qt.AlignRight |
+                                          QtCore.Qt.AlignVCenter)
+        # accomodate in horizontal layout
+        hbox_offset = QHBoxLayout(None)
+        hbox_offset.addWidget(self.chk_offset)
+        hbox_offset.addWidget(self.az_offset_label)
+        hbox_offset.addWidget(self.az_offset_field)
+        hbox_offset.addWidget(self.el_offset_label)
+        hbox_offset.addWidget(self.el_offset_field)
+        hbox_offset.addStretch(1)
+        hbox_offset.addWidget(self.offset_button)
+        vbox.addLayout(hbox_offset)
+        # link to callback
         self.chk_offset.stateChanged.connect(self.chk_offset_state_changed)
         self.chk_offset_state_changed()
         self.offset_button.clicked.connect(self.offset_button_state_changed)
         self.offset_button.setChecked(False)
         self.offset_button_state_changed()
+
+        # add shrink sub form
+        self.chkshrink = QCheckBox('Shrink', parent=self)
+        self.shrink_button = QPushButton('Expand', parent=self)
+        self.shrink_button.setCheckable(True)
+        self.shrink_button.toggle()
+        self.azshrklbl = QLabel('Az.', parent=self)
+        self.azfield = QLineEdit('0.25', parent=self)
+        self.elshrklbl = QLabel('El.', parent=self)
+        self.elfield = QLineEdit('0.25', parent=self)
+        self.azshrklbl.setFixedWidth(40)
+        self.elshrklbl.setFixedWidth(40)
+        self.azfield.setFixedWidth(80)
+        self.elfield.setFixedWidth(80)
+        self.azshrklbl.setAlignment(QtCore.Qt.AlignRight |
+                                    QtCore.Qt.AlignVCenter)
+        self.elshrklbl.setAlignment(QtCore.Qt.AlignRight |
+                                    QtCore.Qt.AlignVCenter)
+        self.azfield.setAlignment(QtCore.Qt.AlignRight |
+                                  QtCore.Qt.AlignVCenter)
+        self.elfield.setAlignment(QtCore.Qt.AlignRight |
+                                  QtCore.Qt.AlignVCenter)
+        hbox_shrink = QHBoxLayout(None)
+        hbox_shrink.addWidget(self.chkshrink)
+        hbox_shrink.addWidget(self.azshrklbl)
+        hbox_shrink.addWidget(self.azfield)
+        hbox_shrink.addWidget(self.elshrklbl)
+        hbox_shrink.addWidget(self.elfield)
+        hbox_shrink.addStretch(1)
+        hbox_shrink.addWidget(self.shrink_button)
+        self.chkshrink.stateChanged.connect(self.chkshrinkstatechanged)
+        self.chkshrinkstatechanged()
+        self.shrink_button.clicked.connect(self.shrink_button_state_changed)
+        self.shrink_button.setChecked(False)
+        self.shrink_button_state_changed()
+        vbox.addLayout(hbox_shrink)
 
         # set fields value
         if filename:
@@ -258,7 +287,13 @@ class PatternDialog(QDialog):
         self.chk_rotate.setChecked(pattern._rotated)
         self.chkxpol.setChecked(pattern._use_second_pol)
         self.chkslope.setChecked(pattern._display_slope)
-        self.chkshrink.setChecked(pattern._shrink)
+        _shrink = pattern._shrink
+        _expand = pattern.set(pattern.configure(), 'expand', False)
+        self.chkshrink.setChecked(_shrink | _expand)
+        if _shrink != _expand:
+            self.shrink_button_state_changed()
+        elif _shrink and _expand:
+            print("Error: you cannot shrink and expand in the same time.")
         self.chk_offset.setChecked(pattern._offset)
         self.chksurf.setChecked(pattern.set(
             pattern.configure(), 'Color surface', False))
@@ -345,8 +380,11 @@ class PatternDialog(QDialog):
         config['sat_lon'] = float(self.lon_field.text())
         config['sat_lat'] = float(self.lat_field.text())
         config['display_slope'] = self.chkslope.isChecked()
-        config['shrink'] = self.chkshrink.isChecked()
-        if config['shrink']:
+        config['shrink'] = (self.chkshrink.isChecked() and
+                            not self.shrink_button.isChecked())
+        config['expand'] = (self.chkshrink.isChecked() and
+                            self.shrink_button.isChecked())
+        if config['shrink'] or config['expand']:
             config['azshrink'] = float(self.azfield.text())
             config['elshrink'] = float(self.elfield.text())
         config['offset'] = self.chk_offset.isChecked()
@@ -408,6 +446,14 @@ class PatternDialog(QDialog):
             self.offset_button.setText('Lon/Lat')
             self.az_offset_label.setText('Az')
             self.el_offset_label.setText('El')
+
+    def shrink_button_state_changed(self):
+        if not self.shrink_button.isChecked():
+            self.shrink_button.setText('Expand')
+            self.chkshrink.setText('Shrink')
+        else:
+            self.shrink_button.setText('Shrink')
+            self.chkshrink.setText('Expand')
 
     def chk_display_slope_changed(self):
         """Callback changing the range displayed in case

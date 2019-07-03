@@ -307,6 +307,10 @@ class AbstractPattern(Element):
             # shrink_copol uses interpolate_copol function that
             # uses _to_plot attribute
             self._to_plot = self.shrink_copol(self._azshrink, self._elshrink)
+        elif self.set(self.configure(), 'expand', False):
+            # expand_copol uses interpolate_copol function that
+            # uses _to_plot attribute
+            self._to_plot = self.expand_copol(self._azshrink, self._elshrink)
 
         utils.trace('out')
 
@@ -536,7 +540,7 @@ class AbstractPattern(Element):
             depointed_copol = depointed_copol[~np.isnan(depointed_copol)]
             return np.max(depointed_copol)
 
-        if shrink == True:
+        if shrink is True:
             co = np.vectorize(depointmin)(az_co, el_co)
         else:
             co = np.vectorize(depointmax)(az_co, el_co)
@@ -554,8 +558,8 @@ class AbstractPattern(Element):
         keep the minimum directivity for each station.
         """
         shrink = True
-        return shrinkextend(shrink, azshrink, elshrink, az_co, el_co,
-                            step, set)
+        return self.shrinkextend(shrink, azshrink, elshrink, az_co, el_co,
+                                 step, set)
     # end of function shrink_copol
 
     def expand_copol(self, azshrink, elshrink, az_co=[], el_co=[],
@@ -565,8 +569,8 @@ class AbstractPattern(Element):
         keep the maximum directivity for each station.
         """
         shrink = False
-        return shrinkextend(shrink, azshrink, elshrink, az_co, el_co,
-                            step, set)
+        return self.shrinkextend(shrink, azshrink, elshrink, az_co, el_co,
+                                 step, set)
 # ==================================================================================================
 
 # grid conversion functions and getters

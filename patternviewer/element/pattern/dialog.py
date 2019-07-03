@@ -211,7 +211,6 @@ class PatternDialog(QDialog):
         hbox_shrink.addWidget(self.elfield)
         hbox_shrink.addStretch(1)
         hbox_shrink.addWidget(self.shrink_button)
-        # vbox.addLayout(hbox_shrink)
         self.chkshrink.stateChanged.connect(self.chkshrinkstatechanged)
         self.chkshrinkstatechanged()
         self.shrink_button.clicked.connect(self.shrink_button_state_changed)
@@ -288,7 +287,13 @@ class PatternDialog(QDialog):
         self.chk_rotate.setChecked(pattern._rotated)
         self.chkxpol.setChecked(pattern._use_second_pol)
         self.chkslope.setChecked(pattern._display_slope)
-        self.chkshrink.setChecked(pattern._shrink)
+        _shrink = pattern._shrink
+        _expand = pattern.set(pattern.configure(), 'expand', False)
+        self.chkshrink.setChecked(_shrink | _expand)
+        if _shrink != _expand:
+            self.shrink_button_state_changed()
+        elif _shrink and _expand:
+            print("Error: you cannot shrink and expand in the same time.")
         self.chk_offset.setChecked(pattern._offset)
         self.chksurf.setChecked(pattern.set(
             pattern.configure(), 'Color surface', False))
@@ -375,8 +380,11 @@ class PatternDialog(QDialog):
         config['sat_lon'] = float(self.lon_field.text())
         config['sat_lat'] = float(self.lat_field.text())
         config['display_slope'] = self.chkslope.isChecked()
-        config['shrink'] = self.chkshrink.isChecked()
-        if config['shrink']:
+        config['shrink'] = (self.chkshrink.isChecked() and
+                            not self.shrink_button.isChecked())
+        config['expand'] = (self.chkshrink.isChecked() and
+                            self.shrink_button.isChecked())
+        if config['shrink'] or config['expand']:
             config['azshrink'] = float(self.azfield.text())
             config['elshrink'] = float(self.elfield.text())
         config['offset'] = self.chk_offset.isChecked()

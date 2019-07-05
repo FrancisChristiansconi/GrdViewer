@@ -1,12 +1,19 @@
 import numpy as np
 
+# import interpolation routine from scipy
+from scipy import interpolate as interp
+
+# import constant file
+import patternviewer.constant as cst
+
 import patternviewer.utils as utils
 
 from patternviewer.element.pattern.abstractpattern import AbstractPattern
 
 
 class Grd(AbstractPattern):
-    """This class implement an antenna pattern object using data from a Ticra .grd file.
+    """This class implement an antenna pattern object using data
+    from a Ticra .grd file.
     """
 
     def read_file(self, filename):
@@ -70,8 +77,10 @@ class Grd(AbstractPattern):
         grid = int(lines[istart].split()[3])
         istart += 1
         # center of beams
-        xi = [int(lines[istart+i_set].split()[0]) for i_set in range(nb_sets)]
-        yi = [int(lines[istart+i_set].split()[1]) for i_set in range(nb_sets)]
+        xi = [int(lines[istart + i_set].split()[0])
+              for i_set in range(nb_sets)]
+        yi = [int(lines[istart + i_set].split()[1])
+              for i_set in range(nb_sets)]
         istart += nb_sets
 
         # data table reading
@@ -136,19 +145,17 @@ class Grd(AbstractPattern):
         # end of file reading
 
         # initialize some grided data
-        E_mag_co = 20*np.log10(np.absolute(E_field_copol))
+        E_mag_co = 20 * np.log10(np.absolute(E_field_copol))
         E_phs_co = np.angle(E_field_copol, deg=True)
-        E_mag_cr = 20*np.log10(np.absolute(E_field_cross))
+        E_mag_cr = 20 * np.log10(np.absolute(E_field_cross))
         E_phs_cr = np.angle(E_field_cross, deg=True)
 
         return nb_sets, \
             grid, \
             x, \
             y, \
-            E_mag_co, \
-            E_phs_co, \
-            E_mag_cr, \
-            E_phs_cr
+            E_field_copol, \
+            E_field_cross
     # end of read_file
 
     def grid_type(self):
@@ -188,7 +195,8 @@ class Grd(AbstractPattern):
         copol_elgrad /= elevation_grad
         # use absolute value
         if not signed:
-            return {'Az': np.absolute(copol_azgrad), 'El': np.absolute(copol_elgrad)}
+            return {'Az': np.absolute(copol_azgrad),
+                    'El': np.absolute(copol_elgrad)}
         else:
             return {'Az': copol_azgrad, 'El': copol_elgrad}
     # end of function azel_slope
@@ -196,12 +204,15 @@ class Grd(AbstractPattern):
     def interpolate_azel_slope(self, az, el, signed=False):
         """return interpolated value of the pattern
         """
-        if not self.interpolated_copol_azgrad or not self.interpolated_copol_elgrad:
+        if (not self.interpolated_copol_azgrad or
+                not self.interpolated_copol_elgrad):
             # if not yet use interpolation of slopes
             self.interpolated_copol_azgrad = interp.RectBivariateSpline(
-                self._x[set][:, 0], self._y[set][0, :], self.azel_slope()['Az'])
+                self._x[set][:, 0], self._y[set][0, :],
+                self.azel_slope()['Az'])
             self.interpolated_copol_elgrad = interp.RectBivariateSpline(
-                self._x[set][:, 0], self._y[set][0, :], self.azel_slope()['El'])
+                self._x[set][:, 0], self._y[set][0, :],
+                self.azel_slope()['El'])
 
         # transform azel into uv (-1 because azimuth positive toward East)
         u = -1 * np.cos(el * cst.DEG2RAD) * np.sin(az * cst.DEG2RAD)
@@ -209,10 +220,18 @@ class Grd(AbstractPattern):
 
         # if uv are 2D, flat them. Use absolute value depending on signed flag
         if not signed:
-            return {'Az': np.absolute(np.reshape(self.interpolated_copol_azgrad.ev(u.flatten(), v.flatten()), np.array(az).shape)),
-                    'El': np.absolute(np.reshape(self.interpolated_copol_elgrad.ev(u.flatten(), v.flatten()), np.array(az).shape))}
+            return {'Az': np.absolute(np.reshape(
+                    self.interpolated_copol_azgrad.ev(u.flatten(),
+                                                      v.flatten()),
+                    np.array(az).shape)),
+                    'El': np.absolute(np.reshape(
+                        self.interpolated_copol_elgrad.ev(u.flatten(),
+                                                          v.flatten()),
+                        np.array(az).shape))}
         else:
-            return {'Az': np.reshape(self.interpolated_copol_azgrad.ev(u.flatten(), v.flatten()), np.array(az).shape),
-                    'El': np.reshape(self.interpolated_copol_elgrad.ev(u.flatten(), v.flatten()), np.array(az).shape)}
+            return {'Az': np.reshape(self.interpolated_copol_azgrad.ev(
+                u.flatten(), v.flatten()), np.array(az).shape),
+                'El': np.reshape(self.interpolated_copol_elgrad.ev(
+                    u.flatten(), v.flatten()), np.array(az).shape)}
     # end of function interpolate_azel_slope
 # end of class Grd

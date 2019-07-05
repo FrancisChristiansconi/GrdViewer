@@ -80,20 +80,14 @@ class AbstractPattern(Element):
         # number of data set contained in file
         self._nb_sets = 0
 
-        # first component of copol
-        self._E_mag_co = []
+        # complex copol
+        self._E_co = []
 
-        # second component of copol
-        self._E_phs_co = []
+        # complex crosspol
+        self._E_cr = []
 
-        # gradient of first component
-        self._E_grad_co = []
-
-        # first component of crosspol
-        self._E_mag_cr = []
-
-        # second component of crosspol
-        self._E_phs_cr = []
+        # gradient of first component of co
+        self._E_co_grad = []
 
         # azimuth grid
         self._azimuth = []
@@ -132,10 +126,8 @@ class AbstractPattern(Element):
             self._grid, \
             self._x, \
             self._y, \
-            self._E_mag_co, \
-            self._E_phs_co, \
-            self._E_mag_cr, \
-            self._E_phs_cr = self.read_file(conf['filename'])
+            self._E_co, \
+            self._E_cr = self.read_file(conf['filename'])
 
         # float[]: isolevel for display
         max_directivity = np.max(self.copol())
@@ -144,7 +136,7 @@ class AbstractPattern(Element):
 
         # matrix to be plotted
         self._to_plot = np.zeros(shape=np.array(
-            self._E_mag_co).shape, dtype=float)
+            self._E_co).shape, dtype=float)
 
         for k in range(self._nb_sets):
             self._longitude.append(np.zeros_like(self._x[k]))
@@ -173,31 +165,25 @@ class AbstractPattern(Element):
                 # change only x-axis of the grid
                 self._x[set] = self._x[set][::-1, :]
                 self._y[set] = self._y[set][::-1, :]
-                self._E_mag_co[set] = self._E_mag_co[set][::-1, :]
-                self._E_phs_co[set] = self._E_phs_co[set][::-1, :]
-                if len(self._E_mag_cr):
-                    self._E_mag_cr[set] = self._E_mag_cr[set][::-1, :]
-                    self._E_phs_cr[set] = self._E_phs_cr[set][::-1, :]
+                self._E_co[set] = self._E_co[set][::-1, :]
+                if len(self._E_cr):
+                    self._E_cr[set] = self._E_cr[set][::-1, :]
             elif (self._x[set][0, 1] < self._x[set][0, 0] and
                   self._y[set][1, 0] < self._y[set][0, 0]):
                 # change x and y-axes of the grid
                 self._x[set] = self._x[set][::-1, ::-1]
                 self._y[set] = self._y[set][::-1, ::-1]
-                self._E_mag_co[set] = self._E_mag_co[set][::-1, ::-1]
-                self._E_phs_co[set] = self._E_phs_co[set][::-1, ::-1]
-                if len(self._E_mag_cr):
-                    self._E_mag_cr[set] = self._E_mag_cr[set][::-1, ::-1]
-                    self._E_phs_cr[set] = self._E_phs_cr[set][::-1, ::-1]
+                self._E_co[set] = self._E_co[set][::-1, ::-1]
+                if len(self._E_cr):
+                    self._E_cr[set] = self._E_cr[set][::-1, ::-1]
             elif (self._x[set][0, 1] > self._x[set][0, 0] and
                   self._y[set][1, 0] < self._y[set][0, 0]):
                 # change only y-axis of the grid
                 self._x[set] = self._x[set][:, ::-1]
                 self._y[set] = self._y[set][:, ::-1]
-                self._E_mag_co[set] = self._E_mag_co[set][:, ::-1]
-                self._E_phs_co[set] = self._E_phs_co[set][:, ::-1]
-                if len(self._E_mag_cr):
-                    self._E_mag_cr[set] = self._E_mag_cr[set][:, ::-1]
-                    self._E_phs_cr[set] = self._E_phs_cr[set][:, ::-1]
+                self._E_co[set] = self._E_co[set][:, ::-1]
+                if len(self._E_cr):
+                    self._E_cr[set] = self._E_cr[set][:, ::-1]
     # end of reshapedata function
 
     def generate_grid(self):
@@ -317,7 +303,7 @@ class AbstractPattern(Element):
     def copol(self, set: int = 0):
         """Return co-polarisation pattern. In dBi.
         """
-        z = self._E_mag_co[set]
+        z = 20 * np.log10(np.abs(self._E_co[set]))
         z[np.where(np.isnan(z))] = -99
         z[np.where(np.isneginf(z))] = -99
         return z
@@ -327,7 +313,7 @@ class AbstractPattern(Element):
         """Return cross-polarisation pattern. In dBi.
         """
         try:
-            z = self._E_mag_cr[set]
+            z = 20 * np.log10(np.abs(self._E_cr[set]))
             z[np.where(np.isnan(z))] = -99
             z[np.where(np.isneginf(z))] = -99
             return z
@@ -339,7 +325,8 @@ class AbstractPattern(Element):
     def xpd(self, set: int = 0):
         """Return XPD pattern. In dB.
         """
-        return self._E_mag_co[set] - self._E_mag_cr[set]
+        return (20 * np.log10(np.abs(self._E_co[set])) -
+                20 * np.log10(np.abs(self._E_cr[set])))
     # end of function xpd
 
     def satellite(self):
@@ -401,7 +388,7 @@ class AbstractPattern(Element):
             # RSS the 2 directions gradient in one scalar field
             self._E_grad_co = np.sqrt(co_grad_az**2 + co_grad_el**2)
         utils.trace('out')
-        return self._E_grad_co
+        return self._E_co_grad
     # end of function slope
 
     def interpolate_copol(self, az, el, set: int = 0, spline=None):
@@ -662,21 +649,17 @@ class AbstractPattern(Element):
     def revert_x(self, set=0):
         """Revert pattern along x axis.
         """
-        self._E_mag_co[set] = self._E_mag_co[set][::-1, :]
-        self._E_phs_co[set] = self._E_phs_co[set][::-1, :]
-        if len(self._E_mag_cr):
-            self._E_mag_cr[set] = self._E_mag_cr[set][::-1, :]
-            self._E_phs_cr[set] = self._E_phs_cr[set][::-1, :]
+        self._E_co[set] = self._E_co[set][::-1, :]
+        if len(self._E_cr):
+            self._E_cr[set] = self._E_cr[set][::-1, :]
     # end of method revert_x
 
     def revert_y(self, set: int = 0):
         """Revert pattern along y axis.
         """
-        self._E_mag_co[set] = self._E_mag_co[set][:, ::-1]
-        self._E_phs_co[set] = self._E_phs_co[set][:, ::-1]
-        if len(self._E_mag_cr):
-            self._E_mag_cr[set] = self._E_mag_cr[set][:, ::-1]
-            self._E_phs_cr[set] = self._E_phs_cr[set][:, ::-1]
+        self._E_co[set] = self._E_co[set][:, ::-1]
+        if len(self._E_cr):
+            self._E_cr[set] = self._E_cr[set][:, ::-1]
     # end of method revert_y
 
     def azimuth(self, set: int = 0):

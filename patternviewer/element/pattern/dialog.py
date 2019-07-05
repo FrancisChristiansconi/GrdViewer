@@ -309,7 +309,7 @@ class PatternDialog(QDialog):
         self.offset_button_state_changed()
 
         # disable use second pol option if second pol not available
-        if len(pattern._E_mag_cr):
+        if len(pattern._E_cr):
             self.chkxpol.setEnabled(True)
         else:
             self.chkxpol.setEnabled(False)

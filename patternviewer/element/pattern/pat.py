@@ -30,7 +30,7 @@ class Pat(AbstractPattern):
         for i in range(linesnumber):
             # detect end of comments
             if lines[i][:4] == '++++':
-                istart = i+1
+                istart = i + 1
                 break
 
         # Line 1
@@ -188,16 +188,22 @@ class Pat(AbstractPattern):
                 E_phs_cr.append(self.phase(iunit, c21, c22))
         # end for
 
+        E_co = (np.power(10, E_mag_co / 20) *
+                np.cos(E_phs_co * np.pi / 180.0) +
+                1j * np.power(10, E_mag_co / 20) *
+                np.sin(E_phs_co * np.pi / 180.0))
+        E_cr = (np.power(10, E_mag_cr / 20) *
+                np.cos(E_phs_cr * np.pi / 180.0) +
+                1j * np.power(10, E_mag_cr / 20) *
+                np.sin(E_phs_cr * np.pi / 180.0))
         utils.trace('out')
 
         return nb_sets, \
             grid, \
             x, \
             y, \
-            E_mag_co, \
-            E_phs_co, \
-            E_mag_cr, \
-            E_phs_cr
+            E_co, \
+            E_cr
     # end of function read_file
 
     def grid_type(self):

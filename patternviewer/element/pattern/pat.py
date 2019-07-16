@@ -28,7 +28,7 @@ class Pat(AbstractPattern):
             self._latitude.append(np.zeros_like(self._x[k]))
             self._azimuth.append(np.zeros_like(self._x[k]))
             self._elevation.append(np.zeros_like(self._x[k]))
-        
+
         # configure
         self.configure(config=conf)
     # End of function __init__

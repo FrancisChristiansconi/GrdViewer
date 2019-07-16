@@ -271,7 +271,5 @@ class Grd(AbstractPattern):
                 self._x[set] = -1 * self._x[set]
                 self._y[set] = -1 * self._y[set]
                 self._rotated = self._rotate
-
-
-
+    # end of function rotate
 # end of class Grd

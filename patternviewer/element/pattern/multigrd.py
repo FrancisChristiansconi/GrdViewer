@@ -4,7 +4,7 @@
 # Standard modules import
 
 # Third party modules import
-#==============================================================================
+# =============================================================================
 # numpy for computation
 import numpy as np
 # import pyproj for coordinates conversion
@@ -13,7 +13,7 @@ import pyproj as prj
 import itertools
 
 # Local modules import
-#==============================================================================
+# =============================================================================
 # project modules
 import patternviewer.utils as utils
 import patternviewer.constant as cst
@@ -22,8 +22,6 @@ import patternviewer.angles as ang
 from patternviewer.element.pattern.grd import Grd
 from patternviewer.element.pattern.abstractpattern import AbstractPattern
 
-
-# UnassortedGrid exception class definition
 
 class UnassortedGrid(Exception):
     """This class defines the exception to be raised when unassorted pattern
@@ -36,11 +34,11 @@ class UnassortedGrid(Exception):
     # end of function __init__
 # end of class UnassortedGrid
 
-# MultiGrd Class definition
-#==============================================================================
+
 class MultiGrd(Grd):
-    """Class Multigrd handle a set of grd file and and excitation law in order
-    to vizualise active antenna resulting pattern.
+    """Class Multigrd definition.
+    Object defined by this class handle a set of grd file and excitation law
+    in order to vizualise active antenna resulting pattern.
     """
 
     def __init__(self, filenames=[], excfilename=None, conf=None,
@@ -157,7 +155,7 @@ class MultiGrd(Grd):
                 _nbre = nbre
             else:
                 _nbre = self.get_number_re()
-            return np.ones(_nbre, dtype=np.complex)           
+            return np.ones(_nbre, dtype=np.complex)
     # End of function read_excitation_file
 
     def get_number_re(self):

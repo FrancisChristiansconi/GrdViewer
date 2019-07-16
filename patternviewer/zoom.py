@@ -11,7 +11,7 @@ class Zoom(object):
     """
 
     def __init__(self, proj='nsper', nsper=(-9.0, -9.0, 9.0, 9.0),
-                 cyl=(-180.0, -85.0, 180.0, -85.0)):
+                 cyl=(-180.0, -85.0, 180.0, 85.0)):
         """Default constructor for Zoom objects.
         Works if zoom defined in AzEl of LL coordinates.
         """

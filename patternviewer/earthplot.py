@@ -839,7 +839,10 @@ class EarthPlot(FigureCanvas):
     def get_file_key(self, filename):
         utils.trace('in')
         file_index = 1
-        f = os.path.basename(filename)
+        if type(filename) is list:
+            f = os.path.basename(filename[0])
+        else:
+            f = os.path.basename(filename)
         file_key = f + ' ' + str(file_index)
         while (file_key in self._patterns) and file_index <= 50:
             file_index = file_index + 1
@@ -864,7 +867,8 @@ class EarthPlot(FigureCanvas):
         file_key = self.get_file_key(filename)
         conf['key'] = file_key
         try:
-            pattern = PatternControler(parent=self, filename=filename)
+            pattern = PatternControler(parent=self,
+                                       config=conf)
         except FileNotFoundError:
             print('Pattern file ' + filename + ' not found')
             return None

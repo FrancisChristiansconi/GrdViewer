@@ -46,11 +46,13 @@ class MultiGrd(Grd):
         """Initialize a multigrd object
         """
         # set number of radiating elements to the number of files provided
+        filenames = conf['filename']
+        excfilename = conf['excfilename']
         self._nb_re = len(filenames)
 
         # read excitation file name or return (1, 1, ..., 1)
-        self._excitation_law = \
-            self.read_exc_file(excfilename=excfilename)
+        _law = self.read_exc_file(excfilename=excfilename)
+        self._excitation_law = list(_law.items())[0][1]
 
         # Initialize object
         AbstractPattern.__init__(self=self, filename=filenames,
@@ -70,6 +72,11 @@ class MultiGrd(Grd):
 
         # configure pattern object
         self.configure(config=conf)
+
+        # Store excitation law in configuration dictionary
+        self._conf['law'] = _law
+        # by default apply first law
+        self.apply_law(0)
 
     # End of function __init__
 
@@ -123,39 +130,45 @@ class MultiGrd(Grd):
         return (nb_sets, grid, x, y, E_co, E_cr)
     # End of function read_file
 
-    def read_exc_file(self, excfilename=None, nbre=None):
+    def read_exc_file(self, excfilename=None):
         """This function reads an excitation law file.
         It is still a WIP as the format is not known yet.
         By default the law is full of ones.
         """
+        # initialize law dictionary
+        _law = {}
         try:
+            # get number of radiating elements
+            _nbre = self.get_number_re()
+            _law_size = _nbre + 1
             # open file and read text data
             file = open(excfilename, "r")
             # read all lines in a table
-            lines = file.readlines()
+            _lines = file.readlines()
             # close file
             file.close()
             # read A/phi law in file
-            As = []
-            phis = []
-            for l in lines[1:self.get_number_re() + 1]:
-                splitted = l.split()
-                As.append(float(splitted[1]))
-                phis.append(float(splitted[2]))
-            As = np.array(As)
-            phis = np.array(phis)
-            # convert to complex array
-            law = As * np.exp(1j * phis * np.pi / 180.0)
-            return law
+            _As = np.zeros(_nbre, dtype=float)
+            _phis = np.zeros(_nbre, dtype=float)
+            _law_nb = int(len(_lines) / _law_size)
+            for _i in range(_law_nb):
+                _splitted = _lines[_i * _law_size].split()
+                _law_id = _splitted[0]
+                for _j in range(_nbre):
+                    _splitted = _lines[(_i * _law_size) + _j + 1].split()
+                    _As[_j] = float(_splitted[1])
+                    _phis[_j] = float(_splitted[2])
+                # convert to complex array
+                _law[_law_id] = _As * np.exp(1j * _phis * np.pi / 180.0)
 
         except FileNotFoundError:
-            errmsg = 'Excitation file {} does not exist in file system.'
-            print(errmsg.format(excfilename))
-            if nbre is not None:
-                _nbre = nbre
-            else:
-                _nbre = self.get_number_re()
-            return np.ones(_nbre, dtype=np.complex)
+            _errmsg = 'Excitation file {} does not exist in file system.'
+            print(_errmsg.format(excfilename))
+            _nbre = self.get_number_re()
+            _law['default'] = np.ones(_nbre, dtype=complex)
+
+        # return law dictionary
+        return _law
     # End of function read_excitation_file
 
     def get_number_re(self):
@@ -184,7 +197,7 @@ class MultiGrd(Grd):
         return z
     # End of function copol
 
-    def cross(self):
+    def cross(self, set=0):
         """Compute crosspolarisation magnitude (in dBi).
         Overloading Grd.cross().
         """
@@ -202,5 +215,16 @@ class MultiGrd(Grd):
         utils.trace('out')
         return z
     # End of function cross
+
+    def apply_law(self, law_id):
+        if type(law_id) is int:
+            if law_id < len(self._conf['law']) and law_id >= 0:
+                self._conf['applied_law'], self._excitation_law = list(self._conf['law'].items())[law_id]
+        elif law_id in self._conf['law'].keys():
+            self._excitation_law = self._conf['law'][law_id]
+            self._conf['applied_law'] = law_id
+        else:
+            raise TypeError
+    # end of method apply_law
 
 # End of class MultiGrd

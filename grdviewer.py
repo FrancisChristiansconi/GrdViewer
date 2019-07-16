@@ -305,6 +305,9 @@ class GrdViewer(QMainWindow):
         load_pattern_action = QAction('Load pattern file', self)
         self.menupattern.addAction(load_pattern_action)
         load_pattern_action.triggered.connect(self.loadpattern)
+        load_multipat_action = QAction('Load active antenna files', self)
+        self.menupattern.addAction(load_multipat_action)
+        load_multipat_action.triggered.connect(self.loadmultipat)
 
         # Add Misc menu
         self._menumisc = menubar.addMenu('Misc.')
@@ -365,7 +368,27 @@ class GrdViewer(QMainWindow):
             # if pattern:
             #     self._earthplot.draw_elements()
         utils.trace('out')
-    # end of method load_pattern
+    # end of method loadpattern
+
+    def loadmultipat(self):
+        """Pops up dialog box to load Grd files and display it
+        on the Earth plot.
+        """
+        utils.trace('in')
+        # Get filenames
+        filenames, _ = QFileDialog.getOpenFileNames(self,
+                                                    caption='Select elementary pattern files.',
+                                                    filter='pattern files (*.grd)')
+        # Get excitation file
+        excfile, _ = QFileDialog.getOpenFileName(self,
+                                                 caption='Select excitation file.',
+                                                 filter='excitation files (*.wts)')
+        # if file name provided open the customised dialog box
+        if not filenames == [] and not excfile == []:
+            pattern = self._earthplot.loadpattern({'filename': filenames,
+                                                   'excfilename': excfile})
+        utils.trace('out')
+    # end of method loadmultipat
 
     def loadpolygon(self):
         """Open dialog to get polygon to draw.

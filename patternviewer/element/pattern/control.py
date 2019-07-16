@@ -20,6 +20,7 @@ from patternviewer.element.pattern.dialog import PatternDialog
 from patternviewer.element.pattern.abstractpattern import AbstractPattern
 from patternviewer.element.pattern.pat import Pat
 from patternviewer.element.pattern.grd import Grd
+from patternviewer.element.pattern.multigrd import MultiGrd
 
 
 class PatternControler():
@@ -27,16 +28,13 @@ class PatternControler():
     links together a pattern, a dialog box and a menu.
     """
 
-    def __init__(self, parent, filename):
+    def __init__(self, parent, config):
         """Initialize a pattern controler.
         parent is the earthplot which is used to display the pattern
         filename is the name of the file containing the pattern data
         """
         utils.trace('in')
-        self._config = {}
-
-        # name and path to the pattern data file
-        self._config['filename'] = filename
+        self._config = config
 
         # reference of the parent EarthPlot
         self._earthplot = parent
@@ -52,6 +50,8 @@ class PatternControler():
             self._pattern = Grd(conf=self._config, parent=self)
         elif self.ispat():
             self._pattern = Pat(conf=self._config, parent=self)
+        elif self.ismultigrd():
+            self._pattern = MultiGrd(conf=self._config, parent=self)
         else:
             raise Exception(
                 'The file provided is not a grd file or a pat file.')
@@ -127,6 +127,10 @@ class PatternControler():
         utils.trace()
         return self._config['filename'][-3:] == 'pat'
     # end of ispat function
+
+    def ismultigrd(self):
+        return type(self._config['filename']) is list
+    # End of ismultigrd function
 
     def plot(self):
         """Plot the antenna pattern into the parent EarthPlot.

@@ -12,7 +12,7 @@ import sys
 # --------------------------------------------------------------------------------------------------
 # import of PyQt5 for all GUI elements
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, \
-    QAction, qApp, QDialog, \
+    QAction, qApp, QDialog, QComboBox, \
     QLineEdit, QHBoxLayout, QVBoxLayout, QPushButton, QWidget, \
     QFileDialog, QLabel, QGridLayout, QCheckBox, QGridLayout
 from PyQt5.QtGui import QColor, QPalette
@@ -122,6 +122,19 @@ class PatternDialog(QDialog):
         hbox_isolevel.addWidget(self.cf_field)
         vbox.addLayout(hbox_isolevel)
 
+        # Add special combo box for multigrd
+        if 'law'in self._pattern.configure().keys():
+            self.law_id_lbl = QLabel('Excitation law', parent=self)
+            self.law_id_cmb = QComboBox(self)
+            self.law_id_cmb.addItems(self._pattern.configure()['law'])
+            self.law_id_cmb.setCurrentText(
+                self._pattern.configure()['applied_law'])
+            self.law_id_cmb.currentTextChanged.connect(self.cmb_law_changed)
+            hbox_law = QHBoxLayout(None)
+            hbox_law.addWidget(self.law_id_lbl)
+            hbox_law.addWidget(self.law_id_cmb)
+            vbox.addLayout(hbox_law)
+
         # Add checkboxes
         self.chk_revert_x = QCheckBox('Revert X axis', parent=self)
         self.chk_revert_y = QCheckBox('Revert Y axis', parent=self)
@@ -220,7 +233,10 @@ class PatternDialog(QDialog):
 
         # set fields value
         if filename:
-            self.filename_field.setText(filename)
+            if type(filename) is list:
+                self.filename_field.setText(filename[0])
+            else:
+                self.filename_field.setText(filename)
         if self.earth_plot:
             self.title_field.setText(self.earth_plot._plot_title)
             self.lon_field.setText(str(self.earth_plot._viewer.longitude()))
@@ -308,6 +324,7 @@ class PatternDialog(QDialog):
                                                   True))
         self.offset_button_state_changed()
 
+
         # disable use second pol option if second pol not available
         if len(pattern._E_cr):
             self.chkxpol.setEnabled(True)
@@ -392,6 +409,11 @@ class PatternDialog(QDialog):
             config['azoffset'] = float(self.az_offset_field.text())
             config['eloffset'] = float(self.el_offset_field.text())
         config['azeloffset'] = self.offset_button.isChecked()
+        
+        # if multigrd pattern, apply law selected
+        if 'law' in self._pattern.configure().keys():
+            self._pattern.apply_law(self.law_id_cmb.currentText())
+
         if self.chkslope.isChecked():
             config['slopes'] = [float(s)
                                 for s in self.isolevel_field.text().split(',')]
@@ -466,6 +488,10 @@ class PatternDialog(QDialog):
                 self._pattern._slope_range[1]))
         else:
             self.isolevel_field.setText(self.get_isolevel())
+
+    def cmb_law_changed(self):
+        self._pattern.apply_law(self.law_id_cmb.currentText())
+        self.refresh_isolevel()
 
     def setlines(self):
         linedlg = LineDialog(self._pattern)

@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(name='patternviewer',
       version='DEV-GV-300',
@@ -12,5 +12,5 @@ setup(name='patternviewer',
           'pyproj==1.9.5.1',
           'matplotlib==3.0.0',
       ],
-      packages=['patternviewer'],
+      packages=find_packages(),
       zip_safe=False)

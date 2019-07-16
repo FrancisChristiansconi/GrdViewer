@@ -134,19 +134,6 @@ class AbstractPattern(Element):
         self._isolevel = np.array(
             cst.DEFAULT_ISOLEVEL_DBI) + int(max_directivity)
 
-        # matrix to be plotted
-        self._to_plot = np.zeros(shape=np.array(
-            self._E_co).shape, dtype=float)
-
-        for k in range(self._nb_sets):
-            self._longitude.append(np.zeros_like(self._x[k]))
-            self._latitude.append(np.zeros_like(self._x[k]))
-            self._azimuth.append(np.zeros_like(self._x[k]))
-            self._elevation.append(np.zeros_like(self._x[k]))
-
-        # configure
-        self.configure(config=conf)
-
         utils.trace('out')
     # end of constructor
 
@@ -238,17 +225,7 @@ class AbstractPattern(Element):
             self._satellite = Viewer(sat_lon, sat_lat, sat_alt)
 
             # if requested by the new configuration, rotate the pattern
-            for set in range(self._nb_sets):
-                if (self._rotate and not self._rotated) or \
-                   (not self._rotate and self._rotated):
-                    x_offset = (
-                        np.max(self._x[set][:]) - np.min(self._x[set][:]))
-                    y_offset = (
-                        np.max(self._y[set][:][:]) -
-                        np.min(self._y[set][:][:]))
-                    self._x[set] = -1 * self._x[set]
-                    self._y[set] = -1 * self._y[set]
-                    self._rotated = self._rotate
+            self.rotate()
 
             # reshape the grid to correspond to interpolation standard
             self.reshapedata()
@@ -303,7 +280,7 @@ class AbstractPattern(Element):
     def copol(self, set: int = 0):
         """Return co-polarisation pattern. In dBi.
         """
-        z = 20 * np.log10(np.abs(self._E_co[set]))
+        z = 20.0 * np.log10(np.abs(self._E_co[set]))
         z[np.where(np.isnan(z))] = -99
         z[np.where(np.isneginf(z))] = -99
         return z

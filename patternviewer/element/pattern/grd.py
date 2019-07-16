@@ -16,6 +16,28 @@ class Grd(AbstractPattern):
     from a Ticra .grd file.
     """
 
+    def __init__(self, filename=[], conf=None,
+                 dialog=False, parent=None):
+        """Initialize a Grd object
+        """
+        # just initialize object
+        super().__init__(filename=filename, conf=conf,
+                         dialog=dialog, parent=parent)
+
+        # matrix to be plotted
+        self._to_plot = np.zeros(shape=np.array(
+            self._E_co).shape, dtype=float)
+
+        for k in range(self._nb_sets):
+            self._longitude.append(np.zeros_like(self._x[k]))
+            self._latitude.append(np.zeros_like(self._x[k]))
+            self._azimuth.append(np.zeros_like(self._x[k]))
+            self._elevation.append(np.zeros_like(self._x[k]))
+
+        # configure
+        self.configure(config=conf)
+    # End of function __init__
+
     def read_file(self, filename):
         """Read data from TICRA .grd file.
         Params:
@@ -150,6 +172,7 @@ class Grd(AbstractPattern):
         E_mag_cr = 20 * np.log10(np.absolute(E_field_cross))
         E_phs_cr = np.angle(E_field_cross, deg=True)
 
+        utils.trace('out')
         return nb_sets, \
             grid, \
             x, \
@@ -234,4 +257,21 @@ class Grd(AbstractPattern):
                 'El': np.reshape(self.interpolated_copol_elgrad.ev(
                     u.flatten(), v.flatten()), np.array(az).shape)}
     # end of function interpolate_azel_slope
+
+    def rotate(self):
+        # if requested by the new configuration, rotate the pattern
+        for set in range(self._nb_sets):
+            if ((self._rotate and not self._rotated) or
+                (not self._rotate and self._rotated)):
+                # x_offset = (
+                #     np.max(self._x[set][:]) - np.min(self._x[set][:]))
+                # y_offset = (
+                #     np.max(self._y[set][:][:]) -
+                #     np.min(self._y[set][:][:]))
+                self._x[set] = -1 * self._x[set]
+                self._y[set] = -1 * self._y[set]
+                self._rotated = self._rotate
+
+
+
 # end of class Grd

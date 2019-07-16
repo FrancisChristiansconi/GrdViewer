@@ -11,6 +11,28 @@ class Pat(AbstractPattern):
     """This class implement reading and processing of Satsoft .pat files.
     """
 
+    def __init__(self, filename=[], conf=None,
+                 dialog=False, parent=None):
+        """Initialize a Pat object
+        """
+        # just initialize object
+        super().__init__(filename=filename, conf=conf,
+                         dialog=dialog, parent=parent)
+
+        # matrix to be plotted
+        self._to_plot = np.zeros(shape=np.array(
+            self._E_co).shape, dtype=float)
+
+        for k in range(self._nb_sets):
+            self._longitude.append(np.zeros_like(self._x[k]))
+            self._latitude.append(np.zeros_like(self._x[k]))
+            self._azimuth.append(np.zeros_like(self._x[k]))
+            self._elevation.append(np.zeros_like(self._x[k]))
+        
+        # configure
+        self.configure(config=conf)
+    # End of function __init__
+
 # Mandatory abstract method to implement
 # --------------------------------------------------------------------------------------------------
     def read_file(self, filename):
@@ -284,5 +306,19 @@ class Pat(AbstractPattern):
         return phs
     # end of function phase
 # ==================================================================================================
+
+    def rotate(self):
+        # if requested by the new configuration, rotate the pattern
+        for set in range(self._nb_sets):
+            if ((self._rotate and not self._rotated) or
+                (not self._rotate and self._rotated)):
+                # x_offset = (
+                #     np.max(self._x[set][:]) - np.min(self._x[set][:]))
+                # y_offset = (
+                #     np.max(self._y[set][:][:]) -
+                #     np.min(self._y[set][:][:]))
+                self._x[set] = -1 * self._x[set]
+                self._y[set] = -1 * self._y[set]
+                self._rotated = self._rotate
 
 # end of class Pat

@@ -801,9 +801,13 @@ class AbstractPattern(Element):
             except ValueError as value_err:
                 print(value_err)
                 if not type(self._filename) is list:
-                    print('Pattern ' + self._filename + ' will not be displayed.')
+                    print('Pattern ' +
+                          self._filename +
+                          ' will not be displayed.')
                 else:
-                    print('Law {} will not be displayed.'.format(self._conf['applied_law']))
+                    print(
+                        'Law {} will not be displayed.'.format(
+                            self._conf['applied_law']))
                 self._plot = None
 
         else:

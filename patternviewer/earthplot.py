@@ -1111,11 +1111,11 @@ class EarthPlot(FigureCanvas):
         # compute first azimuth index of source array and destination array
         x0_source = 0
         x0_destination = 0
-        if azmin > -ead/2:
+        if azmin > - ead / 2:
             # crop in azimuth
-            x0_source = int(np.abs(azmin + ead/2) / stepx)
+            x0_source = int(np.abs(azmin + ead / 2) / stepx)
         else:
-            x0_destination = int(np.abs(azmin + ead/2) / stepx)
+            x0_destination = int(np.abs(azmin + ead / 2) / stepx)
         # if destination array smaller than origin array, limit source array
         if new_nx - x0_destination < nx - x0_source:
             x_source = range(x0_source, x0_source + new_nx - x0_destination)
@@ -1126,11 +1126,11 @@ class EarthPlot(FigureCanvas):
         # compute first elevation index of source array and destination array
         y0_source = 0
         y0_destination = 0
-        if elmin > -ead/2:
+        if elmin > -ead / 2:
             # crop in azimuth
-            y0_source = int(np.abs(elmin + ead/2) / stepy)
+            y0_source = int(np.abs(elmin + ead / 2) / stepy)
         else:
-            y0_destination = int(np.abs(elmin + ead/2) / stepy)
+            y0_destination = int(np.abs(elmin + ead / 2) / stepy)
         # if destination array smaller than origin array, limit source array
         if new_ny - y0_destination < ny - y0_source:
             y_source = range(y0_source, y0_source + new_ny - y0_destination)

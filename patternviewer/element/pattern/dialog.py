@@ -324,7 +324,6 @@ class PatternDialog(QDialog):
                                                   True))
         self.offset_button_state_changed()
 
-
         # disable use second pol option if second pol not available
         if len(pattern._E_cr):
             self.chkxpol.setEnabled(True)
@@ -409,7 +408,7 @@ class PatternDialog(QDialog):
             config['azoffset'] = float(self.az_offset_field.text())
             config['eloffset'] = float(self.el_offset_field.text())
         config['azeloffset'] = self.offset_button.isChecked()
-        
+
         # if multigrd pattern, apply law selected
         if 'law' in self._pattern.configure().keys():
             self._pattern.apply_law(self.law_id_cmb.currentText())

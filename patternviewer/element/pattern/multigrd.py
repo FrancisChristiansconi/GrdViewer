@@ -219,7 +219,8 @@ class MultiGrd(Grd):
     def apply_law(self, law_id):
         if type(law_id) is int:
             if law_id < len(self._conf['law']) and law_id >= 0:
-                self._conf['applied_law'], self._excitation_law = list(self._conf['law'].items())[law_id]
+                self._conf['applied_law'], self._excitation_law = list(
+                    self._conf['law'].items())[law_id]
         elif law_id in self._conf['law'].keys():
             self._excitation_law = self._conf['law'][law_id]
             self._conf['applied_law'] = law_id

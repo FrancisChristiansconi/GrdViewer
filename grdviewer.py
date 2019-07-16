@@ -376,13 +376,17 @@ class GrdViewer(QMainWindow):
         """
         utils.trace('in')
         # Get filenames
-        filenames, _ = QFileDialog.getOpenFileNames(self,
-                                                    caption='Select elementary pattern files.',
-                                                    filter='pattern files (*.grd)')
+        filenames, _ = \
+            QFileDialog.getOpenFileNames(
+                self,
+                caption='Select elementary pattern files.',
+                filter='pattern files (*.grd)')
         # Get excitation file
-        excfile, _ = QFileDialog.getOpenFileName(self,
-                                                 caption='Select excitation file.',
-                                                 filter='excitation files (*.wts)')
+        excfile, _ = \
+            QFileDialog.getOpenFileName(
+                self,
+                caption='Select excitation file.',
+                filter='excitation files (*.wts)')
         # if file name provided open the customised dialog box
         if not filenames == [] and not excfile == []:
             pattern = self._earthplot.loadpattern({'filename': filenames,

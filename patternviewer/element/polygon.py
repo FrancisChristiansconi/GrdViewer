@@ -2,7 +2,7 @@
 """
 
 # import third party modules
-#==================================================================================================
+# ==================================================================================================
 # import Earth projection module
 from mpl_toolkits.basemap import Basemap
 # import Pacth class
@@ -15,11 +15,12 @@ import configparser
 import numpy as np
 
 # import local module
-#==================================================================================================
+# ==================================================================================================
 # import constant file
-import constant as cst
+import patternviewer.constant as cst
 
-from .element import Element
+from patternviewer.element.element import Element
+
 
 class Polygon(Element):
     """Represent a polygon in longitude, latitude and provide function and methods
@@ -118,7 +119,7 @@ def getpolygons(canvas, filename: str):
     config.read(filename)
 
     # get number of polygons
-    polygon_number = config.getint('COHeader','n_cont', fallback=0)
+    polygon_number = config.getint('COHeader', 'n_cont', fallback=0)
 
     # read polygons
     for i in range(1, polygon_number+1):
@@ -132,7 +133,7 @@ def getpolygons(canvas, filename: str):
         lon = []
         lat = []
         for j in range(n_point):
-            point = config.get(section,'p' + str(j + 1), fallback='')
+            point = config.get(section, 'p' + str(j + 1), fallback='')
             lon.append(float(point.split(sep=';')[0]))
             lat.append(float(point.split(sep=';')[1]))
         # end for j
@@ -143,19 +144,20 @@ def getpolygons(canvas, filename: str):
             lat.append(lat[0])
 
         # add polygon to the list
-        polygons.append(Polygon(canvas, lon, lat, gain))  
+        polygons.append(Polygon(canvas, lon, lat, gain))
 
     # end for i
 
     return polygons
 # end of function getpolygons
 
+
 # Main execution
 if __name__ == '__main__':
 
     POLY = Polygon([0, 1, 1, 0], [0, 0, 1, 1], 20)
     CONF = {'gain': 30,
-            'hello':'world'}
+            'hello': 'world'}
     POLY.configure(CONF)
 
 # end of module linedialog

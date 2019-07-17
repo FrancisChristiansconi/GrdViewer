@@ -1,35 +1,58 @@
 import numpy as np
 
-import utils
+import patternviewer.utils as utils
 
-import constant as cst
+import patternviewer.constant as cst
 
-from .abstractpattern import AbstractPattern
+from patternviewer.element.pattern.abstractpattern import AbstractPattern
+
 
 class Pat(AbstractPattern):
     """This class implement reading and processing of Satsoft .pat files.
     """
 
+    def __init__(self, filename=[], conf=None,
+                 dialog=False, parent=None):
+        """Initialize a Pat object
+        """
+        # just initialize object
+        super().__init__(filename=filename, conf=conf,
+                         dialog=dialog, parent=parent)
+
+        # matrix to be plotted
+        self._to_plot = np.zeros(shape=np.array(
+            self._E_co).shape, dtype=float)
+
+        for k in range(self._nb_sets):
+            self._longitude.append(np.zeros_like(self._x[k]))
+            self._latitude.append(np.zeros_like(self._x[k]))
+            self._azimuth.append(np.zeros_like(self._x[k]))
+            self._elevation.append(np.zeros_like(self._x[k]))
+
+        # configure
+        self.configure(config=conf)
+    # End of function __init__
+
 # Mandatory abstract method to implement
-#--------------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
     def read_file(self, filename):
         utils.trace('in')
         # open file and read text data
         file = open(filename, "r")
         # read all lines in a table
         lines = file.readlines()
-        # close file        
+        # close file
         file.close()
-        
-         # line number
+
+        # line number
         linesnumber = len(lines)
         istart = -1
-        
-        # map header data into dicData        
+
+        # map header data into dicData
         for i in range(linesnumber):
             # detect end of comments
             if lines[i][:4] == '++++':
-                istart = i+1
+                istart = i + 1
                 break
 
         # Line 1
@@ -48,7 +71,7 @@ class Pat(AbstractPattern):
         # 3 - linear co and cross
         # 4 - major and minor axis of polarisation ellipse
         # 5 - az/el components
-        # 6 - Alpha and epsilon components 
+        # 6 - Alpha and epsilon components
         kcomp = int(lines[istart].split(sep)[1])
         # number of field components (1 or 2)
         ncomp = int(lines[istart].split(sep)[2])
@@ -60,7 +83,8 @@ class Pat(AbstractPattern):
         # 101 - x, y Plane rectangular grid used for array excitations
         grid = int(lines[istart].split(sep)[3])
         if grid == 101:
-            raise ValueError('101 grid format is not supported by this software.')
+            raise ValueError(
+                '101 grid format is not supported by this software.')
         # X dimension of grid
         nx = int(lines[istart].split(sep)[4])
         # Y dimension of grid
@@ -88,7 +112,7 @@ class Pat(AbstractPattern):
         else:
             # default value 0
             iunit = 0
-        
+
         # next line
         istart += 1
 
@@ -99,11 +123,11 @@ class Pat(AbstractPattern):
             sep = ','
         else:
             sep = None
-            
+
         xs = float(lines[istart].split(sep)[0]) * cst.RAD2DEG
         xe = float(lines[istart].split(sep)[2]) * cst.RAD2DEG
         ys = float(lines[istart].split(sep)[1]) * cst.RAD2DEG
-        ye = float(lines[istart].split(sep)[3]) * cst.RAD2DEG 
+        ye = float(lines[istart].split(sep)[3]) * cst.RAD2DEG
 
         dx = (xe - xs) / (nx - 1)
         dy = (ye - ys) / (ny - 1)
@@ -130,10 +154,12 @@ class Pat(AbstractPattern):
         x = [None] * nb_sets
         y = [None] * nb_sets
         for k in range(nb_sets):
-            x_vec.append(np.linspace(start=xs, stop=xe, num=nx, endpoint=True) + ix[k]) 
-            y_vec.append(np.linspace(start=ys, stop=ye, num=ny, endpoint=True) + iy[k]) 
+            x_vec.append(np.linspace(start=xs, stop=xe,
+                                     num=nx, endpoint=True) + ix[k])
+            y_vec.append(np.linspace(start=ys, stop=ye,
+                                     num=ny, endpoint=True) + iy[k])
             x[k], y[k] = np.meshgrid(x_vec[k], y_vec[k])
-            
+
         # next line
         istart += 1
 
@@ -146,10 +172,10 @@ class Pat(AbstractPattern):
         istart += 1
 
         # patterns
-        E_mag_co = [] # first component of copol
-        E_phs_co = [] # second component of copol
-        E_mag_cr = [] # first component of crosspol
-        E_phs_cr = [] # second component of crosspol
+        E_mag_co = []  # first component of copol
+        E_phs_co = []  # second component of copol
+        E_mag_cr = []  # first component of crosspol
+        E_phs_cr = []  # second component of crosspol
         if ncomp == 2:
             np.zeros((nx, ny), dtype=float)
         # select separator
@@ -157,9 +183,9 @@ class Pat(AbstractPattern):
             sep = ','
         else:
             sep = None
-        
+
         # for each beam
-        for k in range(nb_sets):            
+        for k in range(nb_sets):
             # initialize grids
             c11 = np.zeros((ny, nx), dtype=float)
             c12 = np.zeros((ny, nx), dtype=float)
@@ -175,7 +201,7 @@ class Pat(AbstractPattern):
                         c21[j][i] = float(lines[istart].split(sep)[2])
                         c22[j][i] = float(lines[istart].split(sep)[3])
                     istart += 1
-            
+
             # pattern is read, put it in the right format
             E_mag_co.append(self.magnitude(iunit, c11, c12))
             E_phs_co.append(self.phase(iunit, c11, c12))
@@ -184,17 +210,22 @@ class Pat(AbstractPattern):
                 E_phs_cr.append(self.phase(iunit, c21, c22))
         # end for
 
-        
+        E_co = (np.power(10, E_mag_co / 20) *
+                np.cos(E_phs_co * np.pi / 180.0) +
+                1j * np.power(10, E_mag_co / 20) *
+                np.sin(E_phs_co * np.pi / 180.0))
+        E_cr = (np.power(10, E_mag_cr / 20) *
+                np.cos(E_phs_cr * np.pi / 180.0) +
+                1j * np.power(10, E_mag_cr / 20) *
+                np.sin(E_phs_cr * np.pi / 180.0))
         utils.trace('out')
 
         return nb_sets, \
-               grid, \
-               x, \
-               y, \
-               E_mag_co, \
-               E_phs_co, \
-               E_mag_cr, \
-               E_phs_cr
+            grid, \
+            x, \
+            y, \
+            E_co, \
+            E_cr
     # end of function read_file
 
     def grid_type(self):
@@ -212,17 +243,17 @@ class Pat(AbstractPattern):
         # 3 - az over el
         # 4 - el over az
         # 101 - x, y Plane rectangular grid used for array excitations
-        convert = {1: 1, \
-                   2: 2, \
-                   3: 5, \
-                   4: 4, \
+        convert = {1: 1,
+                   2: 2,
+                   3: 5,
+                   4: 4,
                    101: 101}
         return convert[self._grid]
     # end of function grid_type
-#==================================================================================================
+# ==================================================================================================
 
 # Electrical field processing
-#--------------------------------------------------------------------------------------------------        
+# --------------------------------------------------------------------------------------------------
     def magnitude(self, iunit, component1, component2):
         """Convert (C1, C2) to magnitude (dB) depending on IUNIT value
         """
@@ -231,7 +262,7 @@ class Pat(AbstractPattern):
         def convert(component1, component2):
             """Convert from real/imag electrical field values to magnitude.
             """
-            return  20 * np.log10(np.absolute(component1 + 1j * component2))
+            return 20 * np.log10(np.absolute(component1 + 1j * component2))
 
         def identity(component1, _):
             """Return directly the magnitude which is the first component.
@@ -239,7 +270,7 @@ class Pat(AbstractPattern):
             return component1
 
         # create the processing dictionary
-        converter = {0: convert, \
+        converter = {0: convert,
                      1: identity}
 
         # convert/extract the magnitude
@@ -251,21 +282,21 @@ class Pat(AbstractPattern):
 
     def phase(self, iunit, component1, component2):
         """Convert (C1, C2) to phase (deg) depending on IUNIT value
-        """         
+        """
         utils.trace('in')
 
         def convert(component1, component2):
             """Convert from real/imag electrical field to phase (in degrees)
             """
             return np.angle(component1 + 1j * component2) * cst.RAD2DEG
-        
+
         def identity(_, component2):
             """Directly returns component2 which is the phase.
             """
             return component2
 
         # create the processing dictionary
-        converter = {0: convert, \
+        converter = {0: convert,
                      1: identity}
 
         # convert/extract the magnitude
@@ -274,6 +305,20 @@ class Pat(AbstractPattern):
         utils.trace('out')
         return phs
     # end of function phase
-#==================================================================================================
+# ==================================================================================================
+
+    def rotate(self):
+        # if requested by the new configuration, rotate the pattern
+        for set in range(self._nb_sets):
+            if ((self._rotate and not self._rotated) or
+                (not self._rotate and self._rotated)):
+                # x_offset = (
+                #     np.max(self._x[set][:]) - np.min(self._x[set][:]))
+                # y_offset = (
+                #     np.max(self._y[set][:][:]) -
+                #     np.min(self._y[set][:][:]))
+                self._x[set] = -1 * self._x[set]
+                self._y[set] = -1 * self._y[set]
+                self._rotated = self._rotate
 
 # end of class Pat

@@ -1,7 +1,10 @@
-# folder
-data/
-src/__pycache__/
+# do not ignore .gitignore
+!.gitignore
+
+# folders
+/data/
+/out/
 
 # files
-*.pyc
-*.old
+**.pyc
+~$*.xslx

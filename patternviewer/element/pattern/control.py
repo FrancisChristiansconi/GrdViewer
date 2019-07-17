@@ -7,34 +7,34 @@ import os.path
 # to be able to add action to menu Pattern
 from PyQt5.QtWidgets import QAction, QFileDialog
 
+# axes manipulation
+from mpl_toolkits.axes_grid1 import make_axes_locatable, Size
+
 # import traceback utilities
-import utils
+import patternviewer.utils as utils
 
 # Import dialog to configure pattern display
-from .dialog import PatternDialog
+from patternviewer.element.pattern.dialog import PatternDialog
 
 # import patterns classes
-from .abstractpattern import AbstractPattern
-from .pat import Pat
-from .grd import Grd
+from patternviewer.element.pattern.abstractpattern import AbstractPattern
+from patternviewer.element.pattern.pat import Pat
+from patternviewer.element.pattern.grd import Grd
+from patternviewer.element.pattern.multigrd import MultiGrd
 
 
 class PatternControler():
-    """A pattern controler is an attribute of and EarthPlot that links together a pattern,
-    a dialog box and a menu.
+    """A pattern controler is an attribute of and EarthPlot that
+    links together a pattern, a dialog box and a menu.
     """
 
-
-    def __init__(self, parent, filename):
+    def __init__(self, parent, config):
         """Initialize a pattern controler.
         parent is the earthplot which is used to display the pattern
         filename is the name of the file containing the pattern data
         """
         utils.trace('in')
-        self._config = {}
-
-        # name and path to the pattern data file
-        self._config['filename'] = filename
+        self._config = config
 
         # reference of the parent EarthPlot
         self._earthplot = parent
@@ -50,8 +50,11 @@ class PatternControler():
             self._pattern = Grd(conf=self._config, parent=self)
         elif self.ispat():
             self._pattern = Pat(conf=self._config, parent=self)
+        elif self.ismultigrd():
+            self._pattern = MultiGrd(conf=self._config, parent=self)
         else:
-            raise Exception('The file provided is not a grd file or a pat file.')
+            raise Exception(
+                'The file provided is not a grd file or a pat file.')
 
         # get Menu Pattern reference
         self._pattern_menu = self._mainwindow.menupattern
@@ -123,7 +126,11 @@ class PatternControler():
         """
         utils.trace()
         return self._config['filename'][-3:] == 'pat'
-    # end of isgrd function
+    # end of ispat function
+
+    def ismultigrd(self):
+        return type(self._config['filename']) is list
+    # End of ismultigrd function
 
     def plot(self):
         """Plot the antenna pattern into the parent EarthPlot.
@@ -131,9 +138,7 @@ class PatternControler():
         utils.trace('in')
         if self._plot:
             self.clearplot()
-        self._plot = self._pattern.plot(self._earthplot._earth_map, self._earthplot._viewer, \
-                                        self._earthplot._figure, self._earthplot._axes, \
-                                        self._earthplot._clrbar, self._earthplot._clrbar_axes)
+        self._plot = self._pattern.plot()
         try:
             if self._config['display_slope'] is True:
                 self._plot_type = 'surf'
@@ -149,30 +154,7 @@ class PatternControler():
     def clearplot(self):
         """Clear the current plot
         """
-        utils.trace('in')
-        # if self._config['display_slope']:
-        if self._plot_type == 'surf':
-            self._plot.remove()
-        elif self._plot_type == 'contour':
-            for element in self._plot[0].collections:
-                try:
-                    element.remove()
-                except ValueError:
-                    print(element)
-            if len(self._plot) > 1:
-                try:
-                    self._plot[1][0].remove()
-                except TypeError:
-                    print("None element cannot be removed")
-                try:
-                    self._plot[2].remove()
-                except AttributeError:
-                    print("None element have no attribute remove")
-                for element in self._plot[3]:
-                    element.remove()
-        self._plot = None
-        self._plot_type = None
-        utils.trace('out')
+        self._pattern.clearplot()
     # end of function clear_plot
 
     # def make_remove_pattern(self, file_key, patterns, eplot):
@@ -184,10 +166,12 @@ class PatternControler():
         menu_action = menu.menuAction()
         menu.parent().removeAction(menu_action)
 
+        # delete reference to pattern object
         del self._earthplot._patterns[self._config['key']]
 
-
-        self._earthplot.draw_elements()
+        # clear the plot and redraw EarthPlot
+        self.clearplot()
+        self._earthplot.draw()
 
         # refresh pattern combo box
         itemlist = ['']
@@ -215,13 +199,17 @@ class PatternControler():
         origin_filename = os.path.basename(self._config['filename'])
         default_filename = origin_filename[:-4] + '.pat'
         # Get filename for exporting file
-        filename, _ = QFileDialog.getSaveFileName(self._mainwindow,
-                                                  'Select file',
-                                                  os.path.join(directory, default_filename),
-                                                  'PAT (*.pat)')
+        filename, _ = \
+            QFileDialog.getSaveFileName(self._mainwindow,
+                                        'Select file',
+                                        os.path.join(
+                                            directory,
+                                            default_filename),
+                                        'PAT (*.pat)')
         # get pattern to export
         if filename:
-            self._pattern.export_to_file(filename, shrunk=self._pattern._shrink)
+            self._pattern.export_to_file(
+                filename, shrunk=self._pattern._shrink)
         utils.trace('out')
     # end of function export_pattern
 

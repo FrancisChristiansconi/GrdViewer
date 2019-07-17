@@ -2,16 +2,16 @@
 """
 # imports
 from PyQt5.QtWidgets import QDialog, QLineEdit, QGridLayout, \
-                            QPushButton, QLabel
+    QPushButton, QLabel
 import PyQt5.QtCore as QtCore
 
 
 class Zoom(object):
     """This class represents the current zoom of the earth plot.
     """
-   
-    def __init__(self, proj='nsper', nsper=(-9.0, -9.0, 9.0, 9.0), \
-                 cyl=(-180.0, -85.0, 180.0, -85.0)):
+
+    def __init__(self, proj='nsper', nsper=(-9.0, -9.0, 9.0, 9.0),
+                 cyl=(-180.0, -85.0, 180.0, 85.0)):
         """Default constructor for Zoom objects.
         Works if zoom defined in AzEl of LL coordinates.
         """
@@ -20,9 +20,9 @@ class Zoom(object):
         self.min_elevation = nsper[1]  # deg Elevation
         self.max_azimuth = nsper[2]    # deg Azimuth
         self.max_elevation = nsper[3]  # deg Elevation
-        self.min_longitude = cyl[0] # deg Longitude
+        self.min_longitude = cyl[0]  # deg Longitude
         self.min_latitude = cyl[1]  # deg Latitude
-        self.max_longitude = cyl[2] # deg Longitude
+        self.max_longitude = cyl[2]  # deg Longitude
         self.max_latitude = cyl[3]  # deg Latitude
     # emd of constructor
 # End of class Zoom
@@ -31,6 +31,7 @@ class Zoom(object):
 class ZoomDialog(QDialog):
     """Customized dialog box to set zoom for the earth plot.
     """
+
     def __init__(self, zoom: Zoom, parent=None):
         """ZoomDialog class constructor.
         """
@@ -45,20 +46,20 @@ class ZoomDialog(QDialog):
         # Add Title to the widget
         self.setWindowTitle('Zoom')
         self.setMinimumSize(70, 50)
-        
+
         # Add labels
         min_x_label = QLabel(parent=self)
         min_y_label = QLabel(parent=self)
         max_x_label = QLabel(parent=self)
         max_y_label = QLabel(parent=self)
-        min_x_label.setAlignment(QtCore.Qt.AlignRight
-                                 | QtCore.Qt.AlignVCenter)
-        min_y_label.setAlignment(QtCore.Qt.AlignRight
-                                 | QtCore.Qt.AlignVCenter)
-        max_x_label.setAlignment(QtCore.Qt.AlignRight
-                                 | QtCore.Qt.AlignVCenter)
-        max_y_label.setAlignment(QtCore.Qt.AlignRight
-                                 | QtCore.Qt.AlignVCenter)
+        min_x_label.setAlignment(QtCore.Qt.AlignRight |
+                                 QtCore.Qt.AlignVCenter)
+        min_y_label.setAlignment(QtCore.Qt.AlignRight |
+                                 QtCore.Qt.AlignVCenter)
+        max_x_label.setAlignment(QtCore.Qt.AlignRight |
+                                 QtCore.Qt.AlignVCenter)
+        max_y_label.setAlignment(QtCore.Qt.AlignRight |
+                                 QtCore.Qt.AlignVCenter)
         # Add field
         self.min_x_field = QLineEdit(parent=self)
         self.min_y_field = QLineEdit(parent=self)
@@ -83,7 +84,6 @@ class ZoomDialog(QDialog):
             self.max_x_field.setText(str(self._zoom.max_longitude))
             self.max_y_field.setText(str(self._zoom.max_latitude))
 
-
         # Add a vertical box layout
         gridbox = QGridLayout(self)
 
@@ -97,11 +97,11 @@ class ZoomDialog(QDialog):
         gridbox.addWidget(self.min_y_field, 2, 2)
         gridbox.addWidget(max_y_label, 2, 3)
         gridbox.addWidget(self.max_y_field, 2, 4)
-        
+
         # Add Ok/Cancel buttons
-        resetbutton = QPushButton('Reset',self)
-        okbutton = QPushButton('OK',self)
-        cancelbutton = QPushButton('Cancel',self)
+        resetbutton = QPushButton('Reset', self)
+        okbutton = QPushButton('OK', self)
+        cancelbutton = QPushButton('Cancel', self)
 
         # line 3
         gridbox.addWidget(resetbutton, 3, 2)
@@ -112,14 +112,14 @@ class ZoomDialog(QDialog):
         resetbutton.clicked.connect(self.reset)
         okbutton.clicked.connect(self.updatezoom)
         cancelbutton.clicked.connect(self.close)
-        
+
         # Dialog is modal to avoid reentry and weird behaviour
         self.setModal(True)
         self.show()
     # end of constructor
 
     def reset(self):
-        """This method reset the earth plot zoom to complete Earth 
+        """This method reset the earth plot zoom to complete Earth
         depending on the projection.
         """
         if self.earth_plot.projection() == 'nsper':

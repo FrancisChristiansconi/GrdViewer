@@ -3,11 +3,11 @@
 
 
 from PyQt5.QtWidgets import QDialog, QLineEdit, QVBoxLayout, QHBoxLayout, \
-                            QPushButton, QLabel
+    QPushButton, QLabel
 import PyQt5.QtCore as QtCore
 
 # import constant file
-import constant as cst
+import patternviewer.constant as cst
 
 
 class Viewer(object):
@@ -25,7 +25,7 @@ class Viewer(object):
         """Get/set for attribute _longitude_deg.
         """
         if lon != None:
-            self._longitude_deg=lon
+            self._longitude_deg = lon
         return self._longitude_deg
     # end of longitude function
 
@@ -33,7 +33,7 @@ class Viewer(object):
         """Get/set for attribute _latitude_deg.
         """
         if lat != None:
-            self._latitude_deg=lat
+            self._latitude_deg = lat
         return self._latitude_deg
     # end of latitude function
 
@@ -41,7 +41,7 @@ class Viewer(object):
         """Get/set for attribute _altitude_m.
         """
         if alt != None:
-            self._altitude_m=alt
+            self._altitude_m = alt
         return self._altitude_m
     # end of altitude function
 
@@ -49,11 +49,11 @@ class Viewer(object):
         """Set all three LLA coordinates at once.
         """
         if lon != None:
-            self._longitude_deg=lon
+            self._longitude_deg = lon
         if lat != None:
-            self._latitude_deg=lat
+            self._latitude_deg = lat
         if alt != None:
-            self._altitude_m  =alt
+            self._altitude_m = alt
     # end of set function
 
 # end of class Viewer
@@ -67,17 +67,17 @@ class ViewerPosDialog(QDialog):
     def __init__(self, Viewer: Viewer, parent=None):
         """Default constructor of the class.
         """
-        
+
         # Parent constructor
         super().__init__()
 
         # Store parent ref
-        self.parent=parent
+        self.parent = parent
 
         # store reference to Viewer object
         self._viewerpos = Viewer
 
-         # Add Title to the widget
+        # Add Title to the widget
         self.setWindowTitle('Viewer position')
         self.setMinimumSize(100, 50)
 
@@ -96,10 +96,10 @@ class ViewerPosDialog(QDialog):
                                      | QtCore.Qt.AlignVCenter)
 
         # Add Ok/Cancel buttons
-        ok_button = QPushButton('OK',self)
-        cancel_button = QPushButton('Cancel',self)
+        ok_button = QPushButton('OK', self)
+        cancel_button = QPushButton('Cancel', self)
 
-        # Create Vertical layout 
+        # Create Vertical layout
         verticalbox = QVBoxLayout(self)
 
         # Create longitude line layout
@@ -117,7 +117,7 @@ class ViewerPosDialog(QDialog):
         altitudebox.addWidget(self._alt_label)
         altitudebox.addStretch(1)
         altitudebox.addWidget(self._alt_field)
-        
+
         # Place Ok/Cancel button in an horizontal box layout
         buttonbox = QHBoxLayout(None)
         buttonbox.addStretch(1)
@@ -131,7 +131,7 @@ class ViewerPosDialog(QDialog):
         verticalbox.addLayout(buttonbox)
 
         # set dialog box layout
-        self.setLayout(verticalbox) 
+        self.setLayout(verticalbox)
 
         # connect buttons to actions
         ok_button.clicked.connect(self.update_viewerpos)
@@ -140,16 +140,15 @@ class ViewerPosDialog(QDialog):
         self.setModal(True)
         self.show()
 
+    # Update Viewer fields with dialog box fields values
 
-
-    # Update Viewer fields with dialog box fields values 
     def update_viewerpos(self):
         if self._alt_field.text().upper() == 'GEO':
             alt = cst.ALTGEO
         else:
             alt = float(self._alt_field.text())
-        self._viewerpos.set(float(self._lon_field.text()), \
-                            float(self._lat_field.text()), \
+        self._viewerpos.set(float(self._lon_field.text()),
+                            float(self._lat_field.text()),
                             alt)
         self.parent.draw_elements()
         self.close()

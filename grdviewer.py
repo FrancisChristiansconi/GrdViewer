@@ -42,16 +42,11 @@ import patternviewer.element.station as stn
 from patternviewer.element import polygon
 # import constant file
 import patternviewer.constant as cst
+# import the package version
+from patternviewer.version import version
 
 # static functions
 # ==================================================================================================
-
-
-def version():
-    """Returns version of the software as a string.
-    """
-    return cst.VERSION
-# end of function version
 
 
 def contact():

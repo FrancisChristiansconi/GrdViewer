@@ -4,10 +4,6 @@ import numpy as np
 
 # Constants
 
-
-# Software version
-VERSION = 'develop'
-
 # Contact mail address
 CONTACT = 'christian.francesconi@ses.com'
 

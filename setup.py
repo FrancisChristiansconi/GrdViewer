@@ -1,7 +1,8 @@
 from setuptools import setup, find_packages
+from patternviewer.version import version
 
 setup(name='patternviewer',
-      version='master',
+      version=version(),
       description='executable grd and pat file manager with GUI',
       url='',
       author='C. Francesconi',

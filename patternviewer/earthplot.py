@@ -498,16 +498,17 @@ class EarthPlot(FigureCanvas):
         It's role is to store the first angle of the rectangular zoom on
         Earth display.
         """
-        xevent = event.x
-        yevent = event.y
-        bbox = event.canvas.figure.axes[0].bbox
-        az, el = self.get_mouse_azel(xevent, yevent, bbox)
-        lon, lat = self.get_mouse_ll(xevent, yevent, bbox)
-        x, y = self.get_mouse_xy(xevent, yevent, bbox)
-        self.zoomposorigin = az, el, lon, lat, x, y
-        self.zoompatch = Rectangle(
-            xy=(x, y), width=0, height=0, fill=False, linewidth=0.2)
-        self._axes.add_patch(self.zoompatch)
+        if event.key == 'control':
+            xevent = event.x
+            yevent = event.y
+            bbox = event.canvas.figure.axes[0].bbox
+            az, el = self.get_mouse_azel(xevent, yevent, bbox)
+            lon, lat = self.get_mouse_ll(xevent, yevent, bbox)
+            x, y = self.get_mouse_xy(xevent, yevent, bbox)
+            self.zoomposorigin = az, el, lon, lat, x, y
+            self.zoompatch = Rectangle(
+                xy=(x, y), width=0, height=0, fill=False, linewidth=0.2)
+            self._axes.add_patch(self.zoompatch)
     # end of method mouse_press_zoom
 
     def mouse_release_zoom(self, _):

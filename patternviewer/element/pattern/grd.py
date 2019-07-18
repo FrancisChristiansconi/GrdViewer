@@ -52,7 +52,7 @@ class Grd(AbstractPattern):
             E_mag_cr: magnitude of electrical field in crosspolarisation (dBi)
             E_phs_cr: pahse of electrical field in crosspolarisation (degrees)
         """
-        utils.trace('in')
+
         # open file and read text data
         file = open(filename, "r")
         # read all lines in a table
@@ -172,7 +172,6 @@ class Grd(AbstractPattern):
         E_mag_cr = 20 * np.log10(np.absolute(E_field_cross))
         E_phs_cr = np.angle(E_field_cross, deg=True)
 
-        utils.trace('out')
         return nb_sets, \
             grid, \
             x, \

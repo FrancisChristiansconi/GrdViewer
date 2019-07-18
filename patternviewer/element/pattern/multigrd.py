@@ -131,7 +131,56 @@ class MultiGrd(Grd):
     # End of function read_file
 
     def read_exc_file(self, excfilename=None):
-        """This function reads an excitation law file.
+        if excfilename[-3:] == 'exi':
+            return self.read_exi_file(excfilename=excfilename)
+        else:
+            return self.read_wts_file(excfilename=excfilename)
+
+    def read_exi_file(self, excfilename=None):
+        """This function reads an excitation law file (GRASP format).
+        It is still a WIP as the format is not known yet.
+        By default the law is full of ones.
+        """
+        # initialize law dictionary
+        _law = {}
+        try:
+            # get number of radiating elements
+            _nbre = self.get_number_re()
+            _law_size = _nbre
+            _law_id = '1'
+            # open file and read text data
+            file = open(excfilename, "r")
+            # read all lines in a table
+            _lines = file.readlines()
+            # close file
+            file.close()
+            # read A/phi law in file
+            _As = np.zeros(_nbre, dtype=float)
+            _phis = np.zeros(_nbre, dtype=float)
+            _header = 0
+            for _i in range(len(_lines)):
+                if _lines[_i][:4] == '++++':
+                    _header = _i + 1
+                    break
+            for _i in range(len(_lines) - _header):
+                _splitted = _lines[_i + _header].split()
+                _As[_i] = np.power(10, float(_splitted[1]) / 20.0)
+                _phis[_i] = float(_splitted[2])
+            # convert to complex array
+            _law[_law_id] = _As * np.exp(1j * _phis * np.pi / 180.0)
+
+        except FileNotFoundError:
+            _errmsg = 'Excitation file {} does not exist in file system.'
+            print(_errmsg.format(excfilename))
+            _nbre = self.get_number_re()
+            _law['default'] = np.ones(_nbre, dtype=complex)
+
+        # return law dictionary
+        return _law
+    # End of function read_excitation_file
+
+    def read_wts_file(self, excfilename=None):
+        """This function reads an excitation law file (ADS format).
         It is still a WIP as the format is not known yet.
         By default the law is full of ones.
         """
@@ -169,7 +218,7 @@ class MultiGrd(Grd):
 
         # return law dictionary
         return _law
-    # End of function read_excitation_file
+    # End of function read_wts_file
 
     def get_number_re(self):
         """Return the number of radiating element of the antenna.

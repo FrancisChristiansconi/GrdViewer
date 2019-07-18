@@ -1,5 +1,5 @@
 # package version
-VERSION = 'develop'
+VERSION = 'master'
 
 
 def version():

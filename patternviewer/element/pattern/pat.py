@@ -210,14 +210,21 @@ class Pat(AbstractPattern):
                 E_phs_cr.append(self.phase(iunit, c21, c22))
         # end for
 
+        # convert list to array
+        E_mag_co = np.array(E_mag_co)
+        E_phs_co = np.array(E_phs_co)
         E_co = (np.power(10, E_mag_co / 20) *
                 np.cos(E_phs_co * np.pi / 180.0) +
                 1j * np.power(10, E_mag_co / 20) *
                 np.sin(E_phs_co * np.pi / 180.0))
+
+        E_mag_cr = np.array(E_mag_cr)
+        E_phs_cr = np.array(E_phs_cr)
         E_cr = (np.power(10, E_mag_cr / 20) *
                 np.cos(E_phs_cr * np.pi / 180.0) +
                 1j * np.power(10, E_mag_cr / 20) *
                 np.sin(E_phs_cr * np.pi / 180.0))
+
         utils.trace('out')
 
         return nb_sets, \

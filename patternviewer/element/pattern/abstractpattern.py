@@ -623,6 +623,22 @@ class AbstractPattern(Element):
                   np.arctan2(y, self._satellite.altitude()))
         return az, el
 
+    def latlon2azel(self, lon, lat):
+        # get projection object
+        self.proj = prj.Proj(init='epsg:4326 +proj=nsper' +
+                             ' +h=' + str(self._satellite.altitude()) +
+                             ' +a=6378137.00 +b=6378137.00' +
+                             ' +lon_0=' +
+                             str(self._satellite.longitude()) +
+                             ' +lat_0=' + str(self._satellite.latitude()) +
+                             ' +x_0=0 +y_0=0 +units=m +no_defs')
+        x, y = self.proj(lon, lat, inverse=False)
+        az = (cst.RAD2DEG *
+              np.arctan2(x, self._satellite.altitude()))
+        el = (cst.RAD2DEG *
+              np.arctan2(y, self._satellite.altitude()))
+        return az, el
+
     def revert_x(self, set=0):
         """Revert pattern along x axis.
         """
@@ -676,8 +692,13 @@ class AbstractPattern(Element):
                              ' +x_0=0 +y_0=0 +units=m +no_defs')
         # consider offset
         if self._offset:
-            az_offset = self._azimuth_offset
-            el_offset = self._elevation_offset
+            if self.set(self.configure(), 'azeloffset', True):
+                az_offset = self._azimuth_offset
+                el_offset = self._elevation_offset
+            else:
+                az_offset, el_offset = \
+                    self.compute_azel_boresight(self._azimuth_offset,
+                                                self._elevation_offset)
         else:
             az_offset = 0
             el_offset = 0
@@ -905,12 +926,22 @@ class AbstractPattern(Element):
         xe = np.max(self.azimuth(set)) * cst.DEG2RAD
         ys = np.min(self.elevation(set)) * cst.DEG2RAD
         ye = np.max(self.elevation(set)) * cst.DEG2RAD
+
+        # recompute boresight
         if self._offset:
-            x_offset = self._azimuth_offset * cst.DEG2RAD
-            y_offset = self._elevation_offset * cst.DEG2RAD
+            if self.set(self.configure(), 'azeloffset', True):
+                az_offset = self._azimuth_offset
+                el_offset = self._elevation_offset
+            else:
+                az_offset, el_offset = \
+                    self.compute_azel_boresight(self._azimuth_offset,
+                                                self._elevation_offset)
+            x_offset = az_offset * cst.DEG2RAD
+            y_offset = el_offset * cst.DEG2RAD
         else:
             x_offset = 0
             y_offset = 0
+
         file.write("  " +
                    str(xs + x_offset) + ", " +
                    str(ys + y_offset) + ", " +

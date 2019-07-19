@@ -12,6 +12,7 @@ import pyproj as prj
 # for efficient loops over several dimensions
 import itertools
 
+
 # Local modules import
 # =============================================================================
 # project modules
@@ -91,6 +92,8 @@ class MultiGrd(Grd):
         y_list = []
         E_co_list = []
         E_cr_list = []
+
+        # create progres bar
         for f in filename:
             (nb_sets, grid, x, y,
              E_co, E_cr) = Grd.read_file(None, f)
@@ -276,5 +279,22 @@ class MultiGrd(Grd):
         else:
             raise TypeError
     # end of method apply_law
+
+    def diffpolygon(self, polygon):
+        """Substract the gain of the polygon to the current beamformed pattern.
+        """
+        p = polygon.path()
+        result = np.zeros(self.E_co.shape)
+        # project the polygon to the pattern grid
+
+        copol = self.copol()
+        lon = self.longitude()
+        lat = self.latitude()
+        for i, j in itertools.product(copol.shape[0],
+                                      copol.shape[1]):
+            if p.contains_points((lon[i][j], lat[i][j])):
+                result[i][j] = copol[i][j] - polygon.gain
+
+        return result
 
 # End of class MultiGrd

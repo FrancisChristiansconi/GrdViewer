@@ -196,16 +196,19 @@ class PatternControler():
         # get directory
         directory = self._earthplot.rootdir
         # recreate default filename with .pat extension
-        origin_filename = os.path.basename(self._config['filename'])
-        default_filename = origin_filename[:-4] + '.pat'
+        if isinstance(self._pattern, MultiGrd):
+            default_filename = ''
+        else:
+            origin_filename = os.path.basename(self._config['filename'])
+            default_filename = origin_filename[:-3] + 'pat'
         # Get filename for exporting file
         filename, _ = \
-            QFileDialog.getSaveFileName(self._mainwindow,
-                                        'Select file',
-                                        os.path.join(
+            QFileDialog.getSaveFileName(parent=self._mainwindow,
+                                        caption='Select file',
+                                        directory=os.path.join(
                                             directory,
                                             default_filename),
-                                        'PAT (*.pat)')
+                                        filter='pattern file (*.pat)')
         # get pattern to export
         if filename:
             self._pattern.export_to_file(

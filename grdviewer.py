@@ -382,12 +382,13 @@ class GrdViewer(QMainWindow):
                 filter='grid (*.grd)'
             )
         # Get excitation file
-        excfile, _ = \
-            QFileDialog.getOpenFileName(
-                self,
-                caption='Select excitation file.',
-                filter='coefficient files (*.wts *.exi);; all files (*)'
-            )
+        if not filenames == []:
+            excfile, _ = \
+                QFileDialog.getOpenFileName(
+                    self,
+                    caption='Select excitation file.',
+                    filter='coefficient files (*.wts *.exi);; all files (*)'
+                )
         # if file name provided open the customised dialog box
         if not filenames == [] and excfile is not None:
             pattern = self._earthplot.loadpattern({'filename': filenames,

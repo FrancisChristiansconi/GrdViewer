@@ -341,8 +341,11 @@ class EarthPlot(FigureCanvas):
         if self._patterns is not {} and self._app.getpatterncombo() is not '':
             controler = self._patterns[self._app.getpatterncombo()]
             pattern = controler.get_pattern()
-            gain = pattern.directivity(mouselon, mouselat)
-            gain += pattern.configure()['cf']
+            try:
+                gain = pattern.directivity(mouselon, mouselat) + \
+                    pattern.configure()['cf']
+            except TypeError:
+                gain = None
         else:
             gain = None
         if mouseaz >= self._zoom.max_azimuth or \

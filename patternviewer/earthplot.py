@@ -988,14 +988,14 @@ class EarthPlot(FigureCanvas):
     def viewer(self, v=None):
         """Get _viewer attribute.
         """
-        if v:
+        if v is not None:
             self._viewer = v
         return self._viewer
 
     def zoom(self, z=None):
         """Get _zoom attribute.
         """
-        if z:
+        if z is not None:
             self._zoom = z
         return self._zoom
 

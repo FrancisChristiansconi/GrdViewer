@@ -404,10 +404,11 @@ class PatternDialog(QDialog):
             config['azshrink'] = float(self.azfield.text())
             config['elshrink'] = float(self.elfield.text())
         config['offset'] = self.chk_offset.isChecked()
+        config['azeloffset'] = self.offset_button.isChecked()
         if config['offset']:
+            # if offset is defined as azel
             config['azoffset'] = float(self.az_offset_field.text())
             config['eloffset'] = float(self.el_offset_field.text())
-        config['azeloffset'] = self.offset_button.isChecked()
 
         # if multigrd pattern, apply law selected
         if 'law' in self._pattern.configure().keys():

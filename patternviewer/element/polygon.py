@@ -55,6 +55,15 @@ class Polygon(Element):
         return self._latitude
     # end of function latitude
 
+    def gain(self):
+        return self._gain
+
+    def path(self):
+        path = []
+        for i in range(len(self.longitude)):
+            path.append((self.longitude[i], self.latitude[i]))
+        return Path(path)
+
     def projected(self, map: Basemap):
         """Return list of stations position in the given Earth projection.
         """
@@ -122,7 +131,7 @@ def getpolygons(canvas, filename: str):
     polygon_number = config.getint('COHeader', 'n_cont', fallback=0)
 
     # read polygons
-    for i in range(1, polygon_number+1):
+    for i in range(1, polygon_number + 1):
         # section name is Ci
         section = 'C' + str(i)
         # get contour gain spec

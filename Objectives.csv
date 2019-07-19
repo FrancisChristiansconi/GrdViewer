@@ -1,8 +1,10 @@
 ﻿Ref,Title,Description,Status,Comment
-DEV-GV-100,Implement weighted sum of pattern,Implement a way to sum patterns for active antennae composite pattern rendering.,,
+DEV-GV-100,Implement weighted sum of pattern,Implement a way to sum patterns for active antennae composite pattern rendering.,Val,Published in 1.4.0,
+,,implement export of pattern
+,,implement shrink/expand of pattern
 DEV-GV-200,Use Cartopy instead of BASEMAP,Cartopy seems to be the rising star in term of cartography and display. Investigate possibility and effort to switch to cartopy if Basemap is abandonated. Also consider using only Pyproj and Matplotlib.,,
 REV-GV-100,Align displayed element behaviour,"All displayed elements inherit from Element class. They should be plotted, cleared and configured using the same routines. Edit/Remove menu options should be available in the GUI.",,
-REV-GV-200,Implement inhibition of rectangular zoom trigger when taking focus over main windows.,,,I don't foresee the solution yet
-REV-GV-300,Customisable slope range,implement customisable slope range in pattern widget,Val,
-DEV-GV-300,Extend pattern,opposite function to shrink pattern,Val,Merged to develop
+REV-GV-200,Rectangular zoom,Implement inhibition of rectangular zoom trigger when taking focus over main windows.,,Implement need to push a key to zoom,
+REV-GV-300,Customisable slope range,implement customisable slope range in pattern widget,Val,published in 1.4.0
+DEV-GV-300,Extend pattern,opposite function to shrink pattern,Val,Merged to develop published in 1.4.0
 REV-GV-400,Color surface crash,Correct error when plotting color map in Cylindrical projection,,see trace,

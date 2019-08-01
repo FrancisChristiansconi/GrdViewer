@@ -170,8 +170,11 @@ class GrdViewer(QMainWindow):
         pbox = self._patterncombobox
         pbox.clear()
         pbox.addItems(items)
-        allitems = [pbox.itemText(i) for i in range(pbox.count())]
-        return allitems
+        # Set combo box display to max item size
+        width = pbox.minimumSizeHint().width()
+        pbox.setMinimumWidth(width)
+        # return combo box items list
+        return items
 
     def getpatterncombo(self):
         """Access to pattern combobox value.

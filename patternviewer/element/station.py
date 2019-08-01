@@ -196,10 +196,14 @@ class StationControler():
         self._earthplot = parent
 
         # reference of the Central Widget
-        self._centralwidget = parent.get_centralwidget()
+        self._centralwidget = None
+        if parent is not None:
+            self._centralwidget = parent.get_centralwidget()
 
         # Reference to the Main Window
-        self._app = self._centralwidget.parent()
+        self._app = None
+        if self._centralwidget is not None:
+            self._app = self._centralwidget.parent()
 
         # store station reference
         self._station = station
@@ -334,10 +338,13 @@ def get_station_from_file(filename: str, earthplot=None):
                                        'name': name,
                                        'bpe': beam_point_err,
                                        'tagpos': tagpos})
-                    stncontroler = StationControler(parent=earthplot,
-                                                    station=station)
-                    stncontroler.add_menu_items(station.configure()['tag'])
-                    stations.append(stncontroler)
+                    if earthplot is not None:
+                        stncontroler = StationControler(parent=earthplot,
+                                                        station=station)
+                        stncontroler.add_menu_items(station.configure()['tag'])
+                        stations.append(stncontroler)
+                    else:
+                        stations.append(station)
 
     except FileNotFoundError:
         print('station.py: {} not found'.format(filename))

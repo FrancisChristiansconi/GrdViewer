@@ -24,7 +24,7 @@ class Viewer(object):
     def longitude(self, lon: float = None) -> float:
         """Get/set for attribute _longitude_deg.
         """
-        if lon != None:
+        if lon is not None:
             self._longitude_deg = lon
         return self._longitude_deg
     # end of longitude function
@@ -32,7 +32,7 @@ class Viewer(object):
     def latitude(self, lat: float = None) -> float:
         """Get/set for attribute _latitude_deg.
         """
-        if lat != None:
+        if lat is not None:
             self._latitude_deg = lat
         return self._latitude_deg
     # end of latitude function
@@ -40,7 +40,7 @@ class Viewer(object):
     def altitude(self, alt: float = None) -> float:
         """Get/set for attribute _altitude_m.
         """
-        if alt != None:
+        if alt is not None:
             self._altitude_m = alt
         return self._altitude_m
     # end of altitude function
@@ -48,11 +48,11 @@ class Viewer(object):
     def set(self, lon: float = None, lat: float = None, alt: float = None):
         """Set all three LLA coordinates at once.
         """
-        if lon != None:
+        if lon is not None:
             self._longitude_deg = lon
-        if lat != None:
+        if lat is not None:
             self._latitude_deg = lat
-        if alt != None:
+        if alt is not None:
             self._altitude_m = alt
     # end of set function
 
@@ -84,16 +84,16 @@ class ViewerPosDialog(QDialog):
         # Add field, label and alignment
         self._lon_field = QLineEdit(str(Viewer.longitude()), parent=self)
         self._lat_field = QLineEdit(str(Viewer.latitude()), parent=self)
-        self._alt_field = QLineEdit(str(Viewer.altitude()),   parent=self)
+        self._alt_field = QLineEdit(str(Viewer.altitude()), parent=self)
         self._lon_label = QLabel('Longitude (deg)', parent=self)
-        self._lat_label = QLabel('Latitude (deg)',  parent=self)
-        self._alt_label = QLabel('Altitude (m)',    parent=self)
-        self._lon_label.setAlignment(QtCore.Qt.AlignRight
-                                     | QtCore.Qt.AlignVCenter)
-        self._lat_label.setAlignment(QtCore.Qt.AlignRight
-                                     | QtCore.Qt.AlignVCenter)
-        self._alt_label.setAlignment(QtCore.Qt.AlignRight
-                                     | QtCore.Qt.AlignVCenter)
+        self._lat_label = QLabel('Latitude (deg)', parent=self)
+        self._alt_label = QLabel('Altitude (m)', parent=self)
+        self._lon_label.setAlignment(QtCore.Qt.AlignRight |
+                                     QtCore.Qt.AlignVCenter)
+        self._lat_label.setAlignment(QtCore.Qt.AlignRight |
+                                     QtCore.Qt.AlignVCenter)
+        self._alt_label.setAlignment(QtCore.Qt.AlignRight |
+                                     QtCore.Qt.AlignVCenter)
 
         # Add Ok/Cancel buttons
         ok_button = QPushButton('OK', self)

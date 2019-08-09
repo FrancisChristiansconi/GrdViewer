@@ -244,7 +244,7 @@ class GrdViewer(QMainWindow):
         menuresolution.triggered[QAction].connect(self.set_earth_resolution)
 
         # add/remove Blue Marble
-        bluemarble_action = QAction('Blue Marble', self)
+        bluemarble_action = QAction('Blue Marble', self, checkable=True)
         self._menuview.addAction(bluemarble_action)
         bluemarble_action.triggered.connect(self.toggle_bluemarble)
 
@@ -457,13 +457,13 @@ class GrdViewer(QMainWindow):
     def toggle_bluemarble(self):
         """Toggle display of Earth picture Blue Marble.
         """
-        self._earthplot._bluemarble = not self._earthplot._bluemarble
+        self._earthplot.bluemarble(not self._earthplot.bluemarble())
         projection = self._earthplot._projection
         resolution = self._earthplot._resolution
         self._earthplot.drawearth(proj=projection,
                                   resolution=resolution)
         self.getmenuitem('View>Blue Marble').setChecked(
-            self._earthplot._bluemarble)
+            self._earthplot.bluemarble())
         self._earthplot.draw_axis()
         self._earthplot.draw()
         # end of method toggle_bluemarble

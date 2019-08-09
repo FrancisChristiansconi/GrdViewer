@@ -1017,6 +1017,7 @@ class EarthPlot(FigureCanvas):
         if refresh:
             self.drawearth(proj=self._projection,
                            resolution=self._resolution)
+            self.draw_axis()
             self.draw()
         utils.trace('out')
         return self._coastlines
@@ -1038,6 +1039,7 @@ class EarthPlot(FigureCanvas):
         if refresh:
             self.drawearth(proj=self._projection,
                            resolution=self._resolution)
+            self.draw_axis()
             self.draw()
         utils.trace('out')
         return self._countries
@@ -1059,6 +1061,7 @@ class EarthPlot(FigureCanvas):
         if refresh:
             self.drawearth(proj=self._projection,
                            resolution=self._resolution)
+            self.draw_axis()
             self.draw()
         utils.trace('out')
         return self._parallels
@@ -1080,6 +1083,7 @@ class EarthPlot(FigureCanvas):
         if refresh:
             self.drawearth(proj=self._projection,
                            resolution=self._resolution)
+            self.draw_axis()
             self.draw()
         utils.trace('out')
         return self._meridians
@@ -1171,6 +1175,15 @@ class EarthPlot(FigureCanvas):
     def get_axes(self):
         return self._axes
     # end of function get_axes
+
+    def bluemarble(self, set=None):
+        if set is not None:
+            if set:
+                self._bluemarble = True
+            else:
+                self._bluemarble = False
+        return self._bluemarble
+    # end of function bluemarble
 
 
 # end of class EarthPlot

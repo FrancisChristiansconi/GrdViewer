@@ -331,9 +331,9 @@ class EarthPlot(FigureCanvas):
         bbox = event.canvas.figure.axes[0].bbox
         # compute longitude and latitude from the bbox of the event
         mouselon, mouselat = self.get_mouse_ll(xevent, yevent, bbox)
-        if mouselon > 180 or mouselon < -180:
+        if mouselon > cst.MAX_LON or mouselon < cst.MIN_LON:
             mouselon = np.nan
-        if mouselat > 90 or mouselat < -90:
+        if mouselat > cst.MAX_LAT or mouselat < cst.MIN_LAT:
             mouselat = np.nan
         # compute mouse azimuth and elevation for directivity computation
         mouseaz, mouseel = self.get_mouse_azel(xevent, yevent, bbox)
@@ -412,9 +412,9 @@ class EarthPlot(FigureCanvas):
         # convert to longitue and latitude
         lon, lat = self._earth_map(map_x, map_y, inverse=True)
         # eliminate out of the Earth cases
-        if lon > 180 or lon < -180:
+        if lon > cst.MAX_LON or lon < cst.MIN_LON:
             lon = np.nan
-        if lat > 90 or lat < -90:
+        if lat > cst.MAX_LAT or lat < cst.MIN_LAT:
             lat = np.nan
         return lon, lat
     # end of function get_mouse_ll

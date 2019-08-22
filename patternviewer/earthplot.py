@@ -8,12 +8,16 @@ the Earth plot and all the subsequent elements plots.
 import os
 
 # import Matplotlib and Base_earth_map
-from mpl_toolkits.basemap import Basemap
+# from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.patches import Rectangle
 from matplotlib.backends.backend_qt5agg \
     import FigureCanvasQTAgg as FigureCanvas
+
+# import cartopy
+import cartopy.crs as ccrs
+import cartopy.feature as cfeat
 
 # import PyQt5
 from PyQt5.QtWidgets import QSizePolicy
@@ -1163,7 +1167,7 @@ class EarthPlot(FigureCanvas):
         """Compute Earth anguar diameter from spacecraft point of view
         depending on the altitude.
         """
-        sat_height = cst.EARTH_RAD_BASEMAP + self._viewer.altitude()
+        sat_height = cst.EARTH_RAD + self._viewer.altitude()
         d = 2 * np.arcsin(cst.EARTH_RAD_BASEMAP / sat_height) * cst.RAD2DEG
         return d
     # end of function earth_angular_diameter

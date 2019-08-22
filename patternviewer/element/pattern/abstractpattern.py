@@ -26,8 +26,6 @@ from matplotlib.path import Path
 from mpl_toolkits.axes_grid1 import make_axes_locatable, Size
 # other matplotlib utilities
 import matplotlib.pyplot as plt
-# import Basemap of mpltoolkit
-from mpl_toolkits.basemap import Basemap
 # PyQt5 widgets import
 from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, \
     qApp, QDialog, QHBoxLayout, QVBoxLayout, QPushButton, QWidget, \
@@ -329,7 +327,7 @@ class AbstractPattern(Element):
         return self._isolevel
     # end of function get_isolevel
 
-    def displaymax(self, map: Basemap, set: int = 0):
+    def displaymax(self, map, set: int = 0):
         """Display max of pattern as a cross on the map.
         """
         plot_width = self._earthplot.get_width()

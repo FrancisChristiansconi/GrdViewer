@@ -16,7 +16,7 @@ ALTGEO = 35786000.0  # m
 # Earth radius at equator and pole
 EARTH_RAD_EQUATOR_M = 6378137.0000  # m
 EARTH_RAD_POLE_M = 6356752.3142  # m
-EARTH_RAD_BASEMAP = 6370997.0000  # m
+EARTH_RAD = 6370997.0000  # m
 
 # degrees to radians conversion
 DEG2RAD = np.pi / 180.0

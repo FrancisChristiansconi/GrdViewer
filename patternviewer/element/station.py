@@ -7,7 +7,6 @@
 from PyQt5.QtWidgets import QFileDialog, QDialog, QAction, QLineEdit, QLabel, \
     QCheckBox, QComboBox, QGridLayout, QPushButton
 # matplotlib import
-from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
 # numpy
 import numpy as np

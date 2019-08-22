@@ -4,7 +4,7 @@
 # import third party modules
 # ==================================================================================================
 # import Earth projection module
-from mpl_toolkits.basemap import Basemap
+# from mpl_toolkits.basemap import Basemap
 # import Pacth class
 from matplotlib.patches import Polygon as MplPolygon
 # import path for customised marker
@@ -64,7 +64,7 @@ class Polygon(Element):
             path.append((self.longitude[i], self.latitude[i]))
         return Path(path)
 
-    def projected(self, map: Basemap):
+    def projected(self, map):
         """Return list of stations position in the given Earth projection.
         """
         return map(self._longitude, self._latitude)

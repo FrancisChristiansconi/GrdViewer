@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "C:\\Users\\cfrance\\AppData\\Local\\Programs\\Python\\Python36\\python.exe",
+    "python.pythonPath": "grdviewer-cartopy\\Scripts\\python.exe",
     "python.linting.pylintEnabled": false,
     "python.linting.pylintArgs": [
         "--extension-pkg-whitelist=PyQt5"

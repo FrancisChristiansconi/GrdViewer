@@ -26,7 +26,6 @@ import numpy as np
 import patternviewer.utils as utils
 from patternviewer.element.pattern.control import PatternControler
 from patternviewer.element import station as stn
-# import patternviewer.element.station as stn
 import patternviewer.element.elevation as elv
 from patternviewer.viewer import Viewer
 from patternviewer.zoom import Zoom
@@ -332,17 +331,20 @@ class EarthPlot(FigureCanvas):
         bbox = event.canvas.figure.axes[0].bbox
         # compute longitude and latitude from the bbox of the event
         mouselon, mouselat = self.get_mouse_ll(xevent, yevent, bbox)
-        if mouselon > 180 or mouselon < -180:
+        if mouselon > cst.MAX_LON or mouselon < cst.MIN_LON:
             mouselon = np.nan
-        if mouselat > 90 or mouselat < -90:
+        if mouselat > cst.MAX_LAT or mouselat < cst.MIN_LAT:
             mouselat = np.nan
         # compute mouse azimuth and elevation for directivity computation
         mouseaz, mouseel = self.get_mouse_azel(xevent, yevent, bbox)
         if self._patterns is not {} and self._app.getpatterncombo() is not '':
             controler = self._patterns[self._app.getpatterncombo()]
             pattern = controler.get_pattern()
-            gain = pattern.directivity(mouselon, mouselat)
-            gain += pattern.configure()['cf']
+            try:
+                gain = pattern.directivity(mouselon, mouselat) + \
+                    pattern.configure()['cf']
+            except TypeError:
+                gain = None
         else:
             gain = None
         if mouseaz >= self._zoom.max_azimuth or \
@@ -410,9 +412,9 @@ class EarthPlot(FigureCanvas):
         # convert to longitue and latitude
         lon, lat = self._earth_map(map_x, map_y, inverse=True)
         # eliminate out of the Earth cases
-        if lon > 180 or lon < -180:
+        if lon > cst.MAX_LON or lon < cst.MIN_LON:
             lon = np.nan
-        if lat > 90 or lat < -90:
+        if lat > cst.MAX_LAT or lat < cst.MIN_LAT:
             lat = np.nan
         return lon, lat
     # end of function get_mouse_ll
@@ -988,14 +990,14 @@ class EarthPlot(FigureCanvas):
     def viewer(self, v=None):
         """Get _viewer attribute.
         """
-        if v:
+        if v is not None:
             self._viewer = v
         return self._viewer
 
     def zoom(self, z=None):
         """Get _zoom attribute.
         """
-        if z:
+        if z is not None:
             self._zoom = z
         return self._zoom
 
@@ -1015,6 +1017,7 @@ class EarthPlot(FigureCanvas):
         if refresh:
             self.drawearth(proj=self._projection,
                            resolution=self._resolution)
+            self.draw_axis()
             self.draw()
         utils.trace('out')
         return self._coastlines
@@ -1036,6 +1039,7 @@ class EarthPlot(FigureCanvas):
         if refresh:
             self.drawearth(proj=self._projection,
                            resolution=self._resolution)
+            self.draw_axis()
             self.draw()
         utils.trace('out')
         return self._countries
@@ -1057,6 +1061,7 @@ class EarthPlot(FigureCanvas):
         if refresh:
             self.drawearth(proj=self._projection,
                            resolution=self._resolution)
+            self.draw_axis()
             self.draw()
         utils.trace('out')
         return self._parallels
@@ -1078,6 +1083,7 @@ class EarthPlot(FigureCanvas):
         if refresh:
             self.drawearth(proj=self._projection,
                            resolution=self._resolution)
+            self.draw_axis()
             self.draw()
         utils.trace('out')
         return self._meridians
@@ -1169,6 +1175,15 @@ class EarthPlot(FigureCanvas):
     def get_axes(self):
         return self._axes
     # end of function get_axes
+
+    def bluemarble(self, set=None):
+        if set is not None:
+            if set:
+                self._bluemarble = True
+            else:
+                self._bluemarble = False
+        return self._bluemarble
+    # end of function bluemarble
 
 
 # end of class EarthPlot

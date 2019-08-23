@@ -53,7 +53,7 @@ def main():
     F2_config['revert_x'] = False
     F2_config['revert_y'] = False
     F2_config['rotate'] = True
-    F2_config['use_second_pol'] = True
+    F2_config['use_second_pol'] = False
     F2_config['sat_alt'] = cst.ALTGEO
     F2_config['sat_lon'] = -40.5
     F2_config['sat_lat'] = 0
@@ -70,6 +70,7 @@ def main():
     TM_config['filename'] = TM_pattern_file
     TM_config['revert_x'] = False
     TM_config['revert_y'] = False
+    TM_config['rotate'] = True
     TM_config['use_second_pol'] = False
     TM_config['sat_alt'] = cst.ALTGEO
     TM_config['sat_lon'] = -40.5
@@ -84,7 +85,7 @@ def main():
 
     # import data
     F2_pattern = Grd(conf=F2_config, parent=None)
-    TM_pattern = Pat(conf=TM_config, parent=None)
+    TM_pattern = Grd(conf=TM_config, parent=None)
     stations_list = stn.get_station_from_file(
         filename=stations_file, earthplot=None)
     F2_gain = {}
@@ -106,13 +107,14 @@ def main():
         TM_gain[name] = {}
         F2_gain[name][(azoffset, eloffset)] = F2_pattern.directivity(lon, lat)
         TM_gain[name][(azoffset, eloffset)] = TM_pattern.directivity(lon, lat)
-        outfile.write('{0}: {1:0.2f}dBi {2:0.2f}dBi \n'.format(name,
-                                                               F2_gain[name][(
-                                                                   azoffset,
-                                                                   eloffset)],
-                                                               TM_gain[name][(
-                                                                   azoffset,
-                                                                   eloffset)]))
+        str_temp = '{0}: {1:0.2f}dBi {2:0.2f}dBi \n'.format(name,
+                                                            F2_gain[name][(
+                                                                azoffset,
+                                                                eloffset)],
+                                                            TM_gain[name][(
+                                                                azoffset,
+                                                                eloffset)])
+        outfile.write(str_temp)
 
     # open file and read text data (azel offset)
     file = open(azel_file, "r")

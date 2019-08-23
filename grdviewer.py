@@ -170,8 +170,11 @@ class GrdViewer(QMainWindow):
         pbox = self._patterncombobox
         pbox.clear()
         pbox.addItems(items)
-        allitems = [pbox.itemText(i) for i in range(pbox.count())]
-        return allitems
+        # Set combo box display to max item size
+        width = pbox.minimumSizeHint().width()
+        pbox.setMinimumWidth(width)
+        # return combo box items list
+        return items
 
     def getpatterncombo(self):
         """Access to pattern combobox value.
@@ -241,7 +244,7 @@ class GrdViewer(QMainWindow):
         menuresolution.triggered[QAction].connect(self.set_earth_resolution)
 
         # add/remove Blue Marble
-        bluemarble_action = QAction('Blue Marble', self)
+        bluemarble_action = QAction('Blue Marble', self, checkable=True)
         self._menuview.addAction(bluemarble_action)
         bluemarble_action.triggered.connect(self.toggle_bluemarble)
 
@@ -454,13 +457,13 @@ class GrdViewer(QMainWindow):
     def toggle_bluemarble(self):
         """Toggle display of Earth picture Blue Marble.
         """
-        self._earthplot._bluemarble = not self._earthplot._bluemarble
+        self._earthplot.bluemarble(not self._earthplot.bluemarble())
         projection = self._earthplot._projection
         resolution = self._earthplot._resolution
         self._earthplot.drawearth(proj=projection,
                                   resolution=resolution)
         self.getmenuitem('View>Blue Marble').setChecked(
-            self._earthplot._bluemarble)
+            self._earthplot.bluemarble())
         self._earthplot.draw_axis()
         self._earthplot.draw()
         # end of method toggle_bluemarble
@@ -478,6 +481,10 @@ class GrdViewer(QMainWindow):
         self._earthplot._elev.clear()
         self._earthplot.zoom(Zoom())
         self._earthplot.viewer(Viewer())
+        vlon = self._earthplot.viewer().longitude()
+        vlat = self._earthplot.viewer().latitude()
+        valt = self._earthplot.viewer().altitude()
+        self.setviewerpos(vlon, vlat, valt)
         self._earthplot.draw_axis()
         self._earthplot.draw_elements()
         self._earthplot.draw()

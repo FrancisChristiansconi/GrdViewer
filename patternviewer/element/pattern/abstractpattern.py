@@ -683,6 +683,9 @@ class AbstractPattern(Element):
         """Return directivity for a vector of stations defined with
         longitude and latitude.
         """
+        if np.isnan(lon) or np.isnan(lat):
+            return None
+
         # get projection
         self.proj = prj.Proj(init='epsg:4326 +proj=nsper' +
                              ' +h=' + str(self._satellite.altitude()) +

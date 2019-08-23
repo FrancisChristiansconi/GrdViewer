@@ -26,6 +26,12 @@ RAD2DEG = 180.0 / np.pi
 # Default elevation contour
 DEFAULT_ELEVATION = 10
 
+# Earth geographical boundaries
+MIN_LON = -180.0
+MAX_LON = 180.0
+MIN_LAT = -90.0
+MAX_LAT = 90.0
+
 # boldness of drawing
 BOLDNESS = {'no line': 0,
             'light': 0.1,

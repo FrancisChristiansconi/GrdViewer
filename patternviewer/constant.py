@@ -32,6 +32,15 @@ MAX_LON = 180.0
 MIN_LAT = -90.0
 MAX_LAT = 90.0
 
+# Default azel dimension of the plot
+MIN_AZ = -9.0
+MAX_AZ = 9.0
+MIN_EL = -9.0
+MAX_EL = 9.0
+
+# Default projection
+DEFAULT_PROJ = 'nsper'
+
 # boldness of drawing
 BOLDNESS = {'no line': 0,
             'light': 0.1,

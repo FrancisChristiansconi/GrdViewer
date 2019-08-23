@@ -26,6 +26,7 @@ import numpy as np
 import patternviewer.utils as utils
 from patternviewer.element.pattern.control import PatternControler
 from patternviewer.element import station as stn
+from patternviewer.element import earth
 import patternviewer.element.elevation as elv
 from patternviewer.viewer import Viewer
 from patternviewer.zoom import Zoom

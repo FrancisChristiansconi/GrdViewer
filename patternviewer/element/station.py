@@ -108,6 +108,10 @@ class Station(Element):
                 y_offset *= -1
                 valign = 'top'
                 halign = 'left'
+            else:
+                # default will be upright
+                valign = 'bottom'
+                halign = 'left'
             tag = earthmap.ax.text(s=self._config['tag'],
                                    x=xsta + x_offset,
                                    y=ysta + y_offset,

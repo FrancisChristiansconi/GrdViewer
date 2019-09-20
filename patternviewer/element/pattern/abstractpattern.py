@@ -575,7 +575,19 @@ class AbstractPattern(Element):
         """Return (longitude, latitude) grid converted from (az, el) grid.
         set is the data set to be used
         """
+        # Get azel grid
         az, el = self.azel_grid(set)
+
+        # rotate azel grid
+        yaw_deg = self.set(conf=self.configure(), key='sat_yaw', fallback=0.0)
+        yaw_rad = yaw_deg * cst.DEG2RAD
+        az_origin = az
+        el_origin = el
+        az = az_origin * np.cos(-1 * yaw_rad) - \
+            el_origin * np.sin(-1 * yaw_rad)
+        el = az_origin * np.sin(-1 * yaw_rad) + \
+            el_origin * np.cos(-1 * yaw_rad)
+
         if self._offset:
             if self.set(self.configure(), 'azeloffset', True):
                 az_offset = self._azimuth_offset
@@ -713,6 +725,16 @@ class AbstractPattern(Element):
         el = cst.RAD2DEG * \
             np.arctan2(y, self._satellite.altitude()) - el_offset
 
+        # rotate back azel grid
+        yaw_deg = self.set(conf=self.configure(), key='sat_yaw', fallback=0.0)
+        yaw_rad = yaw_deg * cst.DEG2RAD
+        az_origin = az
+        el_origin = el
+        az = az_origin * np.cos(yaw_rad) - \
+            el_origin * np.sin(yaw_rad)
+        el = az_origin * np.sin(yaw_rad) + \
+            el_origin * np.cos(yaw_rad)
+
         # get directivity vector
         gain, _ = self.interpolate_copol(az, el)
         return gain
@@ -723,6 +745,7 @@ class AbstractPattern(Element):
 
 # plot or export to file methods
 # --------------------------------------------------------------------------------------------------
+
 
     def plot(self):
         """Draw pattern on the earth plot from the provided grd.

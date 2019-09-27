@@ -4,6 +4,8 @@
 # folders
 /data/
 /out/
+/build/
+/distrib/
 
 # files
 **.pyc

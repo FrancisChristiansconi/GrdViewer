@@ -193,6 +193,9 @@ class EarthPlot(FigureCanvas):
                     conf['sat_alt'] = config.getfloat(pattern_section,
                                                       'altitude',
                                                       fallback=cst.ALTGEO)
+                    conf['sat_yaw'] = config.getfloat(pattern_section,
+                                                      'yaw',
+                                                      fallback=0.0)
                     conf['title'] = config.get(pattern_section,
                                                'title',
                                                fallback='Default title')

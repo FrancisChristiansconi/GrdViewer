@@ -98,6 +98,8 @@ class PatternDialog(QDialog):
         self.lat_field = QLineEdit('0.0', parent=self)
         self.alt_label = QLabel('Alt.', parent=self)
         self.alt_field = QLineEdit('0.0', parent=self)
+        self.yaw_label = QLabel('Yaw', parent=self)
+        self.yaw_field = QLineEdit('0.0', parent=self)
         hbox_sat_position = QHBoxLayout(None)
         hbox_sat_position.addWidget(self.lon_label)
         hbox_sat_position.addWidget(self.lon_field)
@@ -107,6 +109,9 @@ class PatternDialog(QDialog):
         hbox_sat_position.addStretch(1)
         hbox_sat_position.addWidget(self.alt_label)
         hbox_sat_position.addWidget(self.alt_field)
+        hbox_sat_position.addStretch(1)
+        hbox_sat_position.addWidget(self.yaw_label)
+        hbox_sat_position.addWidget(self.yaw_field)
         hbox_sat_position.addStretch(1)
         vbox.addLayout(hbox_sat_position)
 
@@ -292,6 +297,8 @@ class PatternDialog(QDialog):
         self.lon_field.setText(str(pattern.satellite().longitude()))
         self.lat_field.setText(str(pattern.satellite().latitude()))
         self.alt_field.setText(str(pattern.satellite().altitude()))
+        self.yaw_field.setText(
+            str(pattern.set(pattern.configure(), 'sat_yaw', 0.0)))
         if pattern._display_slope:
             low = np.amin(pattern.configure()['slopes'])
             high = np.amax(pattern.configure()['slopes'])
@@ -395,6 +402,7 @@ class PatternDialog(QDialog):
         config['sat_alt'] = float(self.alt_field.text())
         config['sat_lon'] = float(self.lon_field.text())
         config['sat_lat'] = float(self.lat_field.text())
+        config['sat_yaw'] = float(self.yaw_field.text())
         config['display_slope'] = self.chkslope.isChecked()
         config['shrink'] = (self.chkshrink.isChecked() and
                             not self.shrink_button.isChecked())

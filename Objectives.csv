@@ -8,3 +8,4 @@ REV-GV-200,Rectangular zoom,Implement inhibition of rectangular zoom trigger whe
 REV-GV-300,Customisable slope range,implement customisable slope range in pattern widget,Val,published in 1.4.0
 DEV-GV-300,Extend pattern,opposite function to shrink pattern,Val,Merged to develop published in 1.4.0
 REV-GV-400,Color surface crash,Correct error when plotting color map in Cylindrical projection,,see trace,
+DEV-GV-400,Yaw angle,Implement rotation around subsatellite point,Val,published in 1.4.2,

@@ -578,16 +578,6 @@ class AbstractPattern(Element):
         # Get azel grid
         az, el = self.azel_grid(set)
 
-        # rotate azel grid
-        yaw_deg = self.set(conf=self.configure(), key='sat_yaw', fallback=0.0)
-        yaw_rad = yaw_deg * cst.DEG2RAD
-        az_origin = az
-        el_origin = el
-        az = az_origin * np.cos(-1 * yaw_rad) - \
-            el_origin * np.sin(-1 * yaw_rad)
-        el = az_origin * np.sin(-1 * yaw_rad) + \
-            el_origin * np.cos(-1 * yaw_rad)
-
         if self._offset:
             if self.set(self.configure(), 'azeloffset', True):
                 az_offset = self._azimuth_offset
@@ -600,8 +590,21 @@ class AbstractPattern(Element):
             az_offset = 0
             el_offset = 0
 
-        x = self._satellite.altitude() * np.tan((az + az_offset) * cst.DEG2RAD)
-        y = self._satellite.altitude() * np.tan((el + el_offset) * cst.DEG2RAD)
+        # apply offset
+        az += az_offset    
+        el += el_offset
+         # rotate azel grid
+        yaw_deg = self.set(conf=self.configure(), key='sat_yaw', fallback=0.0)
+        yaw_rad = yaw_deg * cst.DEG2RAD
+        az_origin = az
+        el_origin = el
+        az = az_origin * np.cos(-1 * yaw_rad) - \
+            el_origin * np.sin(-1 * yaw_rad)
+        el = az_origin * np.sin(-1 * yaw_rad) + \
+            el_origin * np.cos(-1 * yaw_rad)
+
+        x = self._satellite.altitude() * np.tan((az) * cst.DEG2RAD)
+        y = self._satellite.altitude() * np.tan((el) * cst.DEG2RAD)
         self.proj = prj.Proj(init='epsg:4326 +proj=nsper' +
                              ' +h=' + str(self._satellite.altitude()) +
                              ' +a=6378137.00 +b=6378137.00' +
@@ -721,9 +724,9 @@ class AbstractPattern(Element):
         # get az el vector
         x, y = self.proj(lon, lat, inverse=False)
         az = cst.RAD2DEG * \
-            np.arctan2(x, self._satellite.altitude()) - az_offset
+            np.arctan2(x, self._satellite.altitude())
         el = cst.RAD2DEG * \
-            np.arctan2(y, self._satellite.altitude()) - el_offset
+            np.arctan2(y, self._satellite.altitude())
 
         # rotate back azel grid
         yaw_deg = self.set(conf=self.configure(), key='sat_yaw', fallback=0.0)
@@ -734,6 +737,10 @@ class AbstractPattern(Element):
             el_origin * np.sin(yaw_rad)
         el = az_origin * np.sin(yaw_rad) + \
             el_origin * np.cos(yaw_rad)
+
+        # remove offset
+        az -= az_offset
+        el -= el_offset
 
         # get directivity vector
         gain, _ = self.interpolate_copol(az, el)

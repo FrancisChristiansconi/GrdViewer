@@ -2,9 +2,13 @@
 !.gitignore
 
 # folders
+/__pycache__/
 /data/
 /out/
+/build/
+/dist/
 
 # files
 **.pyc
 ~$*.xslx
+grdviewer.spec

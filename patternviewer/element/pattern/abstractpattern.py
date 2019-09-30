@@ -87,7 +87,7 @@ class AbstractPattern(Element):
         self._E_cr = []
 
         # gradient of first component of co
-        self._E_co_grad = []
+        self._E_grad_co = []
 
         # azimuth grid
         self._azimuth = []

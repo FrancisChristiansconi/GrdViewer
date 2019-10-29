@@ -365,7 +365,7 @@ class AbstractPattern(Element):
             # RSS the 2 directions gradient in one scalar field
             self._E_grad_co = np.sqrt(co_grad_az**2 + co_grad_el**2)
         utils.trace('out')
-        return self._E_co_grad
+        return self._E_grad_co
     # end of function slope
 
     def interpolate_copol(self, az, el, set: int = 0, spline=None):

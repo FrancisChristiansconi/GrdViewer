@@ -1,5 +1,5 @@
 # package version
-VERSION = '1.4.2'
+VERSION = '1.4.2_RC3'
 
 
 def version():

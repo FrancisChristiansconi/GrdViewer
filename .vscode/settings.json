@@ -5,6 +5,6 @@
         "--extension-pkg-whitelist=PyQt5"
     ],
     "python.linting.enabled": true,
-    "python.linting.pep8Enabled": true,
-    "python.linting.pep8Args": ["--ignore=E129"]
+    "python.linting.pycodestyleEnabled": true,
+    "python.linting.pycodestyleArgs": ["--ignore=E129"]
 }

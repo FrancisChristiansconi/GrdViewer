@@ -53,8 +53,9 @@ from patternviewer.element.element import Element
 
 
 class AbstractPattern(Element):
-    """Abstract class representing an antenna pattern. This class define all the
-    functions and methods mandatory for compatibility with the viewer features.
+    """Abstract class representing an antenna pattern. This class define all
+    the functions and methods mandatory for compatibility with the viewer
+    features.
     """
 
 # Function and methods common to all
@@ -262,8 +263,8 @@ class AbstractPattern(Element):
         else:
             self._to_plot = self.cross()
             if self._to_plot is None:
-                print('set_to_plot: No crosspol data available. ' +
-                      'Stick to copol.')
+                print(
+                    'set_to_plot: No crosspol data available. Stick to copol.')
                 self._to_plot = self.copol()
         # if shrink option
         if self._shrink:
@@ -302,8 +303,8 @@ class AbstractPattern(Element):
     def xpd(self, set: int = 0):
         """Return XPD pattern. In dB.
         """
-        return (20 * np.log10(np.abs(self._E_co[set])) -
-                20 * np.log10(np.abs(self._E_cr[set])))
+        return (20 * np.log10(np.abs(self._E_co[set])) - 20 * np.log10(
+            np.abs(self._E_cr[set])))
     # end of function xpd
 
     def satellite(self):
@@ -591,9 +592,9 @@ class AbstractPattern(Element):
             el_offset = 0
 
         # apply offset
-        az += az_offset    
+        az += az_offset
         el += el_offset
-         # rotate azel grid
+        # rotate azel grid
         yaw_deg = self.set(conf=self.configure(), key='sat_yaw', fallback=0.0)
         yaw_rad = yaw_deg * cst.DEG2RAD
         az_origin = az
@@ -752,7 +753,6 @@ class AbstractPattern(Element):
 
 # plot or export to file methods
 # --------------------------------------------------------------------------------------------------
-
 
     def plot(self):
         """Draw pattern on the earth plot from the provided grd.

@@ -10,8 +10,9 @@ def getitemlist(filename):
     file.close()
     return [i[:-1] for i in items]
 
-datadir = 'C:\\Users\\cfrance\\Dev\\Python' + \
-    '\\GrdViewer\\data\\ADS - Element pattern\\'
+
+datadir = ('C:\\Users\\cfrance\\Dev\\Python'
+           '\\GrdViewer\\data\\ADS - Element pattern\\')
 
 filelist = getitemlist(datadir + 'text.txt')
 pathlist = [datadir + f for f in filelist]

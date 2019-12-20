@@ -39,7 +39,8 @@ def uv2thetaphi(u, v, degrees=True):
 
 
 def azel2thetaphi(az, el, degrees=True):
-    """Convert (az and el) to (theta, phi) using the following formulae inverted:
+    """Convert (az and el) to (theta, phi) using the following formulae
+    inverted:
     Az = theta * cos(phi)
     El = theta * sin(phi)
     (Grasp documentation)
@@ -125,7 +126,8 @@ def thetaphi2azovel(theta, phi, degrees=True):
 
 
 def thetaphi2elovaz(theta, phi, degrees=True):
-    """Convert (theta, phi) to (el over az) with thetaphi2uv and reverted formulae:
+    """Convert (theta, phi) to (el over az) with thetaphi2uv and reverted
+    formulae:
     u = sin(az)
     v = cos(az) * sin(el)
     """
@@ -316,7 +318,7 @@ if __name__ == '__main__':
     # plt.plot(u, v)
     # plt.plot(u_res, v_res)
     # plt.show()
-    print(np.max(np.abs((u-u_res, v - v_res))))
+    print(np.max(np.abs((u - u_res, v - v_res))))
 
     print('')
     print('test (az,el) to (theta, phi) to (az, el)')
@@ -391,7 +393,7 @@ if __name__ == '__main__':
     # plt.plot(u, v)
     # plt.plot(u_res, v_res)
     # plt.show()
-    print(np.max(np.abs((u-u_res, v - v_res))))
+    print(np.max(np.abs((u - u_res, v - v_res))))
 
 
 # end of module angles

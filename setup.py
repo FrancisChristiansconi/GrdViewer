@@ -13,7 +13,6 @@ setup(console=['grdviewer.py'],
       install_requires=[
           'basemap==1.2.0',
           'pyproj==1.9.5.1',
-          'matplotlib==3.0.0'
-      ],
+          'matplotlib==3.0.0'],
       packages=find_packages(),
       zip_safe=False)

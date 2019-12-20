@@ -1,9 +1,20 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Wed Oct 24 15:56:00 2018
+This module contains definition of Pat class.
+"""
+
+# Third party modules import
+# ==================================================================================================
 import numpy as np
 
+# local modules import
+# ==================================================================================================
+# debug trace utility
 import patternviewer.utils as utils
-
+# package constants definition
 import patternviewer.constant as cst
-
+# Definition of mother class AbstractPattern
 from patternviewer.element.pattern.abstractpattern import AbstractPattern
 
 
@@ -213,17 +224,17 @@ class Pat(AbstractPattern):
         # convert list to array
         E_mag_co = np.array(E_mag_co)
         E_phs_co = np.array(E_phs_co)
-        E_co = (np.power(10, E_mag_co / 20) *
-                np.cos(E_phs_co * np.pi / 180.0) +
-                1j * np.power(10, E_mag_co / 20) *
-                np.sin(E_phs_co * np.pi / 180.0))
+        E_co = (np.power(10, E_mag_co / 20)
+                * np.cos(E_phs_co * np.pi / 180.0)
+                + 1j * np.power(10, E_mag_co / 20)
+                * np.sin(E_phs_co * np.pi / 180.0))
 
         E_mag_cr = np.array(E_mag_cr)
         E_phs_cr = np.array(E_phs_cr)
-        E_cr = (np.power(10, E_mag_cr / 20) *
-                np.cos(E_phs_cr * np.pi / 180.0) +
-                1j * np.power(10, E_mag_cr / 20) *
-                np.sin(E_phs_cr * np.pi / 180.0))
+        E_cr = (np.power(10, E_mag_cr / 20)
+                * np.cos(E_phs_cr * np.pi / 180.0)
+                + 1j * np.power(10, E_mag_cr / 20)
+                * np.sin(E_phs_cr * np.pi / 180.0))
 
         utils.trace('out')
 
@@ -315,15 +326,11 @@ class Pat(AbstractPattern):
 # ==================================================================================================
 
     def rotate(self):
-        # if requested by the new configuration, rotate the pattern
+        # if requested by the new configuration,
+        # rotate the pattern by 180 degrees
         for set in range(self._nb_sets):
-            if ((self._rotate and not self._rotated) or
-                (not self._rotate and self._rotated)):
-                # x_offset = (
-                #     np.max(self._x[set][:]) - np.min(self._x[set][:]))
-                # y_offset = (
-                #     np.max(self._y[set][:][:]) -
-                #     np.min(self._y[set][:][:]))
+            if ((self._rotate and not self._rotated)
+                or (not self._rotate and self._rotated)):
                 self._x[set] = -1 * self._x[set]
                 self._y[set] = -1 * self._y[set]
                 self._rotated = self._rotate

@@ -589,8 +589,8 @@ class GrdViewer(QMainWindow):
             return None
 
     def getmenuitemlist(self, menu, basename=''):
-        """This recursive function returns a dictionary of menu items which keys
-        are the items names.
+        """This recursive function returns a dictionary of menu items
+        which keys are the items names.
         Each submenu level up to the item itself is given in the key,
         levels separated by character '>'
         """

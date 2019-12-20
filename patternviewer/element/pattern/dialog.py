@@ -36,7 +36,8 @@ from patternviewer.element.linedialog import LineDialog
 
 
 class PatternDialog(QDialog):
-    """QDialog derived class which is used to configure display of a pattern file.
+    """QDialog derived class which is used to configure display of
+    a pattern file.
     """
 
     def __init__(self, filename: str = None, parent=None, control=None):
@@ -173,16 +174,16 @@ class PatternDialog(QDialog):
         self.el_offset_field = QLineEdit('0.0', parent=self)
         self.az_offset_label.setFixedWidth(40)
         self.el_offset_label.setFixedWidth(40)
-        self.az_offset_label.setAlignment(QtCore.Qt.AlignRight |
-                                          QtCore.Qt.AlignVCenter)
-        self.el_offset_label.setAlignment(QtCore.Qt.AlignRight |
-                                          QtCore.Qt.AlignVCenter)
+        self.az_offset_label.setAlignment(QtCore.Qt.AlignRight
+                                          | QtCore.Qt.AlignVCenter)
+        self.el_offset_label.setAlignment(QtCore.Qt.AlignRight
+                                          | QtCore.Qt.AlignVCenter)
         self.az_offset_field.setFixedWidth(80)
         self.el_offset_field.setFixedWidth(80)
-        self.az_offset_field.setAlignment(QtCore.Qt.AlignRight |
-                                          QtCore.Qt.AlignVCenter)
-        self.el_offset_field.setAlignment(QtCore.Qt.AlignRight |
-                                          QtCore.Qt.AlignVCenter)
+        self.az_offset_field.setAlignment(QtCore.Qt.AlignRight
+                                          | QtCore.Qt.AlignVCenter)
+        self.el_offset_field.setAlignment(QtCore.Qt.AlignRight
+                                          | QtCore.Qt.AlignVCenter)
         # accomodate in horizontal layout
         hbox_offset = QHBoxLayout(None)
         hbox_offset.addWidget(self.chk_offset)
@@ -213,14 +214,14 @@ class PatternDialog(QDialog):
         self.elshrklbl.setFixedWidth(40)
         self.azfield.setFixedWidth(80)
         self.elfield.setFixedWidth(80)
-        self.azshrklbl.setAlignment(QtCore.Qt.AlignRight |
-                                    QtCore.Qt.AlignVCenter)
-        self.elshrklbl.setAlignment(QtCore.Qt.AlignRight |
-                                    QtCore.Qt.AlignVCenter)
-        self.azfield.setAlignment(QtCore.Qt.AlignRight |
-                                  QtCore.Qt.AlignVCenter)
-        self.elfield.setAlignment(QtCore.Qt.AlignRight |
-                                  QtCore.Qt.AlignVCenter)
+        self.azshrklbl.setAlignment(QtCore.Qt.AlignRight
+                                    | QtCore.Qt.AlignVCenter)
+        self.elshrklbl.setAlignment(QtCore.Qt.AlignRight
+                                    | QtCore.Qt.AlignVCenter)
+        self.azfield.setAlignment(QtCore.Qt.AlignRight
+                                  | QtCore.Qt.AlignVCenter)
+        self.elfield.setAlignment(QtCore.Qt.AlignRight
+                                  | QtCore.Qt.AlignVCenter)
         hbox_shrink = QHBoxLayout(None)
         hbox_shrink.addWidget(self.chkshrink)
         hbox_shrink.addWidget(self.azshrklbl)
@@ -342,7 +343,8 @@ class PatternDialog(QDialog):
     # end of configure method
 
     def get_isolevel(self, pattern=None):
-        """Return string formatted isolevel list. Each value separated with comma.
+        """Return string formatted isolevel list.
+        Each value separated with comma.
         pattern is the antenna pattern
         """
         if self._pattern is None:
@@ -404,10 +406,10 @@ class PatternDialog(QDialog):
         config['sat_lat'] = float(self.lat_field.text())
         config['sat_yaw'] = float(self.yaw_field.text())
         config['display_slope'] = self.chkslope.isChecked()
-        config['shrink'] = (self.chkshrink.isChecked() and
-                            not self.shrink_button.isChecked())
-        config['expand'] = (self.chkshrink.isChecked() and
-                            self.shrink_button.isChecked())
+        config['shrink'] = (self.chkshrink.isChecked()
+                            and not self.shrink_button.isChecked())
+        config['expand'] = (self.chkshrink.isChecked()
+                            and self.shrink_button.isChecked())
         if config['shrink'] or config['expand']:
             config['azshrink'] = float(self.azfield.text())
             config['elshrink'] = float(self.elfield.text())
@@ -452,7 +454,8 @@ class PatternDialog(QDialog):
     # end of function set_pattern_conf
 
     def chkshrinkstatechanged(self):
-        """Callback deactivating the shrink fields when shrink checkbox is unchecked.
+        """Callback deactivating the shrink fields when
+        shrink checkbox is unchecked.
         """
         utils.trace()
         self.azfield.setEnabled(self.chkshrink.isChecked())

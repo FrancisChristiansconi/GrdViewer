@@ -56,7 +56,7 @@ class LineDialog(QDialog):
                                       '-', '--', '-.', ':'])
         try:
             linestyles = config['linestyles']
-        except:
+        except KeyError:
             linestyles = 'solid'
         self.combolinestyle.setCurrentText(linestyles)
         linestylelayout.addWidget(self.combolinestyle)
@@ -72,7 +72,7 @@ class LineDialog(QDialog):
                                       'medium', 'heavy'])
         try:
             linewidths = config['linewidths']
-        except:
+        except KeyError:
             linewidths = 'light'
         self.combolinewidth.setCurrentText(cst.getboldness(linewidths))
         linewidthlayout.addWidget(self.combolinewidth)
@@ -99,7 +99,8 @@ class LineDialog(QDialog):
     # end of method initGUI
 
     def config(self):
-        """Collect value from widget and configure parent with the collected values.
+        """Collect value from widget and configure parent with
+        the collected values.
         """
         # dictionary used to collect parameters
         conf = {}

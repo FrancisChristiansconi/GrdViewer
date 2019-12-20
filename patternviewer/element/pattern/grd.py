@@ -226,8 +226,8 @@ class Grd(AbstractPattern):
     def interpolate_azel_slope(self, az, el, signed=False):
         """return interpolated value of the pattern
         """
-        if (not self.interpolated_copol_azgrad or
-                not self.interpolated_copol_elgrad):
+        if (not self.interpolated_copol_azgrad
+            or not self.interpolated_copol_elgrad):
             # if not yet use interpolation of slopes
             self.interpolated_copol_azgrad = interp.RectBivariateSpline(
                 self._x[set][:, 0], self._y[set][0, :],
@@ -260,8 +260,8 @@ class Grd(AbstractPattern):
     def rotate(self):
         # if requested by the new configuration, rotate the pattern
         for set in range(self._nb_sets):
-            if ((self._rotate and not self._rotated) or
-                (not self._rotate and self._rotated)):
+            if ((self._rotate and not self._rotated)
+                or (not self._rotate and self._rotated)):
                 # x_offset = (
                 #     np.max(self._x[set][:]) - np.min(self._x[set][:]))
                 # y_offset = (

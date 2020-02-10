@@ -6,6 +6,7 @@
 # PyQt5 widgets import
 from PyQt5.QtWidgets import QFileDialog, QDialog, QAction, QLineEdit, QLabel, \
     QCheckBox, QComboBox, QGridLayout, QPushButton
+from PyQt5 import QtCore
 # matplotlib import
 from mpl_toolkits.basemap import Basemap
 import matplotlib.pyplot as plt
@@ -20,6 +21,11 @@ import patternviewer.utils as utils
 from patternviewer import earthplot as eplt
 # Astract mother class Element
 from patternviewer.element.element import Element
+# import line configuration dialog
+from patternviewer.element.linedialog import LineDialog
+from patternviewer.element.markerdialog import MarkerDialog
+# import project constant
+import patternviewer.constant as cst
 
 
 class Station(Element):
@@ -43,7 +49,7 @@ class Station(Element):
         self._config['name'] = ''            # Long name for reference
         self._config['marker'] = 'o'         # station marker
         self._config['marker size'] = 1      # marker size
-        self._config['marker color'] = 'r'   # marker color
+        self._config['marker color'] = 'red'   # marker color
         # tag config
         self._config['tag'] = ''             # Short name for display
         # upleft, upright, downleft or downright
@@ -52,7 +58,7 @@ class Station(Element):
         # Beam pointing error circle
         # Radius of circle to draw around station
         self._config['bpe'] = 0
-        self._config['circle color'] = 'k'   # Color of bpe circle
+        self._config['linecolor'] = 'black'   # Color of bpe circle
         self._config['linewidth'] = 0.3      # Width of bpe circle line
         self._config['linestyle'] = 'dashed'  # Style of bpe circle line
     # end of constructor
@@ -62,64 +68,69 @@ class Station(Element):
     def plot(self):
         """Plot the station on the given map if in the frame.
         """
-        # get reference to Earth Map where station should be plotted
-        earthmap = self._parent.get_earthmap()
-        # radius of the Beam Pointing Error circle to be displayed (optionally)
-        radius = self._parent.az2x(self._config['bpe'])
-        # get coordinates of station in earth plot frame
-        xsta, ysta = earthmap(
-            self._config['longitude'], self._config['latitude'])
-        # if station is out of plot do not display
-        if self.visible(earthmap):
-            # if BPE defined, display circle around station
-            circle = None
-            if self._config['bpe']:
-                circle = plt.Circle((xsta, ysta), radius,
-                                    color=self._config['circle color'],
-                                    fill=False,
-                                    linewidth=self._config['linewidth'],
-                                    linestyle=self._config['linestyle'])
-                earthmap.ax.add_artist(circle)
-            # display a dot at station coordinates
-            point = earthmap.scatter(xsta, ysta,
-                                     self._config['marker size'],
-                                     marker=self._config['marker'],
-                                     color=self._config['marker color'])
-            # add station tag, position is computed from plot size and
-            # desired relative position wrt. station coordinates
-            plot_width = self._parent.get_width()
-            plot_height = self._parent.get_height()
-            x_offset = plot_width / 200
-            y_offset = plot_height / 200
-            position = self._config['tagpos']
-            if position == 'upleft':
-                x_offset *= -1
-                valign = 'bottom'
-                halign = 'right'
-            elif position == 'upright':
-                valign = 'bottom'
-                halign = 'left'
-            elif position == 'downleft':
-                x_offset *= -1
-                y_offset *= -1
-                valign = 'top'
-                halign = 'right'
-            elif position == 'downright':
-                y_offset *= -1
-                valign = 'top'
-                halign = 'left'
-            else:
-                # default will be upright
-                valign = 'bottom'
-                halign = 'left'
-            tag = earthmap.ax.text(s=self._config['tag'],
-                                   x=xsta + x_offset,
-                                   y=ysta + y_offset,
-                                   va=valign,
-                                   ha=halign,
-                                   fontsize=self._config['fontsize'])
-            # store references to plotted elements (point, tag and BPE circle)
-            self._station = point, tag, circle
+        if self.set(conf=self.configure(), key='visible', fallback=True):
+            # get reference to Earth Map where station should be plotted
+            earthmap = self._parent.get_earthmap()
+            # radius of the Beam Pointing Error circle to be displayed
+            radius = self._parent.az2x(self._config['bpe'])
+            # get coordinates of station in earth plot frame
+            xsta, ysta = earthmap(
+                self._config['longitude'], self._config['latitude'])
+            # if station is out of plot do not display
+            if self.visible(earthmap):
+                # if BPE defined, display circle around station
+                circle = None
+                if self._config['bpe']:
+                    circle = plt.Circle((xsta, ysta), radius,
+                                        color=self._config['linecolor'],
+                                        fill=False,
+                                        linewidth=self._config['linewidth'],
+                                        linestyle=self._config['linestyle'])
+                    earthmap.ax.add_artist(circle)
+                # display a dot at station coordinates
+                point = earthmap.scatter(
+                    xsta,
+                    ysta,
+                    self._config['marker size'],
+                    marker=self._config['marker'],
+                    color=self._config['marker color'])
+                # add station tag, position is computed from plot size and
+                # desired relative position wrt. station coordinates
+                plot_width = self._parent.get_width()
+                plot_height = self._parent.get_height()
+                x_offset = plot_width / 200
+                y_offset = plot_height / 200
+                position = self._config['tagpos']
+                if position == 'upleft':
+                    x_offset *= -1
+                    valign = 'bottom'
+                    halign = 'right'
+                elif position == 'upright':
+                    valign = 'bottom'
+                    halign = 'left'
+                elif position == 'downleft':
+                    x_offset *= -1
+                    y_offset *= -1
+                    valign = 'top'
+                    halign = 'right'
+                elif position == 'downright':
+                    y_offset *= -1
+                    valign = 'top'
+                    halign = 'left'
+                else:
+                    # default will be upright
+                    valign = 'bottom'
+                    halign = 'left'
+                tag = earthmap.ax.text(
+                    s=self._config['tag'],
+                    x=xsta + x_offset,
+                    y=ysta + y_offset,
+                    va=valign,
+                    ha=halign,
+                    fontsize=self._config['fontsize'])
+                # store references to plotted elements
+                # (point, tag and BPE circle)
+                self._station = point, tag, circle
     # end of method plot
 
     def clearplot(self):
@@ -212,6 +223,9 @@ class StationControler():
         # store station reference
         self._station = station
 
+        # Store sub menu
+        self.stn_menu = self.add_menu_items(station.configure()['tag'])
+
     def add_menu_items(self, station_key):
         """Add Pattern menu elements to exploit current pattern.
         """
@@ -234,10 +248,23 @@ class StationControler():
         return stn_menu
 
     def remove_station(self):
-        pass
+        # remove menu
+        menu = self.stn_menu
+        menu_action = menu.menuAction()
+        menu.parent().removeAction(menu_action)
+
+        # remove item from plot
+        self._earthplot._stations.remove(self)
+
+        # redraw
+        self.clearplot()
+        self._earthplot.draw()
 
     def edit_station(self):
         dialog = StationWidget(self._station)
+        menu = self.stn_menu
+        menu_action = menu.menuAction()
+        menu_action.setText(self._station.configure()['name'])
 
     def plot(self):
         self._station.plot()
@@ -265,47 +292,140 @@ class StationWidget(QDialog):
         self._stationconfig = station.configure()
 
         # build the widget
-        self.buildgui(station)
+        self.build_widget(station)
+        self.conf_widget(station)
+
+        # connect the buttons
+        self.ok_btn.clicked.connect(lambda: self.ok_close(self._station))
+        self.cancel_btn.clicked.connect(self.close)
+
+        # display the widget
         self.show()
         self.exec_()
 
-    def buildgui(self, station=None):
+    def build_widget(self, station=None):
         """Build and initialize widget from station config"""
 
-        layout = QGridLayout(parent=self)
+        layout = QGridLayout(self)
 
-        visible_chk = QCheckBox(parent=self, text='Visible')
-        visible_chk.setChecked(True)
-        layout.addWidget(visible_chk, 1, 1)
-        name_lbl = QLabel(parent=self, text='Name')
-        name_fld = QLineEdit(parent=self)
-        layout.addWidget(name_lbl, 2, 1)
-        layout.addWidget(name_fld, 2, 2)
-        tag_lbl = QLabel(parent=self, text='Tag')
-        tag_fld = QLineEdit(parent=self)
-        tag_pos_lbl = QLabel(parent=self, text='Tag position')
-        tag_pos_cmb = QComboBox(parent=self)
-        tag_pos_cmb.addItems(['',
-                              'upleft',
-                              'upright',
-                              'downleft',
-                              'downright'])
-        longitude_lbl = QLabel(parent=self, text='Longitude')
-        longitude_fld = QLineEdit(parent=self, text='0.0')
-        latitude_lbl = QLabel(parent=self, text='Latitude')
-        latitude_fld = QLineEdit(parent=self, text='0.0')
-        bpe_chk = QCheckBox(parent=self, text='BPE circle')
-        bpe_fld = QLineEdit(parent=self, text='0.25')
+        self.visible_chk = QCheckBox(parent=self, text='Visible')
+        self.visible_chk.setChecked(True)
+        layout.addWidget(self.visible_chk, 1, 1)
+        self.name_lbl = QLabel(parent=self, text='Name')
+        self.name_fld = QLineEdit(parent=self)
+        layout.addWidget(self.name_lbl, 2, 1)
+        layout.addWidget(self.name_fld, 2, 2)
+        self.tag_lbl = QLabel(parent=self, text='Tag')
+        self.tag_fld = QLineEdit(parent=self)
+        layout.addWidget(self.tag_lbl, 3, 1)
+        layout.addWidget(self.tag_fld, 3, 2)
+        self.tag_pos_lbl = QLabel(parent=self, text='Tag position')
+        self.tag_pos_cmb = QComboBox(parent=self)
+        self.tag_pos_cmb.addItems(
+            ['upleft',
+             'upright',
+             'downleft',
+             'downright'])
+        layout.addWidget(self.tag_pos_lbl, 4, 1)
+        layout.addWidget(self.tag_pos_cmb, 4, 2)
+        self.longitude_lbl = QLabel(parent=self, text='Longitude')
+        self.longitude_fld = QLineEdit(parent=self, text='0.0')
+        layout.addWidget(self.longitude_lbl, 5, 1)
+        layout.addWidget(self.longitude_fld, 5, 2)
+        self.latitude_lbl = QLabel(parent=self, text='Latitude')
+        self.latitude_fld = QLineEdit(parent=self, text='0.0')
+        layout.addWidget(self.latitude_lbl, 6, 1)
+        layout.addWidget(self.latitude_fld, 6, 2)
+        self.bpe_chk = QCheckBox(parent=self, text='BPE circle')
+        self.bpe_fld = QLineEdit(parent=self, text='0.25')
+        layout.addWidget(self.bpe_chk, 7, 1)
+        layout.addWidget(self.bpe_fld, 7, 2)
+
+        # line and marker button
+        self.marker_btn = QPushButton('Marker', self)
+        self.marker_btn.setEnabled(True)
+        layout.addWidget(self.marker_btn, 8, 1)
+        self.marker_btn.clicked.connect(self.setmarker)
 
         # Ok/Cancel buttons
-        ok_btn = QPushButton(parent=self, text='OK')
-        cancel_btn = QPushButton(parent=self, text='Cancel')
-        layout.addWidget(ok_btn, 10, 1)
-        layout.addwidget(cancel_btn, 10, 2)
+        self.ok_btn = QPushButton(parent=self, text='OK')
+        self.cancel_btn = QPushButton(parent=self, text='Cancel')
+        layout.addWidget(self.ok_btn, 9, 1)
+        layout.addWidget(self.cancel_btn, 9, 2)
 
+    def conf_widget(self, station=None):
+        """Set GUI fields with station values
+        """
         if station is not None:
-            name_fld.setText(station.configure()['name'])
-            tag_fld.setText(station.configure()['tag'])
+            # Get station conf dictionary
+            conf = station.configure()
+            # set name and tag
+            self.name_fld.setText(conf['name'])
+            self.tag_fld.setText(conf['tag'])
+            # retrieve visibility status
+            self.visible_chk.setChecked(station.set(
+                conf=conf, key='visible', fallback=True))
+            # retrieve tag position value and set
+            text = station.set(
+                conf=conf, key='tagpos', fallback='')
+            index = self.tag_pos_cmb.findText(text, QtCore.Qt.MatchFixedString)
+            if index >= 0:
+                self.tag_pos_cmb.setCurrentIndex(index)
+            # set longitude
+            self.longitude_fld.setText(
+                "{lon:0.2f}".format(lon=station.set(
+                    conf=conf, key='longitude', fallback=0.0)))
+            # set latitude
+            self.latitude_fld.setText(
+                "{lat:0.2f}".format(lat=station.set(
+                    conf=conf, key='latitude', fallback=0.0)))
+            # set BPE status
+            bpe = station.set(conf=conf, key='bpe', fallback=0.0)
+            self.bpe_chk.setChecked(bpe != 0.0)
+            self.bpe_fld.setText(
+                "{bpe:0.2f}".format(bpe=bpe)
+            )
+
+    def conf_station(self, station, close=False):
+        """Set station dictionary with widget fields value
+        """
+        if station is not None:
+            # Get station conf dictionary
+            conf = {}
+            # set name and tag
+            conf['name'] = self.name_fld.text()
+            conf['tag'] = self.tag_fld.text()
+            # retrieve visibility status
+            conf['visible'] = self.visible_chk.isChecked()
+            # retrieve tag position value and set
+            conf['tagpos'] = self.tag_pos_cmb.currentText()
+            # set longitude
+            conf['longitude'] = float(self.longitude_fld.text())
+            # set latitude
+            conf['latitude'] = float(self.latitude_fld.text())
+            # set BPE status
+            if self.bpe_chk.isChecked():
+                conf['bpe'] = float(self.bpe_fld.text())
+            else:
+                conf['bpe'] = 0.0
+            # merge created dictionary into station dictionary
+            station.configure(config=conf)
+
+    def ok_close(self, station):
+        # update dictionary
+        self.conf_station(station=station)
+        # update drawing
+        station.clearplot()
+        station.plot()
+        station._parent.draw()
+        self.close()
+
+    def setmarker(self):
+        mkrdlg = MarkerDialog(self._station)
+        self.setModal(False)
+        mkrdlg.setModal(True)
+        mkrdlg.exec_()
+        self.setModal(True)
 
 
 # Static methods and functions
@@ -345,7 +465,7 @@ def get_station_from_file(filename: str, earthplot=None):
                     if earthplot is not None:
                         stncontroler = StationControler(parent=earthplot,
                                                         station=station)
-                        stncontroler.add_menu_items(station.configure()['tag'])
+                        # stncontroler.add_menu_items(station.configure()['tag'])
                         stations.append(stncontroler)
                     else:
                         stations.append(station)

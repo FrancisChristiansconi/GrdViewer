@@ -107,25 +107,35 @@ class EarthPlot(FigureCanvas):
             self._axes.yaxis.label.set_fontsize(fontsize)
 
             # set map resolution (take only first letter in lower case)
-            self._resolution = config.get('DEFAULT',
-                                          'map resolution',
-                                          fallback=self._resolution).lower()
+            self._resolution = config.get(
+                'DEFAULT',
+                'map resolution',
+                fallback=self._resolution
+            ).lower()
             self._app.getmenuitem(
-                item='View>Map resolution>' +
-                self._resolution).setChecked(True)
+                item='View>Map resolution>{res}'.format(
+                    res=self._resolution)
+            ).setChecked(True)
             self._resolution = self._resolution[0]
             self._projection = config.get(
-                'DEFAULT', 'projection', fallback='nsper')
+                'DEFAULT',
+                'projection',
+                fallback='nsper'
+            )
             if self._projection == 'nsper':
                 self._app.getmenuitem(
-                    item='View>Projection>Geo').setChecked(True)
+                    item='View>Projection>Geo'
+                ).setChecked(True)
             elif self._projection == 'cyl':
                 self._app.getmenuitem(
-                    item='View>Projection>Cylindrical').setChecked(True)
+                    item='View>Projection>Cylindrical'
+                ).setChecked(True)
 
             # get point of view coordinates if defined
-            longitude = config.getfloat('VIEWER', 'longitude', fallback=0.0)
-            latitude = config.getfloat('VIEWER', 'latitude', fallback=0.0)
+            longitude = config.getfloat(
+                'VIEWER', 'longitude', fallback=0.0)
+            latitude = config.getfloat(
+                'VIEWER', 'latitude', fallback=0.0)
             altitude = config.getfloat(
                 'VIEWER', 'altitude', fallback=cst.ALTGEO)
 
@@ -141,8 +151,9 @@ class EarthPlot(FigureCanvas):
             self._countries = config.get(
                 'DEFAULT', 'countries', fallback='light')
             self._app.getmenuitem(
-                item='View>Country borders>' +
-                self._countries).setChecked(True)
+                item='View>Country borders>{cntry}'.format(
+                    cntry=self._countries)
+            ).setChecked(True)
             self._parallels = config.get(
                 'DEFAULT', 'parallels', fallback='light')
             self._app.getmenuitem(
@@ -275,7 +286,9 @@ class EarthPlot(FigureCanvas):
                 elif 'name' in config[station_section]:
                     station = stn.Station(parent=self)
                     station.configure(config._sections[station_section])
-                    self._stations.append(station)
+                    stncontroller = stn.StationControler(
+                        parent=self, station=station)
+                    self._stations.append(stncontroller)
                 # check for next station section
                 station_index += 1
                 station_section = 'STATION' + str(station_index)
@@ -388,8 +401,8 @@ class EarthPlot(FigureCanvas):
     # end of method mouse_move
 
     def get_mouse_xy(self, xmouse, ymouse, bbox):
-        """This function compute x and y in basemap coordinates of the mouse given
-        the mouse motion event data.
+        """This function compute x and y in basemap coordinates
+        of the mouse given the mouse motion event data.
         """
         # get relative x and y inside the box
         origin_x = bbox.bounds[0]
@@ -499,7 +512,8 @@ class EarthPlot(FigureCanvas):
     # end of method mouse_set_viewer
 
     def mouse_press_zoom(self, event):
-        """On event mouse_press, this method is called by matplotlib environment.
+        """On event mouse_press, this method is called
+        by matplotlib environment.
         It's role is to store the first angle of the rectangular zoom on
         Earth display.
         """
@@ -635,19 +649,24 @@ class EarthPlot(FigureCanvas):
         if self._projection == 'nsper':
             self._axes.set_xlabel('Azimuth (deg)')
             self._axes.set_ylabel('Elevation (deg)')
+            # get viewer coordinate in rendering frame
+            viewer_x, viewer_y = self._earth_map(
+                self._viewer.longitude(),
+                self._viewer.latitude()
+            )
             # compute and add x-axis ticks
             azticks = np.arange(self._zoom.min_azimuth,
                                 self._zoom.max_azimuth + 0.1, 2)
-            self._axes.set_xticks(self.az2x(azticks) +
-                                  self._earth_map(self._viewer.longitude(),
-                                                  self._viewer.latitude())[0])
+            self._axes.set_xticks(
+                self.az2x(azticks) + viewer_x
+            )
             self._axes.set_xticklabels('{0:0.1f}'.format(f) for f in azticks)
             # compute and add y-axis ticks
             elticks = np.arange(self._zoom.min_elevation,
                                 self._zoom.max_elevation + 0.1, 2)
-            self._axes.set_yticks(self.el2y(elticks) +
-                                  self._earth_map(self._viewer.longitude(),
-                                                  self._viewer.latitude())[1])
+            self._axes.set_yticks(
+                self.el2y(elticks) + viewer_y
+            )
             self._axes.set_yticklabels('{0:0.1f}'.format(f) for f in elticks)
         elif self._projection == 'cyl':
             self._axes.set_xlabel('Longitude (deg)')
@@ -819,19 +838,23 @@ class EarthPlot(FigureCanvas):
         """
         utils.trace('in')
         # compute phi
-        phi = np.arccos(np.cos(cst.DEG2RAD * stalat) *
-                        np.cos(cst.DEG2RAD *
-                               (self._viewer.longitude() - stalon)))
+        phi = np.arccos(
+            np.cos(cst.DEG2RAD * stalat)
+            * np.cos(
+                cst.DEG2RAD
+                * (self._viewer.longitude() - stalon)
+            )
+        )
 
         # compute elevation
-        elev = np.reshape([90 if phi == 0 else
-                           cst.RAD2DEG *
-                           np.arctan((np.cos(phi) -
-                                      (cst.EARTH_RAD_EQUATOR_M /
-                                       (cst.EARTH_RAD_EQUATOR_M +
-                                        self._viewer.altitude()))) /
-                                     np.sin(phi))
-                           for phi in phi.flatten()], phi.shape)
+        elev = np.reshape(
+            [90 if phi == 0 else
+             cst.RAD2DEG
+             * np.arctan(
+                 (np.cos(phi) - (cst.EARTH_RAD_EQUATOR_M
+                  / (cst.EARTH_RAD_EQUATOR_M + self._viewer.altitude()))
+                  ) / np.sin(phi))
+             for phi in phi.flatten()], phi.shape)
 
         # remove station out of view
         elev = np.where(np.absolute(
@@ -854,8 +877,8 @@ class EarthPlot(FigureCanvas):
             file_index = file_index + 1
             file_key = f + ' ' + str(file_index)
         if file_index == 50:
-            print('Max repetition of same file reached.' +
-                  ' Index 50 will be overwritten')
+            print(('Max repetition of same file reached.'
+                  ' Index 50 will be overwritten'))
         utils.trace('out')
         return file_key
     # end of function get_file_key

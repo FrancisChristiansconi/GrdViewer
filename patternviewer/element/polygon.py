@@ -23,8 +23,8 @@ from patternviewer.element.element import Element
 
 
 class Polygon(Element):
-    """Represent a polygon in longitude, latitude and provide function and methods
-    to manipulate it and display it on a map.
+    """Represent a polygon in longitude, latitude and provide
+    function and methods to manipulate it and display it on a map.
     """
 
     def __init__(self, parent=None, lon=[0], lat=[0], gain=0.0):

@@ -88,12 +88,12 @@ class ViewerPosDialog(QDialog):
         self._lon_label = QLabel('Longitude (deg)', parent=self)
         self._lat_label = QLabel('Latitude (deg)', parent=self)
         self._alt_label = QLabel('Altitude (m)', parent=self)
-        self._lon_label.setAlignment(QtCore.Qt.AlignRight |
-                                     QtCore.Qt.AlignVCenter)
-        self._lat_label.setAlignment(QtCore.Qt.AlignRight |
-                                     QtCore.Qt.AlignVCenter)
-        self._alt_label.setAlignment(QtCore.Qt.AlignRight |
-                                     QtCore.Qt.AlignVCenter)
+        self._lon_label.setAlignment(QtCore.Qt.AlignRight
+                                     | QtCore.Qt.AlignVCenter)
+        self._lat_label.setAlignment(QtCore.Qt.AlignRight
+                                     | QtCore.Qt.AlignVCenter)
+        self._alt_label.setAlignment(QtCore.Qt.AlignRight
+                                     | QtCore.Qt.AlignVCenter)
 
         # Add Ok/Cancel buttons
         ok_button = QPushButton('OK', self)

@@ -1,3 +1,6 @@
+REM checkout master branch as it should be the only one to be published
+git checkout master
+
 REM Create standalone executable
 python -m PyInstaller --onefile --icon=grdviewer.ico --clean grdviewer.py
 

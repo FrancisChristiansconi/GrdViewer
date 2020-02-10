@@ -35,18 +35,19 @@ class Elevation(Element):
         """
         utils.trace('in')
         # compute phi
-        phi = np.arccos(np.cos(cst.DEG2RAD * stalat) *
-                        np.cos(cst.DEG2RAD *
-                        (self._parent._viewer.longitude() - stalon)))
+        phi = np.arccos(
+            np.cos(cst.DEG2RAD * stalat)
+            * np.cos(cst.DEG2RAD
+                     * (self._parent._viewer.longitude() - stalon)))
 
         # compute elevation
-        elev = np.reshape([90 if phi == 0 else cst.RAD2DEG *
-                          np.arctan((np.cos(phi) -
-                                    (cst.EARTH_RAD_EQUATOR_M /
-                                    (cst.EARTH_RAD_EQUATOR_M +
-                                     self._parent._viewer.altitude()))) /
-                                    np.sin(phi)) for phi in phi.flatten()],
-                          phi.shape)
+        elev = np.reshape(
+            [90 if phi == 0 else cst.RAD2DEG * np.arctan(
+                (np.cos(phi) - (cst.EARTH_RAD_EQUATOR_M
+                 / (cst.EARTH_RAD_EQUATOR_M
+                    + self._parent._viewer.altitude())))
+                / np.sin(phi)) for phi in phi.flatten()],
+            phi.shape)
 
         # remove station out of view
         elev = np.where(np.absolute(

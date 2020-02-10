@@ -52,14 +52,14 @@ class ZoomDialog(QDialog):
         min_y_label = QLabel(parent=self)
         max_x_label = QLabel(parent=self)
         max_y_label = QLabel(parent=self)
-        min_x_label.setAlignment(QtCore.Qt.AlignRight |
-                                 QtCore.Qt.AlignVCenter)
-        min_y_label.setAlignment(QtCore.Qt.AlignRight |
-                                 QtCore.Qt.AlignVCenter)
-        max_x_label.setAlignment(QtCore.Qt.AlignRight |
-                                 QtCore.Qt.AlignVCenter)
-        max_y_label.setAlignment(QtCore.Qt.AlignRight |
-                                 QtCore.Qt.AlignVCenter)
+        min_x_label.setAlignment(QtCore.Qt.AlignRight
+                                 | QtCore.Qt.AlignVCenter)
+        min_y_label.setAlignment(QtCore.Qt.AlignRight
+                                 | QtCore.Qt.AlignVCenter)
+        max_x_label.setAlignment(QtCore.Qt.AlignRight
+                                 | QtCore.Qt.AlignVCenter)
+        max_y_label.setAlignment(QtCore.Qt.AlignRight
+                                 | QtCore.Qt.AlignVCenter)
         # Add field
         self.min_x_field = QLineEdit(parent=self)
         self.min_y_field = QLineEdit(parent=self)

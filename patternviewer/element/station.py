@@ -261,6 +261,10 @@ class StationControler():
 
     def edit_station(self):
         dialog = StationWidget(self._station)
+        menu = self.stn_menu
+        menu_action = menu.menuAction()
+        menu_action.setText(self._station.configure()['name'])
+
 
     def plot(self):
         self._station.plot()
@@ -318,8 +322,7 @@ class StationWidget(QDialog):
         self.tag_pos_lbl = QLabel(parent=self, text='Tag position')
         self.tag_pos_cmb = QComboBox(parent=self)
         self.tag_pos_cmb.addItems(
-            ['',
-             'upleft',
+            ['upleft',
              'upright',
              'downleft',
              'downright'])

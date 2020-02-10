@@ -320,7 +320,7 @@ class GrdViewer(QMainWindow):
         add_stations_action.triggered.connect(self.loadstations)
         add_station_action = QAction('Add station', self)
         stations_menu.addAction(add_station_action)
-        add_station_action.triggered.connect(self.loadstations)
+        add_station_action.triggered.connect(self.addstation)
         # load polygons file
         add_poly_action = QAction('Add polygons file', self)
         self._menumisc.addAction(add_poly_action)
@@ -424,6 +424,13 @@ class GrdViewer(QMainWindow):
             # refresh display
             self._earthplot.draw_elements()
     # end of method station_dialog
+
+    def addstation(self):
+        station = stn.Station(self._earthplot)
+        stationctlr = stn.StationControler(
+            parent=self._earthplot, station=station)
+        stationctlr.edit_station()
+        self._earthplot._stations.append(stationctlr)
 
     def zoom_dialog(self):
         """Open dialog to set zoom of Earth plot.

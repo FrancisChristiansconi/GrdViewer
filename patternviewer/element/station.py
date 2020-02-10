@@ -23,6 +23,9 @@ from patternviewer import earthplot as eplt
 from patternviewer.element.element import Element
 # import line configuration dialog
 from patternviewer.element.linedialog import LineDialog
+from patternviewer.element.markerdialog import MarkerDialog
+# import project constant
+import patternviewer.constant as cst
 
 
 class Station(Element):
@@ -46,7 +49,7 @@ class Station(Element):
         self._config['name'] = ''            # Long name for reference
         self._config['marker'] = 'o'         # station marker
         self._config['marker size'] = 1      # marker size
-        self._config['marker color'] = 'r'   # marker color
+        self._config['marker color'] = 'red'   # marker color
         # tag config
         self._config['tag'] = ''             # Short name for display
         # upleft, upright, downleft or downright
@@ -55,7 +58,7 @@ class Station(Element):
         # Beam pointing error circle
         # Radius of circle to draw around station
         self._config['bpe'] = 0
-        self._config['circle color'] = 'k'   # Color of bpe circle
+        self._config['linecolor'] = 'black'   # Color of bpe circle
         self._config['linewidth'] = 0.3      # Width of bpe circle line
         self._config['linestyle'] = 'dashed'  # Style of bpe circle line
     # end of constructor
@@ -79,16 +82,18 @@ class Station(Element):
                 circle = None
                 if self._config['bpe']:
                     circle = plt.Circle((xsta, ysta), radius,
-                                        color=self._config['circle color'],
+                                        color=self._config['linecolor'],
                                         fill=False,
                                         linewidth=self._config['linewidth'],
                                         linestyle=self._config['linestyle'])
                     earthmap.ax.add_artist(circle)
                 # display a dot at station coordinates
-                point = earthmap.scatter(xsta, ysta,
-                                        self._config['marker size'],
-                                        marker=self._config['marker'],
-                                        color=self._config['marker color'])
+                point = earthmap.scatter(
+                    xsta,
+                    ysta,
+                    self._config['marker size'],
+                    marker=self._config['marker'],
+                    color=self._config['marker color'])
                 # add station tag, position is computed from plot size and
                 # desired relative position wrt. station coordinates
                 plot_width = self._parent.get_width()
@@ -116,12 +121,13 @@ class Station(Element):
                     # default will be upright
                     valign = 'bottom'
                     halign = 'left'
-                tag = earthmap.ax.text(s=self._config['tag'],
-                                    x=xsta + x_offset,
-                                    y=ysta + y_offset,
-                                    va=valign,
-                                    ha=halign,
-                                    fontsize=self._config['fontsize'])
+                tag = earthmap.ax.text(
+                    s=self._config['tag'],
+                    x=xsta + x_offset,
+                    y=ysta + y_offset,
+                    va=valign,
+                    ha=halign,
+                    fontsize=self._config['fontsize'])
                 # store references to plotted elements (point, tag and BPE circle)
                 self._station = point, tag, circle
     # end of method plot
@@ -311,11 +317,12 @@ class StationWidget(QDialog):
         layout.addWidget(self.tag_fld, 3, 2)
         self.tag_pos_lbl = QLabel(parent=self, text='Tag position')
         self.tag_pos_cmb = QComboBox(parent=self)
-        self.tag_pos_cmb.addItems(['',
-                              'upleft',
-                              'upright',
-                              'downleft',
-                              'downright'])
+        self.tag_pos_cmb.addItems(
+            ['',
+             'upleft',
+             'upright',
+             'downleft',
+             'downright'])
         layout.addWidget(self.tag_pos_lbl, 4, 1)
         layout.addWidget(self.tag_pos_cmb, 4, 2)
         self.longitude_lbl = QLabel(parent=self, text='Longitude')
@@ -332,10 +339,10 @@ class StationWidget(QDialog):
         layout.addWidget(self.bpe_fld, 7, 2)
 
         # line and marker button
-        self.lines_button = QPushButton('Lines', self)
-        self.lines_button.setEnabled(False)
-        layout.addWidget(self.lines_button, 8, 2)
-        self.lines_button.clicked.connect(self.setlines)
+        self.marker_btn = QPushButton('Marker', self)
+        self.marker_btn.setEnabled(True)
+        layout.addWidget(self.marker_btn, 8, 1)
+        self.marker_btn.clicked.connect(self.setmarker)
 
         # Ok/Cancel buttons
         self.ok_btn = QPushButton(parent=self, text='OK')
@@ -410,12 +417,11 @@ class StationWidget(QDialog):
         station._parent.draw()
         self.close()
 
-    def setlines(self):
-        linedlg = LineDialog(self)
+    def setmarker(self):
+        mkrdlg = MarkerDialog(self._station)
         self.setModal(False)
-        linedlg.setModal(True)
-        # linedlg.show()
-        linedlg.exec_()
+        mkrdlg.setModal(True)
+        mkrdlg.exec_()
         self.setModal(True)
 
 # Static methods and functions

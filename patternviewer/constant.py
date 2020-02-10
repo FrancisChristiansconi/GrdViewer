@@ -38,6 +38,17 @@ BOLDNESS = {'no line': 0,
             'medium': 0.3,
             'heavy': 0.5}
 
+COLORS = {
+    'blue': 'b',
+    'green': 'g',
+    'red': 'r',
+    'cyan': 'c',
+    'magenta': 'm',
+    'yellow': 'y',
+    'black': 'k',
+    'white': 'w'
+}
+
 
 def getboldness(linewidth):
     """This function return a string key from a line width value.

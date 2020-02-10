@@ -59,11 +59,11 @@ class PatternDialog(QDialog):
         self.filename = filename
         self.earth_plot = parent
         self._control = control
-        self._pattern = None
+        self._patternctlr = None
         self._plot = None
         self._item = None
         if control is not None:
-            self._pattern = control._pattern
+            self._patternctlr = control._pattern
             self._plot = control._plot
             self._item = control._pattern_sub_menu
 
@@ -129,12 +129,12 @@ class PatternDialog(QDialog):
         vbox.addLayout(hbox_isolevel)
 
         # Add special combo box for multigrd
-        if 'law'in self._pattern.configure().keys():
+        if 'law'in self._patternctlr.configure().keys():
             self.law_id_lbl = QLabel('Excitation law', parent=self)
             self.law_id_cmb = QComboBox(self)
-            self.law_id_cmb.addItems(self._pattern.configure()['law'])
+            self.law_id_cmb.addItems(self._patternctlr.configure()['law'])
             self.law_id_cmb.setCurrentText(
-                self._pattern.configure()['applied_law'])
+                self._patternctlr.configure()['applied_law'])
             self.law_id_cmb.currentTextChanged.connect(self.cmb_law_changed)
             hbox_law = QHBoxLayout(None)
             hbox_law.addWidget(self.law_id_lbl)
@@ -249,7 +249,7 @@ class PatternDialog(QDialog):
             self.lat_field.setText(str(self.earth_plot._viewer.latitude()))
             self.alt_field.setText(str(self.earth_plot._viewer.altitude()))
             # TODO do something for the multiple beams in one file case
-            self.cf_field.setText(str(self._pattern._conversion_factor))
+            self.cf_field.setText(str(self._patternctlr._conversion_factor))
 
         # Add Ok/Cancel buttons
         self.lines_button = QPushButton('Lines', self)
@@ -280,8 +280,8 @@ class PatternDialog(QDialog):
         self.cf_field.textChanged.connect(self.refresh_isolevel)
 
         # Set default field value if pattern object has been provided
-        if self._pattern:
-            self.configure(self._pattern)
+        if self._patternctlr:
+            self.configure(self._patternctlr)
     # end of __init__
 
     def configure(self, pattern):
@@ -347,10 +347,10 @@ class PatternDialog(QDialog):
         Each value separated with comma.
         pattern is the antenna pattern
         """
-        if self._pattern is None:
+        if self._patternctlr is None:
             return ",".join(str(x) for x in cst.DEFAULT_ISOLEVEL_DBI)
         else:
-            return ",".join(str(x) for x in self._pattern.get_isolevel())
+            return ",".join(str(x) for x in self._patternctlr.get_isolevel())
     # end of function get_isolevel
 
     def get_cf(self):
@@ -368,10 +368,10 @@ class PatternDialog(QDialog):
         """Refresh isolevel field regarding polarisation selected and
         absolute isolevel stored in pattern configuration dictionary.
         """
-        if self._pattern:
-            max_co = int(np.max(self._pattern.copol()))
+        if self._patternctlr:
+            max_co = int(np.max(self._patternctlr.copol()))
             try:
-                max_cr = int(np.max(self._pattern.cross()))
+                max_cr = int(np.max(self._patternctlr.cross()))
             except TypeError:
                 max_cr = 0
         else:
@@ -379,8 +379,8 @@ class PatternDialog(QDialog):
             max_cr = 0
 
         cf = self.get_cf()
-        isolevel = np.array(self._pattern._isolevel) - \
-            np.max(self._pattern._isolevel)
+        isolevel = np.array(self._patternctlr._isolevel) - \
+            np.max(self._patternctlr._isolevel)
         if self.chkxpol.checkState():
             tmp_str = ",".join(str(x) for x in isolevel + max_cr + cf)
         else:
@@ -393,7 +393,7 @@ class PatternDialog(QDialog):
         utils.trace('in')
 
         # if no defined pattern attribute return
-        if not self._pattern:
+        if not self._patternctlr:
             return
 
         config = {}
@@ -421,8 +421,8 @@ class PatternDialog(QDialog):
             config['eloffset'] = float(self.el_offset_field.text())
 
         # if multigrd pattern, apply law selected
-        if 'law' in self._pattern.configure().keys():
-            self._pattern.apply_law(self.law_id_cmb.currentText())
+        if 'law' in self._patternctlr.configure().keys():
+            self._patternctlr.apply_law(self.law_id_cmb.currentText())
 
         if self.chkslope.isChecked():
             config['slopes'] = [float(s)
@@ -434,11 +434,11 @@ class PatternDialog(QDialog):
         config['cf'] = float(self.cf_field.text())
         config['Color surface'] = self.chksurf.isChecked()
 
-        self._pattern.configure(config=config)
+        self._patternctlr.configure(config=config)
 
         self.earth_plot.settitle(self.title_field.text())
 
-        self._pattern._conversion_factor = float(self.cf_field.text())
+        self._patternctlr._conversion_factor = float(self.cf_field.text())
 
         self.abort = False
 
@@ -495,17 +495,17 @@ class PatternDialog(QDialog):
         utils.trace()
         if self.chkslope.isChecked():
             self.isolevel_field.setText('{},{}'.format(
-                self._pattern._slope_range[0],
-                self._pattern._slope_range[1]))
+                self._patternctlr._slope_range[0],
+                self._patternctlr._slope_range[1]))
         else:
             self.isolevel_field.setText(self.get_isolevel())
 
     def cmb_law_changed(self):
-        self._pattern.apply_law(self.law_id_cmb.currentText())
+        self._patternctlr.apply_law(self.law_id_cmb.currentText())
         self.refresh_isolevel()
 
     def setlines(self):
-        linedlg = LineDialog(self._pattern)
+        linedlg = LineDialog(self._patternctlr)
         self.setModal(False)
         linedlg.setModal(True)
         # linedlg.show()

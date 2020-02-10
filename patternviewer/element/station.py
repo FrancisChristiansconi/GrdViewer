@@ -71,7 +71,7 @@ class Station(Element):
         if self.set(conf=self.configure(), key='visible', fallback=True):
             # get reference to Earth Map where station should be plotted
             earthmap = self._parent.get_earthmap()
-            # radius of the Beam Pointing Error circle to be displayed (optionally)
+            # radius of the Beam Pointing Error circle to be displayed
             radius = self._parent.az2x(self._config['bpe'])
             # get coordinates of station in earth plot frame
             xsta, ysta = earthmap(
@@ -128,7 +128,8 @@ class Station(Element):
                     va=valign,
                     ha=halign,
                     fontsize=self._config['fontsize'])
-                # store references to plotted elements (point, tag and BPE circle)
+                # store references to plotted elements
+                # (point, tag and BPE circle)
                 self._station = point, tag, circle
     # end of method plot
 
@@ -264,7 +265,6 @@ class StationControler():
         menu = self.stn_menu
         menu_action = menu.menuAction()
         menu_action.setText(self._station.configure()['name'])
-
 
     def plot(self):
         self._station.plot()
@@ -426,6 +426,7 @@ class StationWidget(QDialog):
         mkrdlg.setModal(True)
         mkrdlg.exec_()
         self.setModal(True)
+
 
 # Static methods and functions
 # ==================================================================================================

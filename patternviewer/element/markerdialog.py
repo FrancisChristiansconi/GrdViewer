@@ -88,7 +88,7 @@ class MarkerDialog(QDialog):
         self.color_lbl.setStyleSheet(
             'background-color: ' + self.marker_color)
         layout.addWidget(self.color_lbl, 3, 2)
-        
+
         # line style
         linestyle_lbl = QLabel(self)
         linestyle_lbl.setText('linestyle')
@@ -102,14 +102,14 @@ class MarkerDialog(QDialog):
             linestyle = 'solid'
         self.linestyle_cmb.setCurrentText(linestyle)
         layout.addWidget(self.linestyle_cmb, 4, 2)
-        
+
         # line boldness
         linewidth_lbl = QLabel(self)
         linewidth_lbl.setText('linewidth')
         layout.addWidget(linewidth_lbl, 5, 1)
         self.linewidth_cmb = QComboBox(self)
         self.linewidth_cmb.addItems(['no line', 'light',
-                                      'medium', 'heavy'])
+                                     'medium', 'heavy'])
         try:
             linewidth = config['linewidth']
         except KeyError:

@@ -286,7 +286,9 @@ class EarthPlot(FigureCanvas):
                 elif 'name' in config[station_section]:
                     station = stn.Station(parent=self)
                     station.configure(config._sections[station_section])
-                    self._stations.append(station)
+                    stncontroller = stn.StationControler(
+                        parent=self, station=station)
+                    self._stations.append(stncontroller)
                 # check for next station section
                 station_index += 1
                 station_section = 'STATION' + str(station_index)

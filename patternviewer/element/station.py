@@ -212,6 +212,9 @@ class StationControler():
         # store station reference
         self._station = station
 
+        # Store sub menu
+        self.stn_menu = self.add_menu_items(station.configure()['tag'])
+
     def add_menu_items(self, station_key):
         """Add Pattern menu elements to exploit current pattern.
         """
@@ -234,7 +237,17 @@ class StationControler():
         return stn_menu
 
     def remove_station(self):
-        pass
+        # remove menu
+        menu = self.stn_menu
+        menu_action = menu.menuAction()
+        menu.parent().removeAction(menu_action)
+
+        # remove item from plot
+        self._earthplot._stations.remove(self)
+
+        # redraw
+        self.clearplot()
+        self._earthplot.draw()
 
     def edit_station(self):
         dialog = StationWidget(self._station)
@@ -345,7 +358,7 @@ def get_station_from_file(filename: str, earthplot=None):
                     if earthplot is not None:
                         stncontroler = StationControler(parent=earthplot,
                                                         station=station)
-                        stncontroler.add_menu_items(station.configure()['tag'])
+                        # stncontroler.add_menu_items(station.configure()['tag'])
                         stations.append(stncontroler)
                     else:
                         stations.append(station)

@@ -8,7 +8,8 @@ import patternviewer.constant as cst
 
 import patternviewer.utils as utils
 
-from patternviewer.element.pattern.abstractpattern import AbstractPattern
+from patternviewer.element.pattern.abstractpattern \
+    import AbstractPattern, PatternNotCreatedError
 
 
 class Grd(AbstractPattern):
@@ -53,12 +54,16 @@ class Grd(AbstractPattern):
             E_phs_cr: pahse of electrical field in crosspolarisation (degrees)
         """
 
-        # open file and read text data
-        file = open(filename, "r")
-        # read all lines in a table
-        lines = file.readlines()
-        # close file
-        file.close()
+        try:
+            # open file and read text data
+            file = open(filename, "r")
+            # read all lines in a table
+            lines = file.readlines()
+            # close file
+            file.close()
+        except FileNotFoundError as fnf:
+            raise PatternNotCreatedError(
+                value='Pattern file ' + filename + ' not found')
 
         # line number
         linesnumber = len(lines)

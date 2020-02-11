@@ -129,12 +129,23 @@ class AbstractPattern(Element):
         self.interpolated_copol_elgrad = None
 
         # read data file
-        self._nb_sets, \
-            self._grid, \
-            self._x, \
-            self._y, \
-            self._E_co, \
-            self._E_cr = self.read_file(conf['filename'])
+        try:
+            self._nb_sets, \
+                self._grid, \
+                self._x, \
+                self._y, \
+                self._E_co, \
+                self._E_cr = self.read_file(conf['filename'])
+        except (IndexError, ValueError):
+            utils.trace('out')
+            raise PatternNotCreatedError(
+                value=('Error during reading of file: {filename}. '
+                       'Verify consistency between extension '
+                       'and content.').format(
+                           filename=conf['filename']))
+        except PatternNotCreatedError:
+            utils.trace('out')
+            raise
 
         # float[]: isolevel for display
         max_directivity = np.max(self.copol())
@@ -1078,5 +1089,16 @@ class AbstractPattern(Element):
 # ==================================================================================================
 
 # end of class AbstractPattern
+
+
+class PatternNotCreatedError(Exception):
+    """Exception to flag something went wrong when creating pattern
+    """
+
+    def __init__(self, value):
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
 
 # end of module abstractpattern

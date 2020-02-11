@@ -15,7 +15,8 @@ import patternviewer.utils as utils
 # package constants definition
 import patternviewer.constant as cst
 # Definition of mother class AbstractPattern
-from patternviewer.element.pattern.abstractpattern import AbstractPattern
+from patternviewer.element.pattern.abstractpattern \
+    import AbstractPattern, PatternNotCreatedError
 
 
 class Pat(AbstractPattern):
@@ -47,13 +48,16 @@ class Pat(AbstractPattern):
 # Mandatory abstract method to implement
 # --------------------------------------------------------------------------------------------------
     def read_file(self, filename):
-        utils.trace('in')
-        # open file and read text data
-        file = open(filename, "r")
-        # read all lines in a table
-        lines = file.readlines()
-        # close file
-        file.close()
+        try:
+            # open file and read text data
+            file = open(filename, "r")
+            # read all lines in a table
+            lines = file.readlines()
+            # close file
+            file.close()
+        except FileNotFoundError as fnf:
+            raise PatternNotCreatedError(
+                value='Pattern file ' + filename + ' not found')
 
         # line number
         linesnumber = len(lines)
@@ -165,10 +169,10 @@ class Pat(AbstractPattern):
         x = [None] * nb_sets
         y = [None] * nb_sets
         for k in range(nb_sets):
-            x_vec.append(np.linspace(start=xs, stop=xe,
-                                     num=nx, endpoint=True) + ix[k])
-            y_vec.append(np.linspace(start=ys, stop=ye,
-                                     num=ny, endpoint=True) + iy[k])
+            x_vec.append(np.linspace(
+                start=xs, stop=xe, num=nx, endpoint=True) + ix[k])
+            y_vec.append(np.linspace(
+                start=ys, stop=ye, num=ny, endpoint=True) + iy[k])
             x[k], y[k] = np.meshgrid(x_vec[k], y_vec[k])
 
         # next line
@@ -236,14 +240,13 @@ class Pat(AbstractPattern):
                 + 1j * np.power(10, E_mag_cr / 20)
                 * np.sin(E_phs_cr * np.pi / 180.0))
 
-        utils.trace('out')
-
         return nb_sets, \
             grid, \
             x, \
             y, \
             E_co, \
             E_cr
+
     # end of function read_file
 
     def grid_type(self):

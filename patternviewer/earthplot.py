@@ -25,6 +25,8 @@ import numpy as np
 # local module
 import patternviewer.utils as utils
 from patternviewer.element.pattern.control import PatternControler
+from patternviewer.element.pattern.abstractpattern \
+    import PatternNotCreatedError
 from patternviewer.element import station as stn
 import patternviewer.element.elevation as elv
 from patternviewer.viewer import Viewer
@@ -898,8 +900,9 @@ class EarthPlot(FigureCanvas):
         try:
             pattern = PatternControler(parent=self,
                                        config=conf)
-        except FileNotFoundError:
-            print('Pattern file ' + filename + ' not found')
+        except PatternNotCreatedError as pnc:
+            print(pnc.__str__())
+            utils.trace('out')
             return None
         if 'sat_lon' not in conf:
             dialog = True
@@ -913,12 +916,12 @@ class EarthPlot(FigureCanvas):
         # Add grd in grd dictionary
         self._patterns[file_key] = pattern
 
-        utils.trace('out')
         # refresh pattern combo box
         itemlist = ['']
         itemlist.extend(self._patterns.keys())
         self._app.setpatterncombo(itemlist)
         # return pattern controler instance
+        utils.trace('out')
         return self._patterns[file_key]
     # end of load_pattern
 

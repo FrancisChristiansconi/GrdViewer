@@ -10,3 +10,4 @@ copy P:\Antenna_models\GrdViewer\grdviewer.exe P:\Antenna_models\GrdViewer\old\g
 
 REM REM Copy executable to Payload EU
 copy .\dist\grdviewer.exe P:\Antenna_models\GrdViewer\
+copy .\README.md P:\Antenna_models\GrdViewer\

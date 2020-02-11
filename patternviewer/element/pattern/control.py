@@ -33,7 +33,6 @@ class PatternControler():
         parent is the earthplot which is used to display the pattern
         filename is the name of the file containing the pattern data
         """
-        utils.trace('in')
         self._config = config
 
         # reference of the parent EarthPlot
@@ -70,8 +69,6 @@ class PatternControler():
         self._pdialog = PatternDialog(filename=self._config['filename'],
                                       parent=self._earthplot,
                                       control=self)
-
-        utils.trace('out')
     # end of constructor
 
     def configure(self, config=None, dialog=True):

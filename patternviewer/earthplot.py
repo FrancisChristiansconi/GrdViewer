@@ -140,6 +140,9 @@ class EarthPlot(FigureCanvas):
         # get default directory
         self.rootdir = config.get('APPLICATION', 'root', fallback='C:\\')
 
+        # set plot title
+        self.settitle(config.get('APPLICATION', 'title', fallback=''))
+
         # set map resolution (take only first letter in lower case)
         self._resolution = config.get(
             'MAP',
@@ -194,65 +197,14 @@ class EarthPlot(FigureCanvas):
 
         # Initialize zoom
         self._zoom = Zoom(proj=self._projection)
-        self._zoom.configure(config['GEO'])
-        self._zoom.configure(config['CYLINDRICAL'])
+        self._zoom.configure(config._sections['GEO'])
+        self._zoom.configure(config._sections['CYLINDRICAL'])
 
         pattern_index = 1
         pattern_section = 'PATTERN' + str(pattern_index)
         while pattern_section in config:
-            if 'file' in config[pattern_section]:
-                conf = {}
-                conf['file'] = config.get(pattern_section, 'file')
-                conf['longitude'] = config.getfloat(
-                    pattern_section, 'longitude', fallback=0.0)
-                conf['latitude'] = config.getfloat(
-                    pattern_section, 'latitude', fallback=0.0)
-                conf['altitude'] = config.getfloat(
-                    pattern_section, 'altitude', fallback=cst.ALTGEO)
-                conf['yaw'] = config.getfloat(
-                    pattern_section, 'yaw', fallback=0.0)
-                conf['title'] = config.get(
-                    pattern_section, 'title', fallback='Default title')
-                conf['level'] = config.get(
-                    pattern_section, 'level', fallback='25, 30, 35, 38, 40')
-                conf['revert x-axis'] = config.getboolean(
-                    pattern_section, 'revert x-axis', fallback=False)
-                conf['revert y-axis'] = config.getboolean(
-                    pattern_section, 'revert y-axis', fallback=False)
-                conf['rotate'] = config.getboolean(
-                    pattern_section, 'rotate', fallback=False)
-                conf['second polarisation'] = config.getboolean(
-                    pattern_section, 'second polarisation', fallback=False)
-                conf['slope'] = config.getboolean(
-                    pattern_section, 'slope', fallback=False)
-                conf['shrink'] = config.getboolean(
-                    pattern_section, 'shrink', fallback=False)
-                conf['azimuth shrink'] = config.getfloat(
-                    pattern_section, 'azimuth shrink', fallback=0.0)
-                conf['elevation shrink'] = config.getfloat(
-                    pattern_section, 'elevation shrink', fallback=0.0)
-                conf['offset'] = config.getboolean(
-                    pattern_section, 'offset', fallback=False)
-                conf['offset azel format'] = config.getboolean(
-                    pattern_section, 'offset azel format', fallback=False)
-                conf['azimuth offset'] = config.getfloat(
-                    pattern_section, 'azimuth offset', fallback=0.0)
-                conf['elevation offset'] = config.getfloat(
-                    pattern_section, 'elevation offset', fallback=0.0)
-                conf['conversion factor'] = config.getfloat(
-                    pattern_section, 'conversion factor', fallback=0.0)
-                conf['linestyles'] = config.get(
-                    pattern_section, 'linestyles', fallback='solid')
-                conf['linewidths'] = cst.BOLDNESS[config.get(
-                    pattern_section, 'linewidths', fallback='medium')]
-                conf['level'] = [
-                    float(s) for s in conf['level'].split(',')]
-                conf['color surface'] = config.getboolean(
-                    pattern_section, 'color surface', fallback=False)
-
-                self.loadpattern(conf=conf)
-
-                self.settitle(conf['title'])
+            if 'file' in config._sections[pattern_section]:
+                self.loadpattern(conf=config._sections[pattern_section])
 
                 # check for next pattern
                 pattern_index += 1
@@ -295,6 +247,7 @@ class EarthPlot(FigureCanvas):
             # check for next station section
             elevation_index += 1
             elevation_section = 'ELEVATION' + str(elevation_index)
+    # end of function configure
 
     def mouse_move(self, event):
         """Set mouse longitude and latitude plus directivity in the status bar.
@@ -852,7 +805,7 @@ class EarthPlot(FigureCanvas):
         """
         utils.trace('in')
         try:
-            filename = conf['filename']
+            filename = conf['file']
         except KeyError:
             print('load_pattern:File name is mandatory.')
             utils.trace('out')

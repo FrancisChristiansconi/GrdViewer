@@ -54,16 +54,35 @@ class Element(ABC):
         pass
 
     @staticmethod
-    def set(conf, key, fallback=None):
+    def set(conf, key, fallback=None, dtype=None):
         """Try to return element key of dictionary conf. KeyError exception
         is handled. In case of KeyError exception, log message is printed
         on standard output and fallback value is returned.
         By default, fallback value is None
         """
+
+        def convert_to_list(input, dtype):
+            if type(input) is list:
+                return input
+            else:
+                return [convert[dtype](e) for e in input.split(',')]
+
+        convert = {
+            str: lambda s: s,
+            float: float,
+            complex: complex,
+            int: int,
+            bool: lambda b: (b == 'True'),
+            list: lambda l: convert_to_list(l, type(fallback[0]))
+        }
+
         # initialize return value
         param = fallback
         try:
-            param = conf[key]
+            if dtype is not None:
+                param = convert[dtype](conf[key])
+            else:
+                param = conf[key]
         except KeyError:
             pass
         # return either the desired value or None

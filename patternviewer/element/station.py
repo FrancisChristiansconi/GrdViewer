@@ -68,7 +68,8 @@ class Station(Element):
     def plot(self):
         """Plot the station on the given map if in the frame.
         """
-        if self.set(conf=self.configure(), key='visible', fallback=True):
+        if self.set(conf=self.configure(), key='visible',
+                    fallback=True, dtype=bool):
             # get reference to Earth Map where station should be plotted
             earthmap = self._parent.get_earthmap()
             # radius of the Beam Pointing Error circle to be displayed

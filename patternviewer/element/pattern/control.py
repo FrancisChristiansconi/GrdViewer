@@ -58,7 +58,7 @@ class PatternControler():
         # get Menu Pattern reference
         self._pattern_menu = self._mainwindow.menupattern
         # pattern sub menu
-        file_key = self._earthplot.get_file_key(self._config['filename'])
+        file_key = self._earthplot.get_file_key(self._config['file'])
         self._pattern_sub_menu = self.add_menu_items(file_key)
 
         # define _plot attribute for Controler
@@ -66,7 +66,7 @@ class PatternControler():
         self._plot_type = None
 
         # create dialog box to configure the pattern
-        self._pdialog = PatternDialog(filename=self._config['filename'],
+        self._pdialog = PatternDialog(filename=self._config['file'],
                                       parent=self._earthplot,
                                       control=self)
     # end of constructor
@@ -115,18 +115,18 @@ class PatternControler():
         """Return True if file extension is grd.
         """
         utils.trace()
-        return self._config['filename'][-3:] == 'grd'
+        return self._config['file'][-3:] == 'grd'
     # end of isgrd function
 
     def ispat(self):
         """Return True if file extension is pat.
         """
         utils.trace()
-        return self._config['filename'][-3:] == 'pat'
+        return self._config['file'][-3:] == 'pat'
     # end of ispat function
 
     def ismultigrd(self):
-        return type(self._config['filename']) is list
+        return type(self._config['file']) is list
     # End of ismultigrd function
 
     def plot(self):
@@ -196,7 +196,7 @@ class PatternControler():
         if isinstance(self._pattern, MultiGrd):
             default_filename = ''
         else:
-            origin_filename = os.path.basename(self._config['filename'])
+            origin_filename = os.path.basename(self._config['file'])
             default_filename = origin_filename[:-3] + 'pat'
         # Get filename for exporting file
         filename, _ = \

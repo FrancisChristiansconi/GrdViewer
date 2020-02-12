@@ -985,7 +985,7 @@ class AbstractPattern(Element):
                 divider = make_axes_locatable(axes)
                 cbar_axes = divider.append_axes("right", size="5%", pad=0.05)
                 cbar = figure.colorbar(pcm_pattern, cax=cbar_axes)
-            if self._conf['display_slope']:
+            if self._conf['slope']:
                 cbar.ax.set_ylabel('Slope (dB/deg)')
             else:
                 cbar.ax.set_ylabel('Gain (dB)')

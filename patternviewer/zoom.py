@@ -28,7 +28,7 @@ class Zoom(object):
         self.configure(config)
     # end of constructor
 
-    def configure(self, config):
+    def configure(self, config=None):
         if config is not None:
             self._config.update(config)
             self._config['min azimuth'] = float(

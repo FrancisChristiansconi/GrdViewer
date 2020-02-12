@@ -273,8 +273,10 @@ class StationControler():
     def clearplot(self):
         self._station.clearplot()
 
-    def configure(self, config):
-        self._station.configure(config)
+    def configure(self, config=None):
+        if config is not None:
+            self._station.configure(config)
+        return self._station.configure(config)
 
 
 class StationWidget(QDialog):

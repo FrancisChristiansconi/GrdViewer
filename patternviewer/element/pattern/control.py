@@ -85,7 +85,9 @@ class PatternControler():
             self._pdialog.setModal(True)
             self._pdialog.show()
             self._pdialog.exec_()
+
         utils.trace('out')
+        return self._config
     # end of function configure
 
     def add_menu_items(self, file_key):

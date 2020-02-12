@@ -60,6 +60,11 @@ class Element(ABC):
         on standard output and fallback value is returned.
         By default, fallback value is None
         """
+        def convert_to_bool(input):
+            if type(input) is bool:
+                return input
+            else:
+                return (input == 'True')
 
         def convert_to_list(input, dtype):
             if type(input) is list:
@@ -72,7 +77,7 @@ class Element(ABC):
             float: float,
             complex: complex,
             int: int,
-            bool: lambda b: (b == 'True'),
+            bool: convert_to_bool,
             list: lambda l: convert_to_list(l, type(fallback[0]))
         }
 

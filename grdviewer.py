@@ -198,6 +198,14 @@ class GrdViewer(QMainWindow):
         save_action = QAction('Save plot', self)
         self._menufile.addAction(save_action)
         save_action.triggered.connect(self.save)
+        # save plot configuration in ini file
+        save_confas_action = QAction('Save configuration as', self)
+        self._menufile.addAction(save_confas_action)
+        save_confas_action.triggered.connect(self.save_configuration_as)
+        # save plot configuration in ini file
+        save_conf_action = QAction('Save configuration', self)
+        self._menufile.addAction(save_conf_action)
+        save_conf_action.triggered.connect(self.save_configuration)
         # clear plot item
         clear_action = QAction('Clear plot', self)
         self._menufile.addAction(clear_action)
@@ -579,6 +587,20 @@ class GrdViewer(QMainWindow):
         """
         self._earthplot.save()
     # end of callback save
+
+    def save_configuration_as(self):
+        """Callback to save configuration of the current plot
+        """
+        defaultfilename = 'new_configuration.cnf'
+        dialogbox = QFileDialog(caption='Save As ...',
+                                directory=self._earthplot.rootdir)
+        dialogbox.selectFile(defaultfilename)
+        filename, _ = dialogbox.getSaveFileName()
+        self._earthplot.save_configuration(filename)
+    # end of callback save_configuration_as
+
+    def save_configuration(self):
+        self._earthplot.save_configuration()
 
     def get_centralwidget(self):
         """Accessor to central widget.

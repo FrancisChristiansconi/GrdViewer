@@ -21,6 +21,8 @@ from PyQt5 import QtCore
 
 # import numpy for arrays and mathematical operations
 import numpy as np
+# mangement of inifile
+import configparser
 
 # local module
 import patternviewer.utils as utils
@@ -65,9 +67,8 @@ class EarthPlot(FigureCanvas):
         FigureCanvas.__init__(self, self._figure)
         self.setParent(self._centralwidget)
         self._app = self.parent().parent()
-        FigureCanvas.setSizePolicy(self,
-                                   QSizePolicy.Expanding,
-                                   QSizePolicy.Expanding)
+        FigureCanvas.setSizePolicy(
+            self, QSizePolicy.Expanding, QSizePolicy.Expanding)
         FigureCanvas.updateGeometry(self)
         self.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.setFocus()
@@ -107,7 +108,7 @@ class EarthPlot(FigureCanvas):
         self._bluemarble_imshow = None
 
         # default file name to save figure
-        self.filename = 'plot.PNG'
+        self._filename_plot = 'plot.PNG'
 
         # connect canvas to mouse event (enable zoom and recenter)
         self.zoomposorigin = None
@@ -131,11 +132,11 @@ class EarthPlot(FigureCanvas):
 
     def configure(self, config):
         # get font size with fallback = 5
-        fontsize = config.getint('APPLICATION', 'font size', fallback=5)
+        self._fontsize = config.getint('APPLICATION', 'font size', fallback=5)
         # set default font size
-        plt.rcParams.update({'font.size': fontsize})
-        self._axes.xaxis.label.set_fontsize(fontsize)
-        self._axes.yaxis.label.set_fontsize(fontsize)
+        plt.rcParams.update({'font.size': self._fontsize})
+        self._axes.xaxis.label.set_fontsize(self._fontsize)
+        self._axes.yaxis.label.set_fontsize(self._fontsize)
 
         # get default directory
         self.rootdir = config.get('APPLICATION', 'root', fallback='C:\\')
@@ -145,9 +146,7 @@ class EarthPlot(FigureCanvas):
 
         # set map resolution (take only first letter in lower case)
         self._resolution = config.get(
-            'MAP',
-            'map resolution',
-            fallback=self._resolution
+            'MAP', 'map resolution', fallback=self._resolution
         ).lower()
         self._app.getmenuitem(
             item='View>Map resolution>{res}'.format(
@@ -155,10 +154,7 @@ class EarthPlot(FigureCanvas):
         ).setChecked(True)
         self._resolution = self._resolution[0]
         self._projection = config.get(
-            'MAP',
-            'projection',
-            fallback='nsper'
-        )
+            'MAP', 'projection', fallback='nsper')
         if self._projection == 'nsper':
             self._app.getmenuitem(
                 item='View>Projection>Geo'
@@ -248,6 +244,86 @@ class EarthPlot(FigureCanvas):
             elevation_index += 1
             elevation_section = 'ELEVATION' + str(elevation_index)
     # end of function configure
+
+    def to_ini(self):
+        """This function return a ConfigParser object from
+        current configuration.
+        """
+        config = configparser.ConfigParser()
+
+        # set default section
+        config['DEFAULT'] = {}
+
+        # set section dedicated to application
+        config['APPLICATION'] = {
+            'font size': self._fontsize,
+            'root': self.rootdir,
+            'title': self._plot_title
+        }
+
+        # set section dedicated to the map
+        config['MAP'] = {
+            'map resolution': self._resolution,
+            'projection': self._projection,
+            'coast lines': self._coastlines,
+            'countries': self._countries,
+            'parallels': self._parallels,
+            'meridians': self._meridians,
+            'blue marble': self._bluemarble
+        }
+
+        # set the viewer object section
+        config['VIEWER'] = self._viewer.configure()
+
+        # set the nsper projection section
+        confzoom = self._zoom.configure()
+        config['GEO'] = {
+            k: confzoom[k] for k in (
+                'min azimuth',
+                'max azimuth',
+                'min elevation',
+                'max elevation'
+            ) if k in confzoom
+        }
+
+        # set the cylindrical projection section
+        config['CYLINDRICAL'] = {
+            k: confzoom[k] for k in (
+                'min longitude',
+                'max longitude',
+                'min latitude',
+                'max latitude'
+            ) if k in confzoom
+        }
+
+        # set the multiples patterns sections
+        index_of_pattern = 1
+        for key, item in self._patterns.items():
+            config['PATTERN{:d}'.format(
+                index_of_pattern)] = {
+                    k: i for k, i in item.configure(
+                        dialog=False).items() if k not in (
+                        'key'
+                    )
+            }
+            index_of_pattern += 1
+
+        # set the elevations section
+        index_of_elevation = 1
+        for key, item in self._elev.items():
+            config['ELEVATION{:d}'.format(
+                index_of_elevation)] = item.configure()
+            index_of_elevation += 1
+
+        # set the station sections
+        index_of_station = 1
+        for item in self._stations:
+            config['STATION{:d}'.format(
+                index_of_station)] = item.configure()
+            index_of_station += 1
+
+        return config
+    # end of function to_ini
 
     def mouse_move(self, event):
         """Set mouse longitude and latitude plus directivity in the status bar.
@@ -526,8 +602,8 @@ class EarthPlot(FigureCanvas):
         at_least_one_slope = False
         for key in self._patterns:
             self._patterns[key].plot()
-            if 'display_slope' in self._patterns[key].get_config():
-                if self._patterns[key].get_config()['display_slope']:
+            if 'slope' in self._patterns[key].get_config():
+                if self._patterns[key].get_config()['slope']:
                     at_least_one_slope = True
         if not at_least_one_slope and len(self._patterns):
             for i in range(len(self._figure.axes)):
@@ -919,12 +995,22 @@ class EarthPlot(FigureCanvas):
         utils.trace('in')
         # store file name for future call to this function
         if filename:
-            self.filename = filename
+            self._filename_plot = filename
         # save plot into file
-        # plt.savefig(self.filename, dpi='figure')
-        self.print_figure(self.filename)
+        # plt.savefig(self._filename_plot, dpi='figure')
+        self.print_figure(self._filename_plot)
         utils.trace('out')
     # end of function save
+
+    def save_configuration(self, filename=None):
+        # if file name provided update the persistent filename
+        if filename:
+            self._filename_configuration = filename
+
+        # save configparser object into file
+        with open(self._filename_configuration, 'w') as configfile:
+            self.to_ini().write(configfile)
+    # end of method save_configuration
 
     ###################################################################
     #

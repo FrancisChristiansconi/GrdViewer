@@ -15,46 +15,62 @@ class Viewer(object):
     """
 
     # Default constructor for Viewer
-    def __init__(self, lon=0.0, lat=0.0, alt=35786000.0):
-        self._longitude_deg = lon
-        self._latitude_deg = lat
-        self._altitude_m = alt
+    def __init__(self, lon=0.0, lat=0.0, alt=35786000.0, config=None):
+        self._config = {}
+        self.configure({
+            'longitude': lon,
+            'latitude': lat,
+            'altitude': alt
+        })
+        self.configure(config)
     # End of Constructor
 
-    def longitude(self, lon: float = None) -> float:
+    def longitude(self, lon: float = None):
         """Get/set for attribute _longitude_deg.
         """
         if lon is not None:
-            self._longitude_deg = lon
-        return self._longitude_deg
+            self._config['longitude'] = lon
+        return self._config['longitude']
     # end of longitude function
 
-    def latitude(self, lat: float = None) -> float:
+    def latitude(self, lat: float = None):
         """Get/set for attribute _latitude_deg.
         """
         if lat is not None:
-            self._latitude_deg = lat
-        return self._latitude_deg
+            self._config['latitude'] = lat
+        return self._config['latitude']
     # end of latitude function
 
-    def altitude(self, alt: float = None) -> float:
+    def altitude(self, alt: float = None):
         """Get/set for attribute _altitude_m.
         """
         if alt is not None:
-            self._altitude_m = alt
-        return self._altitude_m
+            self._config['altitude'] = alt
+        return self._config['altitude']
     # end of altitude function
 
     def set(self, lon: float = None, lat: float = None, alt: float = None):
         """Set all three LLA coordinates at once.
         """
         if lon is not None:
-            self._longitude_deg = lon
+            self._config['longitude'] = lon
         if lat is not None:
-            self._latitude_deg = lat
+            self._config['latitude'] = lat
         if alt is not None:
-            self._altitude_m = alt
+            self._config['altitude'] = alt
     # end of set function
+
+    def configure(self, config=None):
+        """Properly configure instance.
+        Make sure none-string values are the right type.
+        """
+        if config is not None:
+            self._config.update(config)
+            self._config['longitude'] = float(self._config['longitude'])
+            self._config['latitude'] = float(self._config['latitude'])
+            self._config['altitude'] = float(self._config['altitude'])
+        return self._config
+    # end of configure function
 
 # end of class Viewer
 

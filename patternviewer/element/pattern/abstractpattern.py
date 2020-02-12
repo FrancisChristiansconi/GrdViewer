@@ -115,9 +115,9 @@ class AbstractPattern(Element):
         self._plot = None
 
         # satellite position
-        sat_lon = self.set(conf, 'sat_lon', 0)
-        sat_lat = self.set(conf, 'sat_lat', 0)
-        sat_alt = self.set(conf, 'sat_alt', cst.ALTGEO)
+        sat_lon = self.set(conf, 'longitude', 0)
+        sat_lat = self.set(conf, 'latitude', 0)
+        sat_alt = self.set(conf, 'altitude', cst.ALTGEO)
         self._satellite = Viewer(sat_lon, sat_lat, sat_alt)
 
         # Conversion factor
@@ -215,40 +215,48 @@ class AbstractPattern(Element):
         if config is not None:
             # merge to this instance dictionary
             self._conf.update(config)
-            # file name
-            self._filename = self.set(self._conf, 'filename')
             # boolean: display slope (True) or isolevel (False)
-            self._display_slope = self.set(self._conf, 'display_slope', False)
+            self._conf['slope'] = bool(self.set(
+                self._conf, 'slope', False))
             # float[]: range of slope displayed
             self._slope_range = self.set(self._conf, 'slopes', [3, 30])
             # boolean: use x axis reverted
-            self._revert_x = self.set(self._conf, 'revert_x', False)
+            self._revert_x = self.set(self._conf, 'revert x-axis', False)
             # boolean: use y axis reverted
-            self._revert_y = self.set(self._conf, 'revert_y', False)
+            self._revert_y = self.set(self._conf, 'revert y-axis', False)
             # boolean: rotate 180 degrees around sub sat
             self._rotate = self.set(self._conf, 'rotate', False)
             # boolean: use second polarisation as copol
-            self._use_second_pol = self.set(
-                self._conf, 'use_second_pol', False)
+            self._conf['second polarisation'] = bool(
+                self.set(self._conf, 'second polarisation', False))
             # boolean: shrink the pattern at display
-            self._shrink = self.set(self._conf, 'shrink', False)
+            self._conf['shrink'] = bool(
+                self.set(self._conf, 'shrink', False))
             # float: absolute shrink along azimuth in degrees
-            self._azshrink = self.set(self._conf, 'azshrink', 0.25)
+            self._conf['azimuth shrink'] = float(
+                self.set(self._conf, 'azimuth shrink', 0.0))
             # float: absolute shrink along elevation in degrees
-            self._elshrink = self.set(self._conf, 'elshrink', 0.25)
+            self._conf['elevation shrink'] = float(
+                self.set(self._conf, 'elevation shrink', 0.0))
             # offset of pattern
-            self._offset = self.set(self._conf, 'offset', False)
+            self._conf['offset'] = bool(self.set(
+                self._conf, 'offset', False))
+            self._conf['offset azel format'] = bool(self.set(
+                self._conf, 'offset azel format', False))
             # azimuth offset
-            self._azimuth_offset = self.set(self._conf, 'azoffset', 0)
+            self._conf['azimuth offset'] = float(self.set(
+                self._conf, 'azimuth offset', 0.0))
             # elevation offset
-            self._elevation_offset = self.set(self._conf, 'eloffset', 0)
+            self._conf['elevation offset'] = float(self.set(
+                self._conf, 'elevation offset', 0.0))
             # conversion factor
-            self._conversion_factor = self.set(self._conf, 'cf', 0)
+            self._conf['conversion factor'] = float(self.set(
+                self._conf, 'conversion factor', 0))
             # satellite position
-            sat_lon = self.set(self._conf, 'sat_lon', 0)
-            sat_lat = self.set(self._conf, 'sat_lat', 0)
-            sat_alt = self.set(self._conf, 'sat_alt', cst.ALTGEO)
-            self._satellite = Viewer(sat_lon, sat_lat, sat_alt)
+            sat_lon = self.set(self._conf, 'longitude', 0)
+            sat_lat = self.set(self._conf, 'latitude', 0)
+            sat_alt = self.set(self._conf, 'altitude', cst.ALTGEO)
+            self._satellite = Viewer(lon=sat_lon, lat=sat_lat, alt=sat_alt)
 
             # if requested by the new configuration, rotate the pattern
             self.rotate()
@@ -259,7 +267,7 @@ class AbstractPattern(Element):
             self.generate_grid()
 
             # set the data to be plotted according to configuration
-            self.set_to_plot(self._use_second_pol)
+            self.set_to_plot(self._conf['second polarisation'])
 
             # reverse x and y axis if requested
             if self._revert_x:
@@ -267,7 +275,7 @@ class AbstractPattern(Element):
             if self._revert_y:
                 self._to_plot = self._to_plot[:, ::-1]
 
-            self._isolevel = self.set(self._conf, 'isolevel')
+            self._isolevel = self.set(self._conf, 'level')
             if self._isolevel is None:
                 max_directivity = np.max(self._to_plot)
                 self._isolevel = np.array(cst.DEFAULT_ISOLEVEL_DBI) + \
@@ -292,14 +300,16 @@ class AbstractPattern(Element):
                     'set_to_plot: No crosspol data available. Stick to copol.')
                 self._to_plot = self.copol()
         # if shrink option
-        if self._shrink:
+        if self._conf['shrink']:
             # shrink_copol uses interpolate_copol function that
             # uses _to_plot attribute
-            self._to_plot = self.shrink_copol(self._azshrink, self._elshrink)
+            self._to_plot = self.shrink_copol(
+                self._conf['azimuth shrink'], self._conf['elevation shrink'])
         elif self.set(self.configure(), 'expand', False):
             # expand_copol uses interpolate_copol function that
             # uses _to_plot attribute
-            self._to_plot = self.expand_copol(self._azshrink, self._elshrink)
+            self._to_plot = self.expand_copol(
+                self._conf['azimuth shrink'], self._conf['elevation shrink'])
 
         utils.trace('out')
 
@@ -604,14 +614,14 @@ class AbstractPattern(Element):
         # Get azel grid
         az, el = self.azel_grid(set)
 
-        if self._offset:
-            if self.set(self.configure(), 'azeloffset', True):
-                az_offset = self._azimuth_offset
-                el_offset = self._elevation_offset
+        if self._conf['offset']:
+            if self.set(self.configure(), 'offset azel format', True):
+                az_offset = self.configure()['azimuth offset']
+                el_offset = self.configure()['elevation offset']
             else:
-                az_offset, el_offset = \
-                    self.compute_azel_boresight(self._azimuth_offset,
-                                                self._elevation_offset)
+                az_offset, el_offset = self.compute_azel_boresight(
+                    self.configure()['longitude offset'],
+                    self.configure()['latitude offset'])
         else:
             az_offset = 0
             el_offset = 0
@@ -620,7 +630,7 @@ class AbstractPattern(Element):
         az += az_offset
         el += el_offset
         # rotate azel grid
-        yaw_deg = self.set(conf=self.configure(), key='sat_yaw', fallback=0.0)
+        yaw_deg = self.set(conf=self.configure(), key='yaw', fallback=0.0)
         yaw_rad = yaw_deg * cst.DEG2RAD
         az_origin = az
         el_origin = el
@@ -750,14 +760,14 @@ class AbstractPattern(Element):
                       satlon=self._satellite.longitude(),
                       satlat=self._satellite.latitude()))
         # consider offset
-        if self._offset:
-            if self.set(self.configure(), 'azeloffset', True):
-                az_offset = self._azimuth_offset
-                el_offset = self._elevation_offset
+        if self._conf['offset']:
+            if self.set(self.configure(), 'offset azel format', True):
+                az_offset = self.configure()['azimuth offset']
+                el_offset = self.configure()['elevation offset']
             else:
-                az_offset, el_offset = \
-                    self.compute_azel_boresight(self._azimuth_offset,
-                                                self._elevation_offset)
+                az_offset, el_offset = self.compute_azel_boresight(
+                    self.configure()['longitude offset'],
+                    self.configure()['latitude offset'])
         else:
             az_offset = 0
             el_offset = 0
@@ -770,7 +780,7 @@ class AbstractPattern(Element):
             np.arctan2(y, self._satellite.altitude())
 
         # rotate back azel grid
-        yaw_deg = self.set(conf=self.configure(), key='sat_yaw', fallback=0.0)
+        yaw_deg = self.set(conf=self.configure(), key='yaw', fallback=0.0)
         yaw_rad = yaw_deg * cst.DEG2RAD
         az_origin = az
         el_origin = el
@@ -803,14 +813,14 @@ class AbstractPattern(Element):
         cbar = self._earthplot._clrbar
         cbar_axes = self._earthplot._clrbar_axes
         # choose data to plot
-        if not self._display_slope:
+        if not self._conf['slope']:
             x, y = map(self.longitude(), self.latitude())
             lon_mesh, lat_mesh = self.longitude(), self.latitude()
             x_origin, y_origin = 0, 0
-            to_plot = self._to_plot + self._conversion_factor
-            isolevelscale = self._isolevel
+            to_plot = self._to_plot + self._conf['conversion factor']
+            isolevelscale = self._conf['level']
             maxgain, _, _ = self.getmax()
-            colorbarscale = np.amin(self._isolevel), np.ceil(maxgain)
+            colorbarscale = np.amin(self._conf['level']), np.ceil(maxgain)
         else:
             # define regular grid and azimuth/elevation
             nx, ny = 1001, 1001
@@ -821,9 +831,14 @@ class AbstractPattern(Element):
             az_lin = np.linspace(az_min, az_max, nx)
             el_lin = np.linspace(el_min, el_max, ny)
             az_mesh, el_mesh = np.meshgrid(az_lin, el_lin)
-            if self._offset:
-                az_offset = self._azimuth_offset
-                el_offset = self._elevation_offset
+            if self._conf['offset']:
+                if self._conf['offset azel format']:
+                    az_offset = self._conf['azimuth offset']
+                    el_offset = self._conf['elevation offset']
+                else:
+                    az_offset, el_offset = self.compute_azel_boresight(
+                        self._conf['longitude offset'],
+                        self._conf['latitude offset'])
             else:
                 az_offset = 0
                 el_offset = 0
@@ -857,7 +872,7 @@ class AbstractPattern(Element):
                                       3)
             colorbarscale = self._slope_range
         # display either isolevel or color map of slopes
-        if not self._conf['Color surface']:
+        if not self._conf['color surface']:
             # try to display isolevel
             # if wrong pol is chosen, isolevel value might not be found,
             # hence an exception is thrown and has to be caught.
@@ -879,7 +894,7 @@ class AbstractPattern(Element):
                                          isolevelscale,
                                          linestyles=linestyles,
                                          linewidths=linewidths)
-                if not self._shrink:
+                if not self._conf['shrink']:
                     cs_marker, cs_tag = self.displaymax(map)
                 else:
                     cs_marker = None
@@ -895,10 +910,10 @@ class AbstractPattern(Element):
 
             except ValueError as value_err:
                 print(value_err)
-                if not type(self._filename) is list:
+                if not type(self._conf['filename']) is list:
                     print(('Pattern {file}'
                            ' will not be displayed.').format(
-                               file=self._filename))
+                               file=self._conf['filename']))
                 else:
                     print(
                         'Law {} will not be displayed.'.format(
@@ -976,6 +991,7 @@ class AbstractPattern(Element):
         set is the index of the data set to use
         """
         utils.trace('in')
+
         # open file and read text data
         file = open(filename, "w")
 
@@ -999,14 +1015,14 @@ class AbstractPattern(Element):
         ye = np.max(self.elevation(set)) * cst.DEG2RAD
 
         # recompute boresight
-        if self._offset:
-            if self.set(self.configure(), 'azeloffset', True):
-                az_offset = self._azimuth_offset
-                el_offset = self._elevation_offset
+        if self._conf['offset']:
+            if self.set(self.configure(), 'offset azel format', True):
+                az_offset = self._conf['azimuth offset']
+                el_offset = self._conf['elevation offset']
             else:
-                az_offset, el_offset = \
-                    self.compute_azel_boresight(self._azimuth_offset,
-                                                self._elevation_offset)
+                az_offset, el_offset = self.compute_azel_boresight(
+                    self._conf['longitude offset'],
+                    self._conf['latitude offset'])
             x_offset = az_offset * cst.DEG2RAD
             y_offset = el_offset * cst.DEG2RAD
         else:
@@ -1034,9 +1050,10 @@ class AbstractPattern(Element):
 
         # write pattern data
         if shrunk:
-            co_to_write = self.shrink_copol(azshrink=self._azshrink,
-                                            elshrink=self._elshrink,
-                                            az_co=x, el_co=y, set=set)
+            co_to_write = self.shrink_copol(
+                azshrink=self._conf['azimuth shrink'],
+                elshrink=self._conf['elevation shrink'],
+                az_co=x, el_co=y, set=set)
         else:
             co_to_write, _ = self.interpolate_copol(x, y, set)
 

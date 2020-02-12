@@ -156,7 +156,7 @@ class PatternDialog(QDialog):
         self.chkxpol.stateChanged.connect(self.refresh_isolevel)
         self.chkslope = QCheckBox('Display Slope', parent=self)
         self.chkslope.stateChanged.connect(self.chk_display_slope_changed)
-        self.chksurf = QCheckBox('Color surface', parent=self)
+        self.chksurf = QCheckBox('color surface', parent=self)
         optionbox = QGridLayout(None)
         optionbox.addWidget(self.chkxpol, 1, 1)
         optionbox.addWidget(self.chkslope, 1, 2)
@@ -299,8 +299,8 @@ class PatternDialog(QDialog):
         self.lat_field.setText(str(pattern.satellite().latitude()))
         self.alt_field.setText(str(pattern.satellite().altitude()))
         self.yaw_field.setText(
-            str(pattern.set(pattern.configure(), 'sat_yaw', 0.0)))
-        if pattern._display_slope:
+            str(pattern.set(pattern.configure(), 'yaw', 0.0)))
+        if pattern.configure()['slope']:
             low = np.amin(pattern.configure()['slopes'])
             high = np.amax(pattern.configure()['slopes'])
             self.isolevel_field.setText('{},{}'.format(low, high))
@@ -309,27 +309,35 @@ class PatternDialog(QDialog):
         self.chk_revert_x.setChecked(pattern._revert_x)
         self.chk_revert_y.setChecked(pattern._revert_y)
         self.chk_rotate.setChecked(pattern._rotated)
-        self.chkxpol.setChecked(pattern._use_second_pol)
-        self.chkslope.setChecked(pattern._display_slope)
-        _shrink = pattern._shrink
+        self.chkxpol.setChecked(pattern.configure()['second polarisation'])
+        self.chkslope.setChecked(pattern.configure()['slope'])
+        _shrink = pattern.configure()['shrink']
         _expand = pattern.set(pattern.configure(), 'expand', False)
         self.chkshrink.setChecked(_shrink | _expand)
         if _shrink != _expand:
             self.shrink_button_state_changed()
         elif _shrink and _expand:
             print("Error: you cannot shrink and expand in the same time.")
-        self.chk_offset.setChecked(pattern._offset)
+        self.chk_offset.setChecked(pattern.configure()['offset'])
         self.chksurf.setChecked(pattern.set(
-            pattern.configure(), 'Color surface', False))
-        if pattern._shrink:
-            self.azfield.setText(str(pattern._azshrink))
-            self.elfield.setText(str(pattern._elshrink))
-        if pattern._offset:
-            self.az_offset_field.setText(str(pattern._azimuth_offset))
-            self.el_offset_field.setText(str(pattern._elevation_offset))
-        self.offset_button.setChecked(pattern.set(pattern.configure(),
-                                                  'azeloffset',
-                                                  True))
+            pattern.configure(), 'color surface', False))
+        if pattern.configure()['shrink']:
+            self.azfield.setText(str(pattern.configure()['azimuth shrink']))
+            self.elfield.setText(str(pattern.configure()['elevation shrink']))
+        if pattern.configure()['offset']:
+            if pattern.configure()['offset azel format']:
+                self.az_offset_field.setText(
+                    str(pattern.configure()['azimuth offset']))
+                self.el_offset_field.setText(
+                    str(pattern.configure()['elevation offset']))
+            else:
+                self.az_offset_field.setText(
+                    str(pattern.configure()['longitude offset']))
+                self.el_offset_field.setText(
+                    str(pattern.configure()['latitude offset']))
+
+        self.offset_button.setChecked(
+            pattern.set(pattern.configure(), 'offset azel format', True))
         self.offset_button_state_changed()
 
         # disable use second pol option if second pol not available
@@ -397,28 +405,32 @@ class PatternDialog(QDialog):
             return
 
         config = {}
-        config['revert_x'] = self.chk_revert_x.isChecked()
-        config['revert_y'] = self.chk_revert_y.isChecked()
+        config['revert x-axis'] = self.chk_revert_x.isChecked()
+        config['revert y-axis'] = self.chk_revert_y.isChecked()
         config['rotate'] = self.chk_rotate.isChecked()
-        config['use_second_pol'] = self.chkxpol.isChecked()
-        config['sat_alt'] = float(self.alt_field.text())
-        config['sat_lon'] = float(self.lon_field.text())
-        config['sat_lat'] = float(self.lat_field.text())
-        config['sat_yaw'] = float(self.yaw_field.text())
-        config['display_slope'] = self.chkslope.isChecked()
+        config['second polarisation'] = self.chkxpol.isChecked()
+        config['altitude'] = float(self.alt_field.text())
+        config['longitude'] = float(self.lon_field.text())
+        config['latitude'] = float(self.lat_field.text())
+        config['yaw'] = float(self.yaw_field.text())
+        config['slope'] = self.chkslope.isChecked()
         config['shrink'] = (self.chkshrink.isChecked()
                             and not self.shrink_button.isChecked())
         config['expand'] = (self.chkshrink.isChecked()
                             and self.shrink_button.isChecked())
         if config['shrink'] or config['expand']:
-            config['azshrink'] = float(self.azfield.text())
-            config['elshrink'] = float(self.elfield.text())
+            config['azimuth shrink'] = float(self.azfield.text())
+            config['elevation shrink'] = float(self.elfield.text())
         config['offset'] = self.chk_offset.isChecked()
-        config['azeloffset'] = self.offset_button.isChecked()
+        config['offset azel format'] = self.offset_button.isChecked()
         if config['offset']:
             # if offset is defined as azel
-            config['azoffset'] = float(self.az_offset_field.text())
-            config['eloffset'] = float(self.el_offset_field.text())
+            if config['offset azel format']:
+                config['azimuth offset'] = float(self.az_offset_field.text())
+                config['elevation offset'] = float(self.el_offset_field.text())
+            else:
+                config['longitude offset'] = float(self.az_offset_field.text())
+                config['latitude offset'] = float(self.el_offset_field.text())
 
         # if multigrd pattern, apply law selected
         if 'law' in self._patternctlr.configure().keys():
@@ -428,11 +440,10 @@ class PatternDialog(QDialog):
             config['slopes'] = [float(s)
                                 for s in self.isolevel_field.text().split(',')]
         else:
-            config['isolevel'] = [float(s)
-                                  for s in
-                                  self.isolevel_field.text().split(',')]
-        config['cf'] = float(self.cf_field.text())
-        config['Color surface'] = self.chksurf.isChecked()
+            config['level'] = [
+                float(s) for s in self.isolevel_field.text().split(',')]
+        config['conversion factor'] = float(self.cf_field.text())
+        config['color surface'] = self.chksurf.isChecked()
 
         self._patternctlr.configure(config=config)
 

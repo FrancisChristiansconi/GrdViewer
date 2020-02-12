@@ -137,7 +137,7 @@ class PatternControler():
             self.clearplot()
         self._plot = self._pattern.plot()
         try:
-            if self._config['display_slope'] is True:
+            if self._config['slope'] is True:
                 self._plot_type = 'surf'
             else:
                 self._plot_type = 'contour'

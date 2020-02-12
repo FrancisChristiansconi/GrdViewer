@@ -16,6 +16,21 @@ class Element(ABC):
     on the Earth map.
     """
 
+    @staticmethod
+    def __str__(self):
+        """Convert instance to string
+        """
+        # get configuration of element
+        conf = self.configure()
+
+        # append configuration items into multilines string
+        _str = ''
+        for k, i in conf:
+            _str += k + ' = ' + i + '\n'
+
+        # return .ini like string list
+        return _str
+
     @abstractmethod
     def plot(self):
         """Abstract method plot is used by the EarthPlot parent instance

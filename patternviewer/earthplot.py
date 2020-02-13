@@ -165,7 +165,10 @@ class EarthPlot(FigureCanvas):
             ).setChecked(True)
 
         # get point of view coordinates if defined
-        self._viewer = Viewer(config=config['VIEWER'])
+        if 'VIEWER'in config.sections():
+            self._viewer = Viewer(config=config._sections['VIEWER'])
+        else:
+            self._viewer = Viewer()
 
         # get Earth plot configuration
         self._bluemarble = config.getboolean(
@@ -193,8 +196,10 @@ class EarthPlot(FigureCanvas):
 
         # Initialize zoom
         self._zoom = Zoom(proj=self._projection)
-        self._zoom.configure(config._sections['GEO'])
-        self._zoom.configure(config._sections['CYLINDRICAL'])
+        if 'GEO' in config.sections():
+            self._zoom.configure(config._sections['GEO'])
+        if 'CYLINDRICAL' in config.sections():
+            self._zoom.configure(config._sections['CYLINDRICAL'])
 
         pattern_index = 1
         pattern_section = 'PATTERN' + str(pattern_index)

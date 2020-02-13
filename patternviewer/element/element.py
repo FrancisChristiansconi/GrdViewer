@@ -70,6 +70,8 @@ class Element(ABC):
             if type(input) is list:
                 return input
             else:
+                if input[0] == '[':
+                    input = input[1:-2]
                 return [convert[dtype](e) for e in input.split(',')]
 
         convert = {

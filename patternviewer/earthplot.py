@@ -262,8 +262,15 @@ class EarthPlot(FigureCanvas):
         }
 
         # set section dedicated to the map
+        resolution = {
+            'c': 'crude',
+            'l': 'low',
+            'i': 'intermediate',
+            'h': 'high',
+            'f': 'full'
+        }
         config['MAP'] = {
-            'map resolution': self._resolution,
+            'map resolution': resolution[self._resolution],
             'projection': self._projection,
             'coast lines': self._coastlines,
             'countries': self._countries,
@@ -299,13 +306,15 @@ class EarthPlot(FigureCanvas):
         # set the multiples patterns sections
         index_of_pattern = 1
         for key, item in self._patterns.items():
-            config['PATTERN{:d}'.format(
-                index_of_pattern)] = {
-                    k: i for k, i in item.configure(
-                        dialog=False).items() if k not in (
-                        'key'
-                    )
+            config['PATTERN{:d}'.format(index_of_pattern)] = {
+                k: i for k, i in item.configure(
+                    dialog=False).items() if k not in (
+                    'key',
+                )
             }
+            config['PATTERN{:d}'.format(index_of_pattern)][
+                'linewidths'] = cst.getboldness(
+                item.configure(dialog=False)['linewidths'])
             index_of_pattern += 1
 
         # set the elevations section

@@ -5,8 +5,8 @@ DEV-GV-300;Extend pattern;opposite function to shrink pattern;Val;Merged to deve
 DEV-GV-400;Yaw angle;Implement rotation around subsatellite point;Val;published in 1.4.2
 DEV-GV-500;Export pattern;implement export of pattern;Val;published
 DEV-GV-600;Google Maps export;Add kml/kmz file export. Use of simplekml module ?;;
-DEV-GV-700;Save configuration;use possibility to save current plot in an .ini file;"";""
-DEV-GV-800;Add color to land and sea;add possiblity to color land and sea with picked colors;"";""
+DEV-GV-700;Save configuration;use possibility to save current plot in an .ini file;To validate. proto in develop.;
+DEV-GV-800;Add color to land and sea;add possiblity to color land and sea with picked colors;;
 REV-GV-100;Align displayed element behaviour;All displayed elements inherit from Element class. They should be plotted, cleared and configured using the same routines. Edit/Remove menu options should be available in the GUI.;In progress;Not that easy to align everything.
 REV-GV-110;Stations management;finish work on the station import and management;Val;published in 1.5.0
 REV-GV-200;Rectangular zoom;Implement inhibition of rectangular zoom trigger when taking focus over main windows.;Val;Published in 1.4.1

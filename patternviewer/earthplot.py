@@ -1015,6 +1015,8 @@ class EarthPlot(FigureCanvas):
         # if file name provided update the persistent filename
         if filename:
             self._filename_configuration = filename
+        else:
+            self._filename_configuration = 'grdviewer.ini'
 
         # save configparser object into file
         with open(self._filename_configuration, 'w') as configfile:

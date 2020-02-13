@@ -615,7 +615,7 @@ class GrdViewer(QMainWindow):
         self.config.read(filename)
         self.clearplot()
         self._earthplot.configure(self.config)
-        self._earthplot.draw()
+        self._earthplot.draw_elements()
 
     def get_centralwidget(self):
         """Accessor to central widget.

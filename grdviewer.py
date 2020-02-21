@@ -9,7 +9,10 @@ all the work is done.
 import os
 # system module
 import sys
+import getopt
 from sys import argv
+# import logging facility
+import logging
 
 # import third party modules
 # ==================================================================================================
@@ -24,8 +27,6 @@ import numpy as np
 
 # import local modules
 # ==================================================================================================
-# debug utilities
-import patternviewer.utils as utils
 # Earthplot objects
 import patternviewer.earthplot as plc
 # elevation curves dialog
@@ -44,6 +45,7 @@ from patternviewer.element import polygon
 import patternviewer.constant as cst
 # import the package version
 from patternviewer.version import version
+import patternviewer.utils as utils
 
 # static functions
 # ==================================================================================================
@@ -63,6 +65,9 @@ class GrdViewer(QMainWindow):
     # constructor
     def __init__(self, inifile=None):
         utils.trace("in")
+        logging.debug(
+            'Init GrdViewer instance with inifile={inifile:s}'.format(
+                inifile=inifile))
 
         # Parent constructor
         super().__init__()
@@ -660,15 +665,51 @@ class GrdViewer(QMainWindow):
 
 # Main execution
 if __name__ == '__main__':
+    # inifile
+    INIFILE = 'grdviewer.ini'
+    # log file
+    LOGFILE = 'grdviewer.log'
+    # log level
+    LOGLEVEL = logging.DEBUG
+    # log formatting
+    FORMAT = '%(asctime)-15s:%(message)s'
+
+    # get the options
+    # h to get syntax
+    # i to specify inifile
+    # l to specify logfile
+    # d to set log level
+    try:
+        opts, args = getopt.getopt(
+            argv, 'i:l:d:h',
+            ['inifile=', 'logfile=', 'loglevel='])
+    except getopt.GetoptError:
+        print('grdviewer.exe -i <inifile> -l <logfile> -d <loglevel>')
+        sys.exit(2)
+
+    # process arguments
+    for opt, arg in opts:
+        if opt == '-h':
+            print('grdviewer.exe -i <inifile> -l <logfile> -d <loglevel>')
+            sys.exit()
+        elif opt in ('-i', '--inifile'):
+            INIFILE = arg
+        elif opt in ('-l', '--logfile'):
+            LOGFILE = arg
+        elif opt in ('-d', '--loglevel'):
+            loglevel = getattr(logging, arg.upper())
+
+    # create loggigng file
+    logging.basicConfig(filename=LOGFILE, level=LOGLEVEL)
+
+    logging.info('grdviewer version:' + version())
+
     # Create main window
     MAIN_WINDOW = QApplication(argv)
-    if len(argv) > 1:
-        INIFILE = argv[1]
-    else:
-        INIFILE = None
+
+    # create main object
     APP = GrdViewer(INIFILE)
 
     # Start main loop
     sys.exit(MAIN_WINDOW.exec_())
-
 # end of module grdviewer

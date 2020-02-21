@@ -358,7 +358,8 @@ class PatternDialog(QDialog):
         if self._pattern is None:
             return ",".join(str(x) for x in cst.DEFAULT_ISOLEVEL_DBI)
         else:
-            return self._pattern.configure()['level']
+            return self._pattern.set(
+                self._pattern.configure(), 'level', fallback='', dtype=str)
     # end of function get_isolevel
 
     def get_cf(self):
@@ -388,7 +389,10 @@ class PatternDialog(QDialog):
     # end of function isoleveladd
 
     def get_isolevelmax(self, levelstring):
-        return float(levelstring.split(',')[-1].split(':')[-1])
+        if levelstring != '':
+            return float(levelstring.split(',')[-1].split(':')[-1])
+        else:
+            return 0.0
 
     def refresh_isolevel(self):
         """Refresh isolevel field regarding polarisation selected and
@@ -406,16 +410,19 @@ class PatternDialog(QDialog):
 
         cf = self.get_cf()
 
+        level_str = self._pattern.set(
+            self._pattern.configure(), 'level',
+            fallback=cst.DEFAULT_ISOLEVEL_STR, dtype=str)
         if self.chkxpol.checkState():
             isolevel = self.isoleveladd(
-                self._pattern.configure()['level'],
+                level_str,
                 max_cr + cf - self.get_isolevelmax(
-                    self._pattern.configure()['level']))
+                    level_str))
         else:
             isolevel = self.isoleveladd(
-                self._pattern.configure()['level'],
+                level_str,
                 max_co + cf - self.get_isolevelmax(
-                    self._pattern.configure()['level']))
+                    level_str))
 
         self.isolevel_field.setText(isolevel)
     # end of method refresh_isolevel

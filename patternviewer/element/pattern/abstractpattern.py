@@ -297,12 +297,13 @@ class AbstractPattern(Element):
             if self._conf['revert y-axis']:
                 self._to_plot = self._to_plot[:, ::-1]
 
-            self._isolevel = self.lvl_str_to_list(
-                self.set(self._conf, 'level', str))
+            self._isolevel = self.set(self._conf, 'level', dtype=str)
             if self._isolevel is None:
                 max_directivity = np.max(self._to_plot)
                 self._isolevel = np.array(cst.DEFAULT_ISOLEVEL_DBI) + \
                     int(max_directivity + self._conf['conversion factor'])
+            else:
+                self._isolevel = self.lvl_str_to_list(self._isolevel)
 
         utils.trace('out')
         return self._conf

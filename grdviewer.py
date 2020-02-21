@@ -373,12 +373,14 @@ class GrdViewer(QMainWindow):
         filenames, _ = QFileDialog.getOpenFileNames(
             self,
             caption='Select pattern file(s),',
+            directory=self._earthplot.rootdir,
             filter='pattern files (*.grd *.pat);; all files (*)'
         )
         # if file name provided open the customised dialog box
         if not filenames == []:
             for filename in filenames:
-                pattern = self._earthplot.loadpattern({'file': filename})
+                pattern = self._earthplot.loadpattern(
+                    {'file': filename}, dialog=True)
             # if pattern:
             #     self._earthplot.draw_elements()
         utils.trace('out')

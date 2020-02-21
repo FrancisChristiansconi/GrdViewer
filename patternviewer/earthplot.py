@@ -890,7 +890,7 @@ class EarthPlot(FigureCanvas):
         return file_key
     # end of function get_file_key
 
-    def loadpattern(self, conf=None):
+    def loadpattern(self, conf=None, dialog=False):
         """Load and display a grd file.
         """
         utils.trace('in')
@@ -909,14 +909,11 @@ class EarthPlot(FigureCanvas):
             print(pnc.__str__())
             utils.trace('out')
             return None
-        # open dialog to fine tune pattenr creation
-        if 'longitude' not in conf:
-            dialog = True
+        # open dialog to fine tune pattern creation
+        if dialog:
             conf['longitude'] = self._viewer.longitude()
             conf['latitude'] = self._viewer.latitude()
             conf['altitude'] = self._viewer.altitude()
-        else:
-            dialog = False
         pattern.configure(dialog=dialog, config=conf)
 
         # Add grd in grd dictionary

@@ -9,6 +9,7 @@ CONTACT = 'christian.francesconi@ses.com'
 
 # Default isolevel to be displayed at patten loading
 DEFAULT_ISOLEVEL_DBI = [-10, -8, -6, -4, -2, 0]
+DEFAULT_ISOLEVEL_STR = '-10,-8,-6,-4,-2,0'
 
 # geostationary altitude
 ALTGEO = 35786000.0  # m

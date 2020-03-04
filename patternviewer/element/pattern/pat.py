@@ -4,6 +4,11 @@ Created on Wed Oct 24 15:56:00 2018
 This module contains definition of Pat class.
 """
 
+#  Standard modules
+import os
+import sys
+import logging
+
 # Third party modules import
 # ==================================================================================================
 import numpy as np
@@ -278,7 +283,6 @@ class Pat(AbstractPattern):
     def magnitude(self, iunit, component1, component2):
         """Convert (C1, C2) to magnitude (dB) depending on IUNIT value
         """
-        utils.trace('in')
 
         def convert(component1, component2):
             """Convert from real/imag electrical field values to magnitude.
@@ -297,14 +301,12 @@ class Pat(AbstractPattern):
         # convert/extract the magnitude
         mag = converter[iunit](component1, component2)
 
-        utils.trace('out')
         return mag
     # end of function magnitude
 
     def phase(self, iunit, component1, component2):
         """Convert (C1, C2) to phase (deg) depending on IUNIT value
         """
-        utils.trace('in')
 
         def convert(component1, component2):
             """Convert from real/imag electrical field to phase (in degrees)
@@ -323,7 +325,6 @@ class Pat(AbstractPattern):
         # convert/extract the magnitude
         phs = converter[iunit](component1, component2)
 
-        utils.trace('out')
         return phs
     # end of function phase
 # ==================================================================================================

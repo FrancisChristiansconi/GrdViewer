@@ -6,6 +6,7 @@ the Earth plot and all the subsequent elements plots.
 
 # import os module for files and directories manipulation
 import os
+import sys
 
 # import Matplotlib and Base_earth_map
 from mpl_toolkits.basemap import Basemap
@@ -23,9 +24,10 @@ from PyQt5 import QtCore
 import numpy as np
 # mangement of inifile
 import configparser
+# logging utility
+import logging
 
 # local module
-import patternviewer.utils as utils
 from patternviewer.element.pattern.control import PatternControler
 from patternviewer.element.pattern.abstractpattern \
     import PatternNotCreatedError
@@ -46,7 +48,24 @@ class EarthPlot(FigureCanvas):
     # EarthPlot constructor
     def __init__(self, parent=None, width=5, height=5, dpi=300,
                  proj='nsper', res='crude', config=None):
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(parent={parent},'
+            + 'width={width},'
+            + 'height={height},'
+            + 'dpi={dpi},'
+            + 'proj={proj}'
+            + 'res={res}'
+            + 'config={config})').format(
+                parent=parent,
+                width=width,
+                height=height,
+                dpi=dpi,
+                proj=proj,
+                res=res,
+                config=config
+        ))
 
         # Store Canvas properties
         self._plot_title = 'Default Title'
@@ -126,11 +145,15 @@ class EarthPlot(FigureCanvas):
 
         # draw the already loaded elements
         self.draw_elements()
-
-        utils.trace('out')
     # End of EarthPlot constructor
 
     def configure(self, config):
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(config={config})').format(
+                config=config
+        ))
         # get font size with fallback = 5
         self._fontsize = config.getint('APPLICATION', 'font size', fallback=5)
         # set default font size
@@ -254,6 +277,10 @@ class EarthPlot(FigureCanvas):
         """This function return a ConfigParser object from
         current configuration.
         """
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+        ))
         config = configparser.ConfigParser()
 
         # set default section
@@ -602,7 +629,11 @@ class EarthPlot(FigureCanvas):
     def draw_elements(self):
         """This method redraw all elements of the earth plot
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+        ))
+
         # clear display and reset it
         self._axes.clear()
 
@@ -643,11 +674,14 @@ class EarthPlot(FigureCanvas):
 
         # call to surcharged draw function
         self.draw()
-        utils.trace('out')
     # end of draw_elements function
 
     def draw_axis(self):
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+        ))
+
         if self._projection == 'nsper':
             self._axes.set_xlabel('Azimuth (deg)')
             self._axes.set_ylabel('Elevation (deg)')
@@ -695,27 +729,45 @@ class EarthPlot(FigureCanvas):
             self._axes.set_yticklabels('{0:0.1f}'.format(f) for f in latticks)
         self._axes.tick_params(axis='both', width=0.2)
         self._axes.set_title(self._plot_title)
-        utils.trace('out')
     # end of function draw_axis
 
     def settitle(self, title: str):
         """Set Earth plot title.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(title={title})').format(
+                title=title
+        ))
+
         self._plot_title = title
         self._axes.set_title(self._plot_title)
-        utils.trace('out')
     # end of method settitle
 
     # Change observer Longitude
     def setviewerlongitude(self, lon):
-        utils.trace()
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(lon={lon})').format(
+                lon=lon
+        ))
+
         self._viewer.longitude(lon)
     # end of method setviewerlongitude
 
     # Draw Earth and return Basemap handler
     def drawearth(self, proj='nsper', resolution='c'):
-        utils.trace('in')
+
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(proj={proj},'
+            + 'resolution={resolution})').format(
+                proj=proj,
+                resolution=resolution
+        ))
 
         ax = self._axes
         # add Earth _earth_map
@@ -817,13 +869,18 @@ class EarthPlot(FigureCanvas):
         # Unconditional drawing of Earth boundary
         self._earth_map.drawmapboundary(linewidth=0.2)
 
-        utils.trace('out')
         return self._earth_map
     # end of drawEarth function
 
     # Draw isoElevation contours
     def drawelevation(self, level=(10, 20, 30)):
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(level={level})').format(
+                level=level
+        ))
+
         # define grid
         iNx = 200
         iNy = 200
@@ -836,14 +893,21 @@ class EarthPlot(FigureCanvas):
         csElev = self._earth_map.contour(
             fXMesh, fYMesh, fElev, level,
             colors='black', linestyles='dotted', linewidths=0.5)
-        utils.trace('out')
         return csElev
     # end of drawelevation
 
     def elevation(self, stalon, stalat):
         """Compute elevation of spacecraft seen from a station on the ground.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(stalon={stalon},'
+            + 'stalat={stalat})').format(
+                stalon=stalon,
+                stalat=stalat
+        ))
+
         # compute phi
         phi = np.arccos(
             np.cos(cst.DEG2RAD * stalat)
@@ -867,13 +931,18 @@ class EarthPlot(FigureCanvas):
         elev = np.where(np.absolute(
             stalon - self._viewer.longitude()) < 90, elev, -1)
 
-        utils.trace('out')
         # Return vector
         return elev
     # end of function elevation
 
     def get_file_key(self, filename):
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(filename={filename})').format(
+                filename=filename
+        ))
+
         file_index = 1
         if type(filename) is list:
             f = os.path.basename(filename[0])
@@ -886,19 +955,27 @@ class EarthPlot(FigureCanvas):
         if file_index == 50:
             print(('Max repetition of same file reached.'
                   ' Index 50 will be overwritten'))
-        utils.trace('out')
         return file_key
     # end of function get_file_key
 
     def loadpattern(self, conf=None):
         """Load and display a grd file.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(conf={conf})').format(
+                conf=conf
+        ))
+
         try:
             filename = conf['file']
         except KeyError:
-            print('load_pattern:File name is mandatory.')
-            utils.trace('out')
+            logging.warning((
+                sys._getframe().f_code.co_filename.split('\\')[-1]
+                + ':' + sys._getframe().f_code.co_name
+                + ':File name is mandatory.'
+            ))
             return None
         file_key = self.get_file_key(filename)
         conf['key'] = file_key
@@ -906,8 +983,11 @@ class EarthPlot(FigureCanvas):
             pattern = PatternControler(parent=self,
                                        config=conf)
         except PatternNotCreatedError as pnc:
-            print(pnc.__str__())
-            utils.trace('out')
+            logging.error((
+                sys._getframe().f_code.co_filename.split('\\')[-1]
+                + ':' + sys._getframe().f_code.co_name
+                + ':' + pnc.__str__()
+            ))
             return None
         # open dialog to fine tune pattenr creation
         if 'longitude' not in conf:
@@ -926,13 +1006,23 @@ class EarthPlot(FigureCanvas):
         itemlist = ['']
         itemlist.extend(self._patterns.keys())
         self._app.setpatterncombo(itemlist)
+        logging.info((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + ': Loaded pattern : {filename}').format(
+                filename=filename
+        ))
         # return pattern controler instance
-        utils.trace('out')
         return self._patterns[file_key]
     # end of load_pattern
 
     # Zoom on the _earth_map
     def updatezoom(self):
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+        ))
+
         self.llcrnrx = self.az2x(self._zoom.min_azimuth())
         self.llcrnry = self.el2y(self._zoom.min_elevation())
         self.urcrnrx = self.az2x(self._zoom.max_azimuth())
@@ -948,6 +1038,11 @@ class EarthPlot(FigureCanvas):
     # end of method updatezoom
 
     def get_width(self):
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+        ))
+
         if self._projection == 'nsper':
             return self.urcrnrx - self.llcrnrx
         elif self._projection == 'cyl':
@@ -957,6 +1052,11 @@ class EarthPlot(FigureCanvas):
     # end of function get_width
 
     def get_height(self):
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+        ))
+
         if self._projection == 'nsper':
             return self.urcrnry - self.llcrnry
         elif self._projection == 'cyl':
@@ -967,56 +1067,113 @@ class EarthPlot(FigureCanvas):
 
     # convert Azimuth to _earth_map.x
     def az2x(self, az):
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(az={az})').format(
+                az=az
+        ))
+
         return np.tan(az * cst.DEG2RAD) * self._viewer.altitude()
 
     # convert Elevation to _earth_map.y
     def el2y(self, el):
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(el={el})').format(
+                el=el
+        ))
+
         return np.tan(el * cst.DEG2RAD) * self._viewer.altitude()
 
     def x2az(self, x):
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(x={x})').format(
+                x=x
+        ))
+
         return np.arctan2(x, self._viewer.altitude()) * cst.RAD2DEG
 
     def y2el(self, y):
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(y={y})').format(
+                y=y
+        ))
+
         return np.arctan2(y, self._viewer.altitude()) * cst.RAD2DEG
 
     def projection(self, proj: str = None):
         """This function allows access to attribute _projection.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(proj={proj})').format(
+                proj=proj
+        ))
+
         if proj:
             if proj == 'nsper' or proj == 'cyl':
                 self._projection = proj
             else:
                 raise ValueError("Projection is either 'nsper' or 'cyl'.")
-        utils.trace('out')
+
         return self._projection
     # end of function projection
 
     def set_resolution(self, resolution: str = 'c'):
         """Set Earth map resolution.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(resolution={resolution})').format(
+                resolution=resolution
+        ))
+
         self._resolution = resolution
         self._earth_map.resolution = self._resolution
         self.draw_elements()
-        utils.trace('out')
     # end of function set_resolution
 
     def save(self, filename=None):
         """Save the plot with given filename. If file name not provided,
         use last used name.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(filename={filename})').format(
+                filename=filename
+        ))
+
         # store file name for future call to this function
         if filename:
             self._filename_plot = filename
         # save plot into file
         # plt.savefig(self._filename_plot, dpi='figure')
         self.print_figure(self._filename_plot)
-        utils.trace('out')
+        logging.info((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + ': Saved plot in : {filename})').format(
+                filename=filename
+        ))
     # end of function save
 
     def save_configuration(self, filename=None):
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(filename={filename})').format(
+                filename=filename
+        ))
+
         # if file name provided update the persistent filename
         if filename:
             self._filename_configuration = filename
@@ -1026,6 +1183,12 @@ class EarthPlot(FigureCanvas):
         # save configparser object into file
         with open(self._filename_configuration, 'w') as configfile:
             self.to_ini().write(configfile)
+        logging.info((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + ': Saved configuration in : {filename})').format(
+                filename=filename
+        ))
     # end of method save_configuration
 
     ###################################################################
@@ -1037,6 +1200,13 @@ class EarthPlot(FigureCanvas):
     def viewer(self, v=None):
         """Get _viewer attribute.
         """
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(v={v})').format(
+                v=v
+        ))
+
         if v is not None:
             self._viewer = v
         return self._viewer
@@ -1044,6 +1214,13 @@ class EarthPlot(FigureCanvas):
     def zoom(self, z=None):
         """Get _zoom attribute.
         """
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(z={z})').format(
+                z=z
+        ))
+
         if z is not None:
             self._zoom = z
         return self._zoom
@@ -1059,14 +1236,21 @@ class EarthPlot(FigureCanvas):
         If refresh is True, redraw Earth.
         Return the value passed to the function.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(c={c},'
+            + 'refresh={refresh})').format(
+                c=c,
+                refresh=refresh
+        ))
+
         self._coastlines = c
         if refresh:
             self.drawearth(proj=self._projection,
                            resolution=self._resolution)
             self.draw_axis()
             self.draw()
-        utils.trace('out')
         return self._coastlines
     # end of function set_coastlines
 
@@ -1081,14 +1265,21 @@ class EarthPlot(FigureCanvas):
         If refresh is True, redraw Earth.
         Return the value passed to the function.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(c={c},'
+            + 'refresh={refresh})').format(
+                c=c,
+                refresh=refresh
+        ))
+
         self._countries = c
         if refresh:
             self.drawearth(proj=self._projection,
                            resolution=self._resolution)
             self.draw_axis()
             self.draw()
-        utils.trace('out')
         return self._countries
     # end of function set_countries
 
@@ -1103,14 +1294,21 @@ class EarthPlot(FigureCanvas):
         If refresh is True, redraw Earth.
         Return the value passed to the function.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(p={p},'
+            + 'refresh={refresh})').format(
+                p=p,
+                refresh=refresh
+        ))
+
         self._parallels = p
         if refresh:
             self.drawearth(proj=self._projection,
                            resolution=self._resolution)
             self.draw_axis()
             self.draw()
-        utils.trace('out')
         return self._parallels
     # end of function set_parallels
 
@@ -1125,14 +1323,21 @@ class EarthPlot(FigureCanvas):
         If refresh is True, redraw Earth.
         Return the value passed to the function.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(m={m},'
+            + 'refresh={refresh})').format(
+                m=m,
+                refresh=refresh
+        ))
+
         self._meridians = m
         if refresh:
             self.drawearth(proj=self._projection,
                            resolution=self._resolution)
             self.draw_axis()
             self.draw()
-        utils.trace('out')
         return self._meridians
     # end of function set_meridians
 
@@ -1143,6 +1348,11 @@ class EarthPlot(FigureCanvas):
     # end of get_centralwidget
 
     def croppedbluemarble(self):
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+        ))
+
         # get blue marble data projected on the current projection
         im = self._earth_map.bluemarble(alpha=0.9, scale=0.5)
         data = im.get_array()
@@ -1210,6 +1420,11 @@ class EarthPlot(FigureCanvas):
         """Compute Earth anguar diameter from spacecraft point of view
         depending on the altitude.
         """
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+        ))
+
         sat_height = cst.EARTH_RAD_BASEMAP + self._viewer.altitude()
         d = 2 * np.arcsin(cst.EARTH_RAD_BASEMAP / sat_height) * cst.RAD2DEG
         return d
@@ -1224,6 +1439,13 @@ class EarthPlot(FigureCanvas):
     # end of function get_axes
 
     def bluemarble(self, set=None):
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(set={set})').format(
+                set=set
+        ))
+
         if set is not None:
             if set:
                 self._bluemarble = True

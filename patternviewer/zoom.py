@@ -1,6 +1,9 @@
 """This module deals with zoom capability of the application.
 """
 # imports
+import logging
+import sys
+
 from PyQt5.QtWidgets import QDialog, QLineEdit, QGridLayout, \
     QPushButton, QLabel
 import PyQt5.QtCore as QtCore
@@ -15,6 +18,18 @@ class Zoom(object):
         """Default constructor for Zoom objects.
         Works if zoom defined in AzEl of LL coordinates.
         """
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(proj={proj},'
+            + 'nsper={nsper},'
+            + 'cyl={cyl},'
+            + 'config={config})').format(
+                proj=proj,
+                nsper=nsper,
+                cyl=cyl,
+                config=config
+        ))
         self._config = {}
         self._config['projection'] = proj         # projection
         self._config['min azimuth'] = nsper[0]    # deg Azimuth
@@ -29,6 +44,12 @@ class Zoom(object):
     # end of constructor
 
     def configure(self, config=None):
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(config={config})').format(
+                config=config
+        ))
         if config is not None:
             self._config.update(config)
             self._config['min azimuth'] = float(

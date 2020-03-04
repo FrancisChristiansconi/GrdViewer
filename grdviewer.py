@@ -21,7 +21,7 @@ import configparser
 # import PyQt5 and link with matplotlib
 from PyQt5.QtWidgets import QApplication, QMainWindow, QAction, qApp, \
     QVBoxLayout, QHBoxLayout, QWidget, QFileDialog, \
-    QLabel, QComboBox
+    QLabel, QComboBox, QMessageBox
 # numerical help
 import numpy as np
 
@@ -64,10 +64,12 @@ class GrdViewer(QMainWindow):
 
     # constructor
     def __init__(self, inifile=None):
-        utils.trace("in")
-        logging.debug(
-            'Init GrdViewer instance with inifile={inifile:s}'.format(
-                inifile=inifile))
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(inifile={inifile})').format(
+                inifile=inifile
+        ))
 
         # Parent constructor
         super().__init__()
@@ -136,13 +138,23 @@ class GrdViewer(QMainWindow):
         # self.centralwidget.addLayout(vbox)
         self.setCentralWidget(self.centralwidget)
         self.show()
-
-        utils.trace('out')
     # end of constructor
 
     def setmousepos(self, lon, lat, gain=None):
         """Set mouse position in status bar.
         """
+
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(lon={lon},'
+            + 'lat={lat},'
+            + 'gain={gain})').format(
+                lon=lon,
+                lat=lat,
+                gain=gain
+        ))
+
         # if the mouse is out of Earth do not display anything
         if np.isnan(lon) or np.isnan(lat):
             mouse_label_text = ''
@@ -162,6 +174,18 @@ class GrdViewer(QMainWindow):
     def setviewerpos(self, lon, lat, alt):
         """Set viewer position in status bar.
         """
+
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(lon={lon},'
+            + 'lat={lat},'
+            + 'alt={lat})').format(
+                lon=lon,
+                lat=lat,
+                alt=alt
+        ))
+
         viewer_label_text = \
             'Viewer: {0:0.2f}deg. E {1:0.2f}deg. N  {2:0.2f}m.'.format(lon,
                                                                        lat,
@@ -172,6 +196,14 @@ class GrdViewer(QMainWindow):
     def setpatterncombo(self, items):
         """Update status bar combobox items list.
         """
+
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(items={items})').format(
+                items=items
+        ))
+
         pbox = self._patterncombobox
         pbox.clear()
         pbox.addItems(items)
@@ -184,12 +216,38 @@ class GrdViewer(QMainWindow):
     def getpatterncombo(self):
         """Access to pattern combobox value.
         """
+        logging.debug(
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name)
         return self._patterncombobox.currentText()
+
+    def closeEvent(self, event):
+        reply = QMessageBox.question(
+            self, 'Quit', 'Are You Sure to Quit?',
+            QMessageBox.No | QMessageBox.Yes)
+        if reply == QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()
+        logging.info((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ': End Grdviewer'
+        ))
+
+    def quit(self):
+        logging.info((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ': End Grdviewer'
+        ))
+        qApp.quit()
 
     # Create menu bar and menus
     def createmenu(self):
         """Create application menu bar, sub menus and items
         """
+        logging.debug(
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name)
         # Add menu bar
         menubar = self.menuBar()
 
@@ -222,7 +280,7 @@ class GrdViewer(QMainWindow):
         # quit application item
         quit_action = QAction('Quit', self)
         self._menufile.addAction(quit_action)
-        quit_action.triggered.connect(qApp.quit)
+        quit_action.triggered.connect(self.quit)
 
         # Add Viewer Menu
         self._menuview = menubar.addMenu('View')
@@ -360,6 +418,11 @@ class GrdViewer(QMainWindow):
         """This method pops up the viewer setting dialog widget.
         Viewer coordinates are given in LLA.
         """
+
+        logging.debug(
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name)
+
         dialbox = ViewerPosDialog(self._earthplot.viewer(), self._earthplot)
         dialbox.exec_()
 
@@ -373,7 +436,11 @@ class GrdViewer(QMainWindow):
         """Pops up dialog box to load Grd file and display it
         on the Earth plot.
         """
-        utils.trace('in')
+
+        logging.debug(
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name)
+
         # Get filename
         filenames, _ = QFileDialog.getOpenFileNames(
             self,
@@ -386,14 +453,18 @@ class GrdViewer(QMainWindow):
                 pattern = self._earthplot.loadpattern({'file': filename})
             # if pattern:
             #     self._earthplot.draw_elements()
-        utils.trace('out')
+
     # end of method loadpattern
 
     def loadmultipat(self):
         """Pops up dialog box to load Grd files and display it
         on the Earth plot.
         """
-        utils.trace('in')
+
+        logging.debug(
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name)
+
         # Get filenames
         filenames, _ = \
             QFileDialog.getOpenFileNames(
@@ -413,12 +484,16 @@ class GrdViewer(QMainWindow):
         if not filenames == [] and excfile is not None:
             pattern = self._earthplot.loadpattern({'file': filenames,
                                                    'excfilename': excfile})
-        utils.trace('out')
+
     # end of method loadmultipat
 
     def loadpolygon(self):
         """Open dialog to get polygon to draw.
         """
+        logging.debug(
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name)
+
         filenames, _ = QFileDialog.getOpenFileNames()
         if not filenames == []:
             for filename in filenames:
@@ -432,6 +507,11 @@ class GrdViewer(QMainWindow):
     def loadstations(self):
         """Open dialog to get stations to draw.
         """
+
+        logging.debug(
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name)
+
         filenames, _ = QFileDialog.getOpenFileNames()
         if not filenames == []:
             for filename in filenames:
@@ -443,6 +523,13 @@ class GrdViewer(QMainWindow):
     # end of method station_dialog
 
     def addstation(self):
+        """Define and add a station using a dedicated GUI
+        """
+
+        logging.debug(
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name)
+
         station = stn.Station(self._earthplot)
         stationctlr = stn.StationControler(
             parent=self._earthplot, station=station)
@@ -452,6 +539,11 @@ class GrdViewer(QMainWindow):
     def zoom_dialog(self):
         """Open dialog to set zoom of Earth plot.
         """
+
+        logging.debug(
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name)
+
         dialbox = ZoomDialog(self._earthplot.zoom(),
                              self._earthplot)
         dialbox.exec_()
@@ -460,6 +552,11 @@ class GrdViewer(QMainWindow):
     def elevation_dialog(self):
         """Open dialog to draw Elevation contour.
         """
+
+        logging.debug(
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name)
+
         dialbox = ElevDialog(self)
         dialbox.exec_()
     # end of method elevation_dialog
@@ -467,6 +564,15 @@ class GrdViewer(QMainWindow):
     def toggleprojection(self, action):
         """Toggle between Geo and Cylindrical projection.
         """
+
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(action={action})'
+        ).format(
+            action=action
+        ))
+
         if action.text() == 'Geo':
             self._earthplot.projection('nsper')
             self.getmenuitem('View>Projection>Geo').setChecked(True)
@@ -481,6 +587,11 @@ class GrdViewer(QMainWindow):
     def toggle_bluemarble(self):
         """Toggle display of Earth picture Blue Marble.
         """
+
+        logging.debug(
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name)
+
         self._earthplot.bluemarble(not self._earthplot.bluemarble())
         projection = self._earthplot._projection
         resolution = self._earthplot._resolution
@@ -490,11 +601,16 @@ class GrdViewer(QMainWindow):
             self._earthplot.bluemarble())
         self._earthplot.draw_axis()
         self._earthplot.draw()
-        # end of method toggle_bluemarble
+    # end of method toggle_bluemarble
 
     def clearplot(self):
         """Clear the Earth map plot
         """
+
+        logging.debug(
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name)
+
         # remove pattern menu items
         for pattern in self._earthplot._patterns:
             menu = self._earthplot._patterns[pattern]._pattern_sub_menu
@@ -517,6 +633,15 @@ class GrdViewer(QMainWindow):
     def set_earth_resolution(self, action):
         """Call back to call for EarthPlot set_resolution function.
         """
+
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(action={action})'
+        ).format(
+            action=action
+        ))
+
         menu = self.getmenuitem('View>Map resolution').menu()
         action_dictionary = self.getmenuitemlist(menu=menu)
         for act in action_dictionary:
@@ -528,78 +653,119 @@ class GrdViewer(QMainWindow):
     def set_coastlines(self, action):
         """Callback to set the boldness of coastlines on Earth map
         """
-        utils.trace('in')
+
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(action={action})'
+        ).format(
+            action=action
+        ))
+
         menu = self.getmenuitem('View>Coast lines').menu()
         action_dictionary = self.getmenuitemlist(menu=menu)
         for act in action_dictionary:
             action_dictionary[act].setChecked(False)
         action.setChecked(True)
         self._earthplot.set_coastlines(action.text(), True)
-        utils.trace('out')
     # end of method set_coastlines
 
     def set_countries(self, action):
         """Callback to set the boldness of country borders on Earth map
         """
-        utils.trace('in')
+
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(action={action})'
+        ).format(
+            action=action
+        ))
+
         menu = self.getmenuitem('View>Country borders').menu()
         action_dictionary = self.getmenuitemlist(menu=menu)
         for act in action_dictionary:
             action_dictionary[act].setChecked(False)
         action.setChecked(True)
         self._earthplot.set_countries(action.text(), True)
-        utils.trace('out')
     # end of method set_countries
 
     def set_parallels(self, action):
         """Callback to set the boldness of parallels on Earth map
         """
-        utils.trace('in')
+
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(action={action})'
+        ).format(
+            action=action
+        ))
+
         menu = self.getmenuitem('View>Parallels').menu()
         action_dictionary = self.getmenuitemlist(menu=menu)
         for act in action_dictionary:
             action_dictionary[act].setChecked(False)
         action.setChecked(True)
         self._earthplot.set_parallels(action.text(), True)
-        utils.trace('out')
     # end of method set_parallels
 
     def set_meridians(self, action):
         """Callback to set the boldness of meridians on Earth map
         """
-        utils.trace('in')
+
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(action={action})'
+        ).format(
+            action=action
+        ))
+
         menu = self.getmenuitem('View>Meridians').menu()
         action_dictionary = self.getmenuitemlist(menu=menu)
         for act in action_dictionary:
             action_dictionary[act].setChecked(False)
         action.setChecked(True)
         self._earthplot.set_meridians(action.text(), True)
-        utils.trace('out')
     # end of method set_meridians
 
     def saveas(self):
         """Callback to save the Earth plot into file.
         """
-        utils.trace('in')
+
+        logging.debug(
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name)
+
         defaultfilename = 'plot.PNG'
         dialogbox = QFileDialog(caption='Save As ...',
                                 directory=self._earthplot.rootdir)
         dialogbox.selectFile(defaultfilename)
         filename, _ = dialogbox.getSaveFileName()
         self._earthplot.save(filename)
-        utils.trace('out')
     # end of callback saveas
 
     def save(self):
         """Callback to save the Earth plot with default/previously
         given file name.
         """
+
+        logging.debug(
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name)
+
         self._earthplot.save()
     # end of callback save
 
     def save_configuration_as(self):
         """Callback to save configuration of the current plot
         """
+
+        logging.debug(
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name)
+
         defaultfilename = 'new_configuration.cnf'
         dialogbox = QFileDialog(caption='Save As ...',
                                 directory=self._earthplot.rootdir)
@@ -609,9 +775,17 @@ class GrdViewer(QMainWindow):
     # end of callback save_configuration_as
 
     def save_configuration(self):
+        logging.debug(
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name)
         self._earthplot.save_configuration()
 
     def load_configuration(self):
+
+        logging.debug(
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name)
+
         filename, _ = QFileDialog.getOpenFileName(
             self,
             caption='Select configuration file.',
@@ -625,12 +799,23 @@ class GrdViewer(QMainWindow):
     def get_centralwidget(self):
         """Accessor to central widget.
         """
+        logging.debug(
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name)
         return self.centralwidget
     # end of get_centralwidget
 
     def getmenuitem(self, item: str):
         """Return menu item from menu name and item name.
         """
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(item={item})'
+        ).format(
+            item=item
+        ))
+
         menu_dictionary = self.getmenuitemlist(self._menubar)
         try:
             return menu_dictionary[item]
@@ -643,6 +828,16 @@ class GrdViewer(QMainWindow):
         Each submenu level up to the item itself is given in the key,
         levels separated by character '>'
         """
+        caller = sys._getframe(1).f_code.co_name
+        if caller != sys._getframe().f_code.co_name:
+            logging.debug((
+                sys._getframe().f_code.co_filename.split('\\')[-1]
+                + ':' + sys._getframe().f_code.co_name
+                + '(menu={menu})'
+            ).format(
+                menu=menu
+            ))
+
         item_dictionary = {}
         for item in menu.actions():
             if isinstance(item, QAction):
@@ -699,10 +894,15 @@ if __name__ == '__main__':
         elif opt in ('-d', '--loglevel'):
             loglevel = getattr(logging, arg.upper())
 
-    # create loggigng file
+    # create logging file
+    if os.path.exists(LOGFILE):
+        os.remove(LOGFILE)
     logging.basicConfig(filename=LOGFILE, level=LOGLEVEL)
 
-    logging.info('grdviewer version:' + version())
+    logging.info((
+        sys._getframe().f_code.co_filename.split('\\')[-1]
+        + ': Start Grdviewer version:' + version()
+    ))
 
     # Create main window
     MAIN_WINDOW = QApplication(argv)

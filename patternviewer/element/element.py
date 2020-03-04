@@ -25,8 +25,8 @@ class Element(ABC):
 
         # append configuration items into multilines string
         _str = ''
-        for k, i in conf:
-            _str += k + ' = ' + i + '\n'
+        for k, i in conf.items():
+            _str += k + ' = ' + str(i) + '\n'
 
         # return .ini like string list
         return _str

@@ -13,6 +13,8 @@ to manipulate antenna pattern files.
 # ==================================================================================================
 # import os function
 import os
+import sys
+import logging
 # import math basic library
 import math
 
@@ -69,7 +71,18 @@ class AbstractPattern(Element):
     def __init__(self, filename=None, conf=None, dialog=False, parent=None):
         """Constructor of abstract class Pattern do nothing.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(filename={filename},'
+            + 'conf={conf},'
+            + 'dialog={dialog},'
+            + 'parent={parent})').format(
+                filename=filename,
+                conf=conf,
+                dialog=dialog,
+                parent=parent
+        ))
 
         # just initialize object
         super().__init__()
@@ -134,22 +147,28 @@ class AbstractPattern(Element):
                 self._E_co, \
                 self._E_cr = self.read_file(conf['file'])
         except (IndexError, ValueError):
-            utils.trace('out')
+            logging.error((
+                sys._getframe().f_code.co_filename.split('\\')[-1]
+                + ':' + sys._getframe().f_code.co_name
+                + ': File reading issue: verify format'
+            ))
             raise PatternNotCreatedError(
                 value=('Error during reading of file: {filename}. '
                        'Verify consistency between extension '
                        'and content.').format(
                            filename=conf['file']))
         except PatternNotCreatedError:
-            utils.trace('out')
+            logging.error((
+                sys._getframe().f_code.co_filename.split('\\')[-1]
+                + ':' + sys._getframe().f_code.co_name
+                + ': Pattern object not created'
+            ))
             raise
 
         # float[]: isolevel for display
         max_directivity = np.max(self.copol())
         self._isolevel = np.array(
             cst.DEFAULT_ISOLEVEL_DBI) + int(max_directivity)
-
-        utils.trace('out')
     # end of constructor
 
     def reshapedata(self):
@@ -206,7 +225,12 @@ class AbstractPattern(Element):
     # end of function generate_grid
 
     def configure(self, config=None):
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(config={config})').format(
+                config=config
+        ))
         # if config dictionary is provided, merge it to this instance
         # dictionary
         if config is not None:
@@ -304,7 +328,6 @@ class AbstractPattern(Element):
                 self._isolevel = np.array(cst.DEFAULT_ISOLEVEL_DBI) + \
                     int(max_directivity + self._conf['conversion factor'])
 
-        utils.trace('out')
         return self._conf
     # end of function configure
 
@@ -333,7 +356,12 @@ class AbstractPattern(Element):
     def set_to_plot(self, cross=False):
         """Set the pattern data to be plotted by the plot method.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(cross={cross})').format(
+                cross=cross
+        ))
 
         # select to plot co or cross
         if not cross:
@@ -355,8 +383,7 @@ class AbstractPattern(Element):
             # uses _to_plot attribute
             self._to_plot = self.expand_copol(
                 self._conf['azimuth shrink'], self._conf['elevation shrink'])
-
-        utils.trace('out')
+    # end of function set_to_plot
 
     def copol(self, set: int = 0):
         """Return co-polarisation pattern. In dBi.
@@ -431,7 +458,12 @@ class AbstractPattern(Element):
     def slope(self, set: int = 0):
         """Return gradient of Co-polarisation pattern
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(set={set})').format(
+                set=set
+        ))
         if self._E_grad_co == []:
             # get gradient of Azimuth coordinate
             azimuth_grad, _ = np.gradient(self.azimuth())
@@ -445,7 +477,6 @@ class AbstractPattern(Element):
             co_grad_el /= elevation_grad
             # RSS the 2 directions gradient in one scalar field
             self._E_grad_co = np.sqrt(co_grad_az**2 + co_grad_el**2)
-        utils.trace('out')
         return self._E_grad_co
     # end of function slope
 
@@ -487,7 +518,18 @@ class AbstractPattern(Element):
     def interpolate_slope(self, az, el, set: int = 0, spline=None):
         """return interpolated value of the pattern
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(az={az},'
+            + 'el={el},'
+            + 'set={set},'
+            + 'spline={spline})').format(
+                az=az,
+                el=el,
+                set=set,
+                spline=sline
+        ))
         if spline is None:
             if self._x[set][0, 0] == self._x[set][1, 0]:
                 x = self._x[set][0, :]
@@ -513,8 +555,6 @@ class AbstractPattern(Element):
         # prepare results for return statement
         a, b = np.reshape(spline.ev(x.flatten(), y.flatten()),
                           np.array(az).shape), spline
-
-        utils.trace('out')
         return a, b
     # end of function interpolate_slope
 
@@ -524,7 +564,24 @@ class AbstractPattern(Element):
         This function compute the pattern with different pointing error and
         keep the minimum directivity for each station.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(shrink={shrink},'
+            + 'azshrink={azshrink},'
+            + 'elshrink={elshrink},'
+            + 'az_co={az_co},'
+            + 'el_co={el_co},'
+            + 'step={step},'
+            + 'set={set})').format(
+                shrink=shrink,
+                azshrink=azshrink,
+                elshrink=elshrink,
+                az_co=az_co,
+                el_co=el_co,
+                step=step,
+                set=set
+        ))
         # Create azel meshgrid (rectangular grid)
         if step is None:
             az_step = azshrink / 10
@@ -591,7 +648,6 @@ class AbstractPattern(Element):
             co = np.vectorize(depointmax)(az_co, el_co)
         co = np.reshape(co, self.azimuth().shape)
 
-        utils.trace('out')
         # return result pattern
         return co
     # end of function shrinkextend_copol
@@ -852,7 +908,10 @@ class AbstractPattern(Element):
     def plot(self):
         """Draw pattern on the earth plot from the provided grd.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+        ))
         map = self._earthplot.get_earthmap()
         viewer = self._earthplot._viewer
         figure = self._earthplot._figure
@@ -956,6 +1015,7 @@ class AbstractPattern(Element):
                 self._plot = 'contour', cs_pattern, cs_marker, cs_tag, cs_label
 
             except ValueError as value_err:
+                # TODO add error/warning logs
                 print(value_err)
                 if not type(self._conf['file']) is list:
                     print(('Pattern {file}'
@@ -993,12 +1053,14 @@ class AbstractPattern(Element):
             self._plot = 'surface', pcm_pattern, cbar, figure
         # endif
 
-        utils.trace('out')
         return self._plot
     # end of method plot
 
     def clearplot(self):
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+        ))
         if self._plot is not None:
             if self._plot[0] == 'surface':
                 self._plot[1].remove()
@@ -1028,7 +1090,6 @@ class AbstractPattern(Element):
                     for element in self._plot[4]:
                         element.remove()
         self._plot = None
-        utils.trace('out')
 
     def export_to_file(self, filename: str, shrunk: bool = False,
                        set: int = 0):
@@ -1037,7 +1098,16 @@ class AbstractPattern(Element):
         shrunk is a boolean specifying if the output pattern should be shrunk
         set is the index of the data set to use
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(filename={filename},'
+            + 'shrunk={shrunk},'
+            + 'set={set})').format(
+                filename=filename,
+                shrunk=shrunk,
+                set=set
+        ))
 
         # open file and read text data
         file = open(filename, "w")
@@ -1112,7 +1182,12 @@ class AbstractPattern(Element):
 
         # close file
         file.close()
-        utils.trace('out')
+        logging.info((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + ': Exported pattern to : {filename}').format(
+                filename=filename
+        ))
     # end of function export_to_file
 # ==================================================================================================
 

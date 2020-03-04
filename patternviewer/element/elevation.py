@@ -22,6 +22,15 @@ class Elevation(Element):
     """
 
     def __init__(self, parent=None, config=None):
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(parent={parent},'
+            + 'config={config})').format(
+                parent=parent,
+                config=config
+        ))
+
         self._parent = parent
         self._config = {}
         self._config['linewidths'] = 0.3
@@ -33,7 +42,15 @@ class Elevation(Element):
     def elevation(self, stalon, stalat):
         """Compute elevation of spacecraft seen from a station on the ground.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(stalon={stalon},'
+            + 'stalat={stalat})').format(
+                stalon=stalon,
+                stalat=stalat
+        ))
+
         # compute phi
         phi = np.arccos(
             np.cos(cst.DEG2RAD * stalat)
@@ -53,14 +70,16 @@ class Elevation(Element):
         elev = np.where(np.absolute(
             stalon - self._parent._viewer.longitude()) < 90, elev, -1)
 
-        utils.trace('out')
         # Return vector
         return elev
     # end of function elevation
 
 # implementation of Element abstract methods
     def plot(self):
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+        ))
         emap = self._parent.get_earthmap()
         # define grid
         nx = 200
@@ -76,7 +95,6 @@ class Elevation(Element):
                                   colors=self._config['colors'],
                                   linestyles=self._config['linestyles'],
                                   linewidths=self._config['linewidths'])
-        utils.trace('out')
         return self._plot
     # end of plot
 
@@ -104,6 +122,12 @@ class ElevDialog(QDialog):
     """
 
     def __init__(self, parent=None):
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(parent={parent})').format(
+                parent=parent
+        ))
         # Parent constructor
         super().__init__()
 
@@ -154,6 +178,10 @@ class ElevDialog(QDialog):
     # end of constructor
 
     def addcontour(self):
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+        ))
         self.close()
         config = {}
         elevationlist = [float(s) for s in self.fieldelev.text().split(',')]
@@ -169,6 +197,10 @@ class ElevDialog(QDialog):
         # self._eplt.draw_elements()
 
     def removecontour(self):
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+        ))
         self.close()
         elevationlist = [float(s) for s in self.fieldelev.text().split(',')]
         for elevation in elevationlist:

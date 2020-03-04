@@ -230,7 +230,12 @@ class StationControler():
     def add_menu_items(self, station_key):
         """Add Pattern menu elements to exploit current pattern.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(station_key={station_key})').format(
+                station_key=station_key
+        ))
         # get Pattern menu reference and add sub menu for current pattern
         stns_menu = self._app.getmenuitem('Misc.>Stations').menu()
         stn_name = self._station.configure()['name']
@@ -244,7 +249,6 @@ class StationControler():
         stn_menu.addAction(edit_action)
         edit_action.triggered.connect(self.edit_station)
 
-        utils.trace('out')
         # return submenu
         return stn_menu
 

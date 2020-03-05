@@ -3,6 +3,8 @@
 
 # file manipulation
 import os.path
+import sys
+import logging
 
 # to be able to add action to menu Pattern
 from PyQt5.QtWidgets import QAction, QFileDialog
@@ -75,7 +77,14 @@ class PatternControler():
         """This method is used to update PatternControler attributes either via
         predefined configuration or via dialog window.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(config={config},'
+            + 'dialog={dialog})').format(
+                config=config,
+                dialog=dialog
+        ))
         if config:
             self._config.update(config)
             self._pattern.configure(config=config)
@@ -85,15 +94,18 @@ class PatternControler():
             self._pdialog.setModal(True)
             self._pdialog.show()
             self._pdialog.exec_()
-
-        utils.trace('out')
         return self._config
     # end of function configure
 
     def add_menu_items(self, file_key):
         """Add Pattern menu elements to exploit current pattern.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(file_key={file_key})').format(
+                file_key=file_key
+        ))
         # get Pattern menu reference and add sub menu for current pattern
         patternmenu = self._pattern_menu.addMenu(file_key)
         # add Remove action
@@ -109,21 +121,18 @@ class PatternControler():
         patternmenu.addAction(export_pat_action)
         export_pat_action.triggered.connect(self.export_pattern)
 
-        utils.trace('out')
         # return submenu
         return patternmenu
 
     def isgrd(self):
         """Return True if file extension is grd.
         """
-        utils.trace()
         return self._config['file'][-3:] == 'grd'
     # end of isgrd function
 
     def ispat(self):
         """Return True if file extension is pat.
         """
-        utils.trace()
         return self._config['file'][-3:] == 'pat'
     # end of ispat function
 
@@ -134,7 +143,10 @@ class PatternControler():
     def plot(self):
         """Plot the antenna pattern into the parent EarthPlot.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+        ))
         if self._plot:
             self.clearplot()
         self._plot = self._pattern.plot()
@@ -147,7 +159,6 @@ class PatternControler():
         except KeyError:
             # if KeyError it means that Cancel button has been pressed
             print('control.plot: issue with display_slope attribute')
-        utils.trace('out')
     # end of function plot
 
     def clearplot(self):
@@ -160,7 +171,10 @@ class PatternControler():
     def remove_pattern(self):
         """Callback maker for remove pattern menu items.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+        ))
         menu = self._pattern_sub_menu
         menu_action = menu.menuAction()
         menu.parent().removeAction(menu_action)
@@ -177,21 +191,21 @@ class PatternControler():
         itemlist.extend(self._earthplot._patterns.keys())
         self._mainwindow.setpatterncombo(itemlist)
 
-        utils.trace('out')
     # end of function make_remove_pattern
 
     def edit_pattern(self):
         """Callback maker for edit pattern menu items.
         """
-        utils.trace('in')
         self.configure(dialog=True)
-        utils.trace('out')
     # end of function make_edit_pattern
 
     def export_pattern(self):
         """Open QDialog box to select file//directory where to export the file.
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+        ))
         # get directory
         directory = self._earthplot.rootdir
         # recreate default filename with .pat extension
@@ -212,7 +226,6 @@ class PatternControler():
         if filename:
             self._pattern.export_to_file(
                 filename, shrunk=self._pattern._shrink)
-        utils.trace('out')
     # end of function export_pattern
 
     def get_config(self):

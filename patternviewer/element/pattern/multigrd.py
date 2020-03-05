@@ -2,6 +2,10 @@
 """
 
 # Standard modules import
+import os
+import sys
+import logging
+
 
 # Third party modules import
 # =============================================================================
@@ -85,7 +89,12 @@ class MultiGrd(Grd):
         """Overloading of read_file function from Grd class to handle a set
         of grd instead of only one
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(filename={filename})').format(
+                filename=filename
+        ))
         nb_sets_list = []
         grid_list = []
         x_list = []
@@ -125,11 +134,9 @@ class MultiGrd(Grd):
                                             range(nb_rows),
                                             range(nb_col),
                                             range(nb_re)):
-            # print('{} {} {} {}'.format(s, r, c, e))
             E_co[s][r][c][e] = E_co_list[e][s][r][c]
             E_cr[s][r][c][e] = E_cr_list[e][s][r][c]
 
-        utils.trace('out')
         return (nb_sets, grid, x, y, E_co, E_cr)
     # End of function read_file
 
@@ -234,7 +241,12 @@ class MultiGrd(Grd):
         """Compute copolarisation magnitude (in dBi).
         Overloading Grd.Copol()
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(set={set})').format(
+                set=set
+        ))
         _, nb_rows, nb_cols, _ = np.array(self._E_co).shape
         E_co = np.zeros((nb_rows, nb_cols), dtype=complex)
         for r, c in itertools.product(range(nb_rows),
@@ -245,7 +257,6 @@ class MultiGrd(Grd):
         z[np.where(np.isnan(z))] = -99
         z[np.where(np.isneginf(z))] = -99
 
-        utils.trace('out')
         return z
     # End of function copol
 
@@ -253,7 +264,12 @@ class MultiGrd(Grd):
         """Compute crosspolarisation magnitude (in dBi).
         Overloading Grd.cross().
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(set={set})').format(
+                set=set
+        ))
         _, nb_rows, nb_cols, _ = np.array(self._E_cr).shape
         E_cr = np.zeros((nb_rows, nb_cols), dtype=complex)
         for r, c in itertools.product(range(nb_rows),
@@ -264,7 +280,6 @@ class MultiGrd(Grd):
         z[np.where(np.isnan(z))] = -99
         z[np.where(np.isneginf(z))] = -99
 
-        utils.trace('out')
         return z
     # End of function cross
 

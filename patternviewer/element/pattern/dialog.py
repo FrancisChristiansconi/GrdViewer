@@ -5,7 +5,9 @@ It's the GUI for Pattern (re)configuration.
 # import standard modules
 # --------------------------------------------------------------------------------------------------
 # system module
+import os
 import sys
+import logging
 # ==================================================================================================
 
 # import third party modules
@@ -48,7 +50,16 @@ class PatternDialog(QDialog):
             the antenna pattern
         control is the antenna pattern controler instance
         """
-        utils.trace()
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(filename={filename},'
+            + 'parent={parent},'
+            + 'control={control})').format(
+                filename=filename,
+                parent=parent,
+                control=control
+        ))
         # Parent constructor
         super().__init__()
 
@@ -291,7 +302,12 @@ class PatternDialog(QDialog):
         pattern is the antenna pattern object which provide
         the configuration for this GUI
         """
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(pattern={pattern})').format(
+                pattern=pattern.__str__(pattern)
+        ))
         try:
             self.title_field.setText(pattern._conf['title'])
         except KeyError:
@@ -347,7 +363,6 @@ class PatternDialog(QDialog):
             self.chkxpol.setEnabled(False)
 
         self.refresh_isolevel()
-        utils.trace('out')
     # end of configure method
 
     def get_isolevel(self, pattern=None):
@@ -428,7 +443,12 @@ class PatternDialog(QDialog):
     # end of method refresh_isolevel
 
     def set_pattern_conf(self, close=False):
-        utils.trace('in')
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(close={close})').format(
+                close=close
+        ))
 
         # if no defined pattern attribute return
         if not self._pattern:
@@ -490,14 +510,12 @@ class PatternDialog(QDialog):
 
         if close:
             self.close()
-        utils.trace('out')
     # end of function set_pattern_conf
 
     def chkshrinkstatechanged(self):
         """Callback deactivating the shrink fields when
         shrink checkbox is unchecked.
         """
-        utils.trace()
         self.azfield.setEnabled(self.chkshrink.isChecked())
         self.elfield.setEnabled(self.chkshrink.isChecked())
     # end of callback
@@ -505,7 +523,6 @@ class PatternDialog(QDialog):
     def chk_offset_state_changed(self):
         """Callback deactivating the offset fields when checkbox is unchecked.
         """
-        utils.trace()
         self.az_offset_field.setEnabled(self.chk_offset.isChecked())
         self.el_offset_field.setEnabled(self.chk_offset.isChecked())
     # end of callback
@@ -532,7 +549,6 @@ class PatternDialog(QDialog):
         """Callback changing the range displayed in case
         the display slope option is checked.
         """
-        utils.trace()
         if self.chkslope.isChecked():
             self.isolevel_field.setText('{},{}'.format(
                 self._pattern.configure()['slopes'][0],

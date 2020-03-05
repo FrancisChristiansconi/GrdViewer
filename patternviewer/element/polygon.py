@@ -104,9 +104,9 @@ class Polygon(Element):
         return len(self._longitude)
 
     def configure(self, config=None):
-        self._longitude = self.set(conf=config, key='longitude', dtype=float)
-        self._latitude = self.set(conf=config, key='latitude', dtype=float)
-        self._gain = self.set(conf=config, key='gain', dtype=float)
+        self._longitude = self.set(key='longitude', dtype=float)
+        self._latitude = self.set(key='latitude', dtype=float)
+        self._gain = self.set(key='gain', dtype=float)
 
 # end of class Polygon
 

@@ -309,14 +309,14 @@ class PatternDialog(QDialog):
                 pattern=pattern.__str__(pattern)
         ))
         try:
-            self.title_field.setText(pattern._conf['title'])
+            self.title_field.setText(pattern._configuration['title'])
         except KeyError:
             print('pattern.dialog: No title in pattern._conf dictionary.')
         self.lon_field.setText(str(pattern.satellite().longitude()))
         self.lat_field.setText(str(pattern.satellite().latitude()))
         self.alt_field.setText(str(pattern.satellite().altitude()))
         self.yaw_field.setText(
-            str(pattern.set(pattern.configure(), 'yaw', 0.0)))
+            str(pattern.set('yaw', 0.0)))
         if pattern.configure()['slope']:
             low = np.amin(pattern.configure()['slopes'])
             high = np.amax(pattern.configure()['slopes'])
@@ -329,7 +329,7 @@ class PatternDialog(QDialog):
         self.chkxpol.setChecked(pattern.configure()['second polarisation'])
         self.chkslope.setChecked(pattern.configure()['slope'])
         _shrink = pattern.configure()['shrink']
-        _expand = pattern.set(pattern.configure(), 'expand', False)
+        _expand = pattern.set('expand', False)
         self.chkshrink.setChecked(_shrink | _expand)
         if _shrink != _expand:
             self.shrink_button_state_changed()
@@ -353,7 +353,7 @@ class PatternDialog(QDialog):
                     str(pattern.configure()['latitude offset']))
 
         self.offset_button.setChecked(
-            pattern.set(pattern.configure(), 'offset azel format', True))
+            pattern.set('offset azel format', True))
         self.offset_button_state_changed()
 
         # disable use second pol option if second pol not available
@@ -374,7 +374,7 @@ class PatternDialog(QDialog):
             return ",".join(str(x) for x in cst.DEFAULT_ISOLEVEL_DBI)
         else:
             return self._pattern.set(
-                self._pattern.configure(), 'level', fallback='', dtype=str)
+                'level', fallback='', dtype=str)
     # end of function get_isolevel
 
     def get_cf(self):
@@ -426,7 +426,7 @@ class PatternDialog(QDialog):
         cf = self.get_cf()
 
         level_str = self._pattern.set(
-            self._pattern.configure(), 'level',
+            'level',
             fallback=cst.DEFAULT_ISOLEVEL_STR, dtype=str)
         if self.chkxpol.checkState():
             isolevel = self.isoleveladd(

@@ -16,6 +16,9 @@ class Element(ABC):
     on the Earth map.
     """
 
+    # dictionary for storing Element configuration
+    _configuration = {}
+
     @staticmethod
     def __str__(self):
         """Convert instance to string
@@ -53,8 +56,7 @@ class Element(ABC):
         """
         pass
 
-    @staticmethod
-    def set(conf, key, fallback=None, dtype=None):
+    def set(self, key, fallback=None, dtype=None):
         """Try to return element key of dictionary conf. KeyError exception
         is handled. In case of KeyError exception, log message is printed
         on standard output and fallback value is returned.
@@ -87,9 +89,9 @@ class Element(ABC):
         param = fallback
         try:
             if dtype is not None:
-                param = convert[dtype](conf[key])
+                param = convert[dtype](self._configuration[key])
             else:
-                param = conf[key]
+                param = self._configuration[key]
         except KeyError:
             pass
         # return either the desired value or None

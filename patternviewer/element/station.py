@@ -1,6 +1,11 @@
 """This module deals with station representation.
 """
 
+
+import os
+import sys
+import logging
+
 # import third party modules
 # ==================================================================================================
 # PyQt5 widgets import
@@ -68,7 +73,7 @@ class Station(Element):
     def plot(self):
         """Plot the station on the given map if in the frame.
         """
-        if self.set(conf=self.configure(), key='visible',
+        if self.set(key='visible',
                     fallback=True, dtype=bool):
             # get reference to Earth Map where station should be plotted
             earthmap = self._parent.get_earthmap()
@@ -371,23 +376,23 @@ class StationWidget(QDialog):
             self.tag_fld.setText(conf['tag'])
             # retrieve visibility status
             self.visible_chk.setChecked(station.set(
-                conf=conf, key='visible', fallback=True))
+                key='visible', fallback=True))
             # retrieve tag position value and set
             text = station.set(
-                conf=conf, key='tagpos', fallback='')
+                key='tagpos', fallback='')
             index = self.tag_pos_cmb.findText(text, QtCore.Qt.MatchFixedString)
             if index >= 0:
                 self.tag_pos_cmb.setCurrentIndex(index)
             # set longitude
             self.longitude_fld.setText(
                 "{lon:0.2f}".format(lon=station.set(
-                    conf=conf, key='longitude', fallback=0.0)))
+                    key='longitude', fallback=0.0)))
             # set latitude
             self.latitude_fld.setText(
                 "{lat:0.2f}".format(lat=station.set(
-                    conf=conf, key='latitude', fallback=0.0)))
+                    key='latitude', fallback=0.0)))
             # set BPE status
-            bpe = station.set(conf=conf, key='bpe', fallback=0.0)
+            bpe = station.set(key='bpe', fallback=0.0)
             self.bpe_chk.setChecked(bpe != 0.0)
             self.bpe_fld.setText(
                 "{bpe:0.2f}".format(bpe=bpe)

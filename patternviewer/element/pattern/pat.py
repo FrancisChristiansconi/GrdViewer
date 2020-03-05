@@ -333,10 +333,10 @@ class Pat(AbstractPattern):
         # if requested by the new configuration,
         # rotate the pattern by 180 degrees
         for set in range(self._nb_sets):
-            if ((self._conf['rotate'] and not self._rotated)
-                or (not self._conf['rotate'] and self._rotated)):
+            if ((self._configuration['rotate'] and not self._rotated)
+                or (not self._configuration['rotate'] and self._rotated)):
                 self._x[set] = -1 * self._x[set]
                 self._y[set] = -1 * self._y[set]
-                self._rotated = self._conf['rotate']
+                self._rotated = self._configuration['rotate']
 
 # end of class Pat

@@ -79,7 +79,7 @@ class MultiGrd(Grd):
         self.configure(config=conf)
 
         # Store excitation law in configuration dictionary
-        self._conf['law'] = _law
+        self._configuration['law'] = _law
         # by default apply first law
         self.apply_law(0)
 
@@ -285,12 +285,13 @@ class MultiGrd(Grd):
 
     def apply_law(self, law_id):
         if type(law_id) is int:
-            if law_id < len(self._conf['law']) and law_id >= 0:
-                self._conf['applied_law'], self._excitation_law = list(
-                    self._conf['law'].items())[law_id]
-        elif law_id in self._conf['law'].keys():
-            self._excitation_law = self._conf['law'][law_id]
-            self._conf['applied_law'] = law_id
+            if law_id < len(self._configuration['law']) and law_id >= 0:
+                (self._configuration['applied_law'],
+                 self._excitation_law) = list(
+                    self._configuration['law'].items())[law_id]
+        elif law_id in self._configuration['law'].keys():
+            self._excitation_law = self._configuration['law'][law_id]
+            self._configuration['applied_law'] = law_id
         else:
             raise TypeError
     # end of method apply_law

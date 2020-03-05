@@ -110,7 +110,7 @@ class Elevation(Element):
         if config is not None:
             self._config.update(config)
             self._config['linewidths'] = self.set(
-                self._config, 'linewidths', float)
+                'linewidths', float)
         return self._config
 
 

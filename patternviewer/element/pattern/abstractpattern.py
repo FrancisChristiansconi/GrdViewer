@@ -25,7 +25,7 @@ import numpy as np
 # import interpolation routine from scipy
 from scipy import interpolate as interp
 # import pyproj for coordinates conversion
-import pyproj as prj
+# import pyproj as prj
 # import path for customised marker
 from matplotlib.path import Path
 # axes manipulation
@@ -41,6 +41,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QAction, \
 from PyQt5.QtGui import QColor, QPalette
 # abstract class toolbox
 from abc import ABC, abstractmethod
+import simplekml
 
 # Local module import
 # ==================================================================================================
@@ -748,18 +749,7 @@ class AbstractPattern(Element):
 
         x = self._satellite.altitude() * np.tan((az) * cst.DEG2RAD)
         y = self._satellite.altitude() * np.tan((el) * cst.DEG2RAD)
-        self.proj = prj.Proj(
-            init=('epsg:4326 +proj=nsper'
-                  ' +h={satalt}'
-                  ' +a=6378137.00 +b=6378137.00'
-                  ' +lon_0={satlon}'
-                  ' +lat_0={satlat}'
-                  ' +x_0=0 +y_0=0 +units=m +no_defs').format(
-                      satalt=str(self._satellite.altitude()),
-                      satlon=str(self._satellite.longitude()),
-                      satlat=str(self._satellite.latitude())
-            ))
-        return self.proj(x, y, inverse=True)
+        return self._satellite.projection(x, y, inverse=True)
     # end of function ll_grid
 
     def compute_azel_boresight(self, lon=0.0, lat=0.0):
@@ -772,17 +762,7 @@ class AbstractPattern(Element):
             el = 0.0
         else:
             # get projection object
-            self.proj = prj.Proj(
-                init=('epsg:4326 +proj=nsper'
-                      ' +h={satalt:0.2f}'
-                      ' +a=6378137.00 +b=6378137.00'
-                      ' +lon_0={satlon:0.5f}'
-                      ' +lat_0={satlat:0.5f}'
-                      ' +x_0=0 +y_0=0 +units=m +no_defs').format(
-                          satalt=self._satellite.altitude(),
-                          satlon=self._satellite.longitude(),
-                          satlat=self._satellite.latitude()))
-            x, y = self.proj(lon, lat, inverse=False)
+            x, y = self._satellite.projection(lon, lat, inverse=False)
             az = (cst.RAD2DEG
                   * np.arctan2(x, self._satellite.altitude()))
             el = (cst.RAD2DEG
@@ -791,17 +771,7 @@ class AbstractPattern(Element):
 
     def latlon2azel(self, lon, lat):
         # get projection object
-        self.proj = prj.Proj(
-            init=('epsg:4326 +proj=nsper'
-                  ' +h={satalt:0.2f}'
-                  ' +a=6378137.00 +b=6378137.00'
-                  ' +lon_0={satlon:0.5f}'
-                  ' +lat_0={satlat:0.5f}'
-                  ' +x_0=0 +y_0=0 +units=m +no_defs').format(
-                      satalt=self._satellite.altitude(),
-                      satlon=self._satellite.longitude(),
-                      satlat=self._satellite.latitude()))
-        x, y = self.proj(lon, lat, inverse=False)
+        x, y = self._satellite.projection(lon, lat, inverse=False)
         az = (cst.RAD2DEG
               * np.arctan2(x, self._satellite.altitude()))
         el = (cst.RAD2DEG
@@ -855,17 +825,6 @@ class AbstractPattern(Element):
         if np.isnan(lon) or np.isnan(lat):
             return None
 
-        # get projection
-        self.proj = prj.Proj(
-            init=('epsg:4326 +proj=nsper'
-                  ' +h={satalt:0.2f}'
-                  ' +a=6378137.00 +b=6378137.00'
-                  ' +lon_0={satlon:0.5f}'
-                  ' +lat_0={satlat:0.5f}'
-                  ' +x_0=0 +y_0=0 +units=m +no_defs').format(
-                      satalt=self._satellite.altitude(),
-                      satlon=self._satellite.longitude(),
-                      satlat=self._satellite.latitude()))
         # consider offset
         if self._configuration['offset']:
             if self.set('offset azel format', True, bool):
@@ -880,7 +839,7 @@ class AbstractPattern(Element):
             el_offset = 0
 
         # get az el vector
-        x, y = self.proj(lon, lat, inverse=False)
+        x, y = self._satellite.projection(lon, lat, inverse=False)
         az = cst.RAD2DEG * \
             np.arctan2(x, self._satellite.altitude())
         el = cst.RAD2DEG * \
@@ -910,7 +869,7 @@ class AbstractPattern(Element):
 
 # plot or export to file methods
 # --------------------------------------------------------------------------------------------------
-    def plot(self):
+    def plot(self, label=True):
         """Draw pattern on the earth plot from the provided grd.
         """
         logging.debug((
@@ -961,19 +920,7 @@ class AbstractPattern(Element):
                 np.tan((el_mesh + el_offset) * cst.DEG2RAD)
 
             # compute plot origin (Nadir of spacecraft)
-            # get projection
-            self.proj = prj.Proj(
-                init=('epsg:4326 +proj=nsper'
-                      ' +h={satalt:0.5f}'
-                      ' +a=6378137.00 +b=6378137.00'
-                      ' +lon_0={satlon:0.5f}'
-                      ' +lat_0={satlat:0.5f}'
-                      ' +x_0=0 +y_0=0 +units=m +no_defs').format(
-                          satalt=self._satellite.altitude(),
-                          satlon=self._satellite.longitude(),
-                          satlat=self._satellite.latitude()
-                ))
-            lon_mesh, lat_mesh = self.proj(x, y, inverse=True)
+            lon_mesh, lat_mesh = self._satellite.projection(x, y, inverse=True)
             # x, y = map(lon_mesh, lat_mesh, inverse=False)
             x_origin, y_origin = 0, 0
             # get interpolated points on a regular grid
@@ -1014,9 +961,13 @@ class AbstractPattern(Element):
                     # no call to displaymax because it has no meaning
                     # when shrinking the pattern
                 # add isolevels labels
-                cs_label = figure.axes[0].clabel(cs_pattern, isolevelscale,
-                                                 inline=True, fmt='%1.1f',
-                                                 fontsize=2)
+                if label:
+                    cs_label = figure.axes[0].clabel(
+                        cs_pattern, isolevelscale,
+                        inline=True, fmt='%1.1f',
+                        fontsize=2)
+                else:
+                    cs_label = None
                 # Set return value
                 self._plot = 'contour', cs_pattern, cs_marker, cs_tag, cs_label
 
@@ -1097,8 +1048,8 @@ class AbstractPattern(Element):
                         element.remove()
         self._plot = None
 
-    def export_to_file(self, filename: str, shrunk: bool = False,
-                       set: int = 0):
+    def export_to_pat(self, filename: str, shrunk: bool = False,
+                      set: int = 0):
         """Export this pattern to .pat file.
         filename is the target filename
         shrunk is a boolean specifying if the output pattern should be shrunk
@@ -1152,7 +1103,7 @@ class AbstractPattern(Element):
             x_offset = 0
             y_offset = 0
 
-        file.write("  {xs:0.10f}, {ys:0.10f}, {xe:0.10f}, {ye:0.10f}\n".format(
+        file.write("  {xs:0.10E}, {ys:0.10E}, {xe:0.10E}, {ye:0.10E}\n".format(
             xs=xs + x_offset,
             ys=ys + y_offset,
             xe=xe + x_offset,
@@ -1194,7 +1145,103 @@ class AbstractPattern(Element):
             + ': Exported pattern to : {filename}').format(
                 filename=filename
         ))
-    # end of function export_to_file
+    # end of function export_to_pat
+
+    def export_to_grd(self, filename: str, shrunk: bool = False, set: int = 0):
+        """Export this pattern to .grd file.
+        filename is the target filename
+        shrunk is a boolean specifying if the output pattern should be shrunk
+        set is the index of the data set to use
+        TODO: finish the work
+        """
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+            + '(filename={filename},'
+            + 'shrunk={shrunk},'
+            + 'set={set})').format(
+                filename=filename,
+                shrunk=shrunk,
+                set=set
+        ))
+
+        # open file and read text data
+        file = open(filename, "w")
+
+        file.write('File generated by GrdViewer\n')
+
+        # end of comment section
+        file.write("++++\n")
+
+        # write header
+        # write ktype, should always be 1
+        file.write('{:4d}'.format(1))
+        # next line gives:
+        # number of patterns: self._nb_sets
+        # field components: icomp=3 (linear co and cx)
+        # number of field components: ncomp=2 (far field)
+        # grid type: grid=5 (elevation and azimuth)
+        file.write('{nset:4d}{icomp:4d}{ncomp:4d}{grid:4d}'.format(
+            nset=1,
+            icomp=3,
+            ncomp=2,
+            grid=5
+        ))
+        # center of grid for each set
+        file.write('{ix:4d}{iy:4d}'.format(
+            ix=0,
+            iy=0
+        ))
+        # limits of grid
+        xs = np.min(self.azimuth(set))
+        xe = np.max(self.azimuth(set))
+        ys = np.min(self.elevation(set))
+        ye = np.max(self.elevation(set))
+        file.write((' {xs: 0.10E} {xe: 0.10E} {ys: 0.10E} {ye: 0.10E}').format(
+            xs=xs, xe=xe, ys=ys, ye=ye
+        ))
+        # number of rows and columns and klimit=0
+        ny, nx = self._x[set].shape
+        klimit = 0
+        file.write('{nx: 4d}{ny: 4d}{klimit: 4d}'.format(
+            nx=nx, ny=ny, klimit=klimit
+        ))
+
+    def export_to_kml(self, filename: str):
+        # create instance of Kml
+        kml = simplekml.Kml()
+
+        # test if there is a plot and if the plot is contour
+        if self._plot is not None:
+            # replot without labels (to have nice lines)
+            self.plot(label=False)
+            if self._plot[0] == 'contour':
+                for i in range(len(self._isolevel)):
+                    level = self._isolevel[i]
+                    # get used color
+                    color = self._plot[1].collections[i]._original_edgecolor
+                    # get all the polygons for this level
+                    contours = self._plot[1].collections[i]._paths
+                    for contour in contours:
+                        # get coordinates and convert
+                        map_coords = contour.vertices
+                        lon, lat = self._earthplot._earth_map(
+                            map_coords[:, 0], map_coords[:, 1], inverse=True)
+                        llg_coords = np.stack((lon, lat), axis=1)
+
+                        lin = kml.newlinestring(
+                            name='{:0.2f}'.format(level),
+                            coords=llg_coords)
+                        r, g, b, a = color[0]
+                        r = int(r * 255)
+                        g = int(g * 255)
+                        b = int(b * 255)
+                        a = int(a * 255)
+                        lin.style.linestyle.color = simplekml.Color.rgb(
+                            r, g, b, a)
+            self.plot()
+        kml.save(filename)
+
 # ==================================================================================================
 
 # Mandatory functions and methods to be implemented

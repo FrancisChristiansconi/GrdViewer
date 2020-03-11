@@ -8,6 +8,8 @@ from PyQt5.QtWidgets import QDialog, QLineEdit, QVBoxLayout, QHBoxLayout, \
     QPushButton, QLabel
 import PyQt5.QtCore as QtCore
 
+import pyproj as prj
+
 # import constant file
 import patternviewer.constant as cst
 
@@ -16,8 +18,9 @@ class Viewer(object):
     """Viewer represents position of observer of the projection.
     """
 
-    # Default constructor for Viewer
-    def __init__(self, lon=0.0, lat=0.0, alt=35786000.0, config=None):
+    def __init__(self, lon=0.0, lat=0.0, alt=cst.ALTGEO, config=None):
+        """Default constructor for Viewer
+        """
         logging.debug((
             sys._getframe().f_code.co_filename.split('\\')[-1]
             + ':' + sys._getframe().f_code.co_name
@@ -34,7 +37,7 @@ class Viewer(object):
             'altitude': alt
         })
         self.configure(config)
-    # End of Constructor
+    # End ofs Constructor
 
     def longitude(self, lon: float = None):
         """Get/set for attribute _longitude_deg.
@@ -47,6 +50,8 @@ class Viewer(object):
         ))
         if lon is not None:
             self._config['longitude'] = lon
+            self.updateproj()
+
         return self._config['longitude']
     # end of longitude function
 
@@ -61,6 +66,8 @@ class Viewer(object):
         ))
         if lat is not None:
             self._config['latitude'] = lat
+            self.updateproj()
+
         return self._config['latitude']
     # end of latitude function
 
@@ -75,8 +82,24 @@ class Viewer(object):
         ))
         if alt is not None:
             self._config['altitude'] = alt
+            self.updateproj()
         return self._config['altitude']
     # end of altitude function
+
+    def updateproj(self):
+        self._config['projection'] = (
+            'epsg:4326 +proj=nsper'
+            ' +h={satalt:f}'
+            ' +a=6378137.00 +b=6378137.00'
+            ' +lon_0={satlon:f}'
+            ' +lat_0={satlat:f}'
+            ' +x_0=0 +y_0=0 +units=m +no_defs').format(
+                satalt=self._config['altitude'],
+                satlon=self._config['longitude'],
+                satlat=self._config['latitude']
+        )
+        self._proj = prj.Proj(init=self._config['projection'])
+    # end of function updateproj
 
     def set(self, lon: float = None, lat: float = None, alt: float = None):
         """Set all three LLA coordinates at once.
@@ -97,6 +120,8 @@ class Viewer(object):
             self._config['latitude'] = lat
         if alt is not None:
             self._config['altitude'] = alt
+        if lon is not None or lat is not None or alt is not None:
+            self.updateproj()
     # end of set function
 
     def configure(self, config=None):
@@ -115,9 +140,43 @@ class Viewer(object):
             self._config['longitude'] = float(self._config['longitude'])
             self._config['latitude'] = float(self._config['latitude'])
             self._config['altitude'] = float(self._config['altitude'])
+            self.updateproj()
+
         return self._config
     # end of configure function
 
+    def projection(self, x, y, inverse=False):
+        """Apply the current projection to the given coordinates set
+        """
+        if self._proj is not None:
+            lon, lat, alt = self.getprojparams()
+            if (lon != self._config['longitude']
+                or lat != self._config['latitude']
+                or alt != self._config['altitude']):
+                self.updateproj()
+        else:
+            self.updateproj()
+        return self._proj(x, y, inverse=inverse)
+    # end of projection function
+
+    def getprojparams(self):
+        """Return longitude, latitude and altitude of the projection
+        """
+        lon = 0
+        lat = 0
+        alt = cst.ALTGEO
+        if self._proj is not None:
+            tmpstrlist = self._proj.definition_string().split(' ')
+            for s in tmpstrlist:
+                vals = s.split('=')
+                if 'lon' in vals[0]:
+                    lon = float(vals[1])
+                if 'lat' in vals[0]:
+                    lat = float(vals[1])
+                if vals[0] is '+h':
+                    alt = float(vals[1])
+        return lon, lat, alt
+    # end of function getprojparams
 # end of class Viewer
 
 

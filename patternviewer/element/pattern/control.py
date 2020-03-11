@@ -120,6 +120,10 @@ class PatternControler():
         export_pat_action = QAction('Export', self._mainwindow)
         patternmenu.addAction(export_pat_action)
         export_pat_action.triggered.connect(self.export_pattern)
+        # add Export to kml action
+        export_kml_action = QAction('Export to kml', self._mainwindow)
+        patternmenu.addAction(export_kml_action)
+        export_kml_action.triggered.connect(self.export_to_kml)
 
         # return submenu
         return patternmenu
@@ -224,9 +228,36 @@ class PatternControler():
                                         filter='pattern file (*.pat)')
         # get pattern to export
         if filename:
-            self._pattern.export_to_file(
+            self._pattern.export_to_pat(
                 filename, shrunk=self._pattern._shrink)
     # end of function export_pattern
+
+    def export_to_kml(self):
+        """Open QDialog box to select file//directory where to export the file.
+        """
+        logging.debug((
+            sys._getframe().f_code.co_filename.split('\\')[-1]
+            + ':' + sys._getframe().f_code.co_name
+        ))
+        # get directory
+        directory = self._earthplot.rootdir
+        # recreate default filename with .pat extension
+        if isinstance(self._pattern, MultiGrd):
+            default_filename = ''
+        else:
+            origin_filename = os.path.basename(self._config['file'])
+            default_filename = origin_filename[:-3] + 'kml'
+        # Get filename for exporting file
+        filename, _ = \
+            QFileDialog.getSaveFileName(parent=self._mainwindow,
+                                        caption='Select file',
+                                        directory=os.path.join(
+                                            directory,
+                                            default_filename),
+                                        filter='Google Earth file (*.kml)')
+        # get pattern to export
+        if filename:
+            self._pattern.export_to_kml(filename)
 
     def get_config(self):
         """Return _config protected attribute.

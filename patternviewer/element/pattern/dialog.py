@@ -309,7 +309,7 @@ class PatternDialog(QDialog):
                 pattern=pattern.__str__(pattern)
         ))
         try:
-            self.title_field.setText(pattern._configuration['title'])
+            self.title_field.setText(self.earth_plot._plot_title)
         except KeyError:
             print('pattern.dialog: No title in pattern._conf dictionary.')
         self.lon_field.setText(str(pattern.satellite().longitude()))

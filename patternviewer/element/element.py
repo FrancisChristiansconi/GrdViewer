@@ -62,19 +62,19 @@ class Element(ABC):
         on standard output and fallback value is returned.
         By default, fallback value is None
         """
-        def convert_to_bool(input):
-            if type(input) is bool:
-                return input
+        def convert_to_bool(param):
+            if type(param) is bool:
+                return param
             else:
-                return (input == 'True')
+                return (param == 'True')
 
-        def convert_to_list(input, dtype):
-            if type(input) is list:
-                return input
+        def convert_to_list(param, dtype):
+            if type(param) is list:
+                return param
             else:
-                if input[0] == '[':
-                    input = input[1:-2]
-                return [convert[dtype](e) for e in input.split(',')]
+                if param[0] == '[':
+                    param = param[1:-1]
+                return [convert[dtype](e) for e in param.split(',')]
 
         convert = {
             str: lambda s: s,

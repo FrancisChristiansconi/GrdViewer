@@ -793,6 +793,7 @@ class GrdViewer(QMainWindow):
             caption='Select configuration file.',
             filter='configuration files (*.cnf *.ini);; all files (*)'
         )
+        self.config = configparser.ConfigParser()
         self.config.read(filename)
         self.clearplot()
         self._earthplot.configure(self.config)

@@ -47,25 +47,25 @@ class Station(Element):
         self._parent = parent  # reference to the parent EarthPlot
         self._station = None  # display elements references
         # configuration is stored in a dictionary
-        self._config = {}
+        self._configuration = {}
         # station conf
-        self._config['longitude'] = 0.0      # Longitude in degrees
-        self._config['latitude'] = 0.0       # Latitude in degrees
-        self._config['name'] = ''            # Long name for reference
-        self._config['marker'] = 'o'         # station marker
-        self._config['marker size'] = 1      # marker size
-        self._config['marker color'] = 'red'   # marker color
+        self._configuration['longitude'] = 0.0      # Longitude in degrees
+        self._configuration['latitude'] = 0.0       # Latitude in degrees
+        self._configuration['name'] = ''            # Long name for reference
+        self._configuration['marker'] = 'o'         # station marker
+        self._configuration['marker size'] = 1      # marker size
+        self._configuration['marker color'] = 'red'   # marker color
         # tag config
-        self._config['tag'] = ''             # Short name for display
+        self._configuration['tag'] = ''             # Short name for display
         # upleft, upright, downleft or downright
-        self._config['tagpos'] = ''
-        self._config['fontsize'] = 3         # Tag fontsize
+        self._configuration['tagpos'] = ''
+        self._configuration['fontsize'] = 3         # Tag fontsize
         # Beam pointing error circle
         # Radius of circle to draw around station
-        self._config['bpe'] = 0
-        self._config['linecolor'] = 'black'   # Color of bpe circle
-        self._config['linewidth'] = 0.3      # Width of bpe circle line
-        self._config['linestyle'] = 'dashed'  # Style of bpe circle line
+        self._configuration['bpe'] = 0
+        self._configuration['linecolor'] = 'black'   # Color of bpe circle
+        self._configuration['linewidth'] = 0.3      # Width of bpe circle line
+        self._configuration['linestyle'] = 'dashed'  # Style of bpe circle line
     # end of constructor
 
 # mandatory abstract method implementation inherited from class Element
@@ -78,35 +78,46 @@ class Station(Element):
             # get reference to Earth Map where station should be plotted
             earthmap = self._parent.get_earthmap()
             # radius of the Beam Pointing Error circle to be displayed
-            radius = self._parent.az2x(self._config['bpe'])
+            radius = self._parent.az2x(self._configuration['bpe'])
             # get coordinates of station in earth plot frame
             xsta, ysta = earthmap(
-                self._config['longitude'], self._config['latitude'])
+                self._configuration['longitude'], self._configuration['latitude'])
             # if station is out of plot do not display
             if self.visible(earthmap):
                 # if BPE defined, display circle around station
                 circle = None
-                if self._config['bpe']:
-                    circle = plt.Circle((xsta, ysta), radius,
-                                        color=self._config['linecolor'],
-                                        fill=False,
-                                        linewidth=self._config['linewidth'],
-                                        linestyle=self._config['linestyle'])
+                if self._configuration['bpe'] > 0:
+                    circle = plt.Circle(
+                        (xsta, ysta), radius,
+                        color=self._configuration['linecolor'],
+                        fill=False,
+                        linewidth=self._configuration['linewidth'],
+                        linestyle=self._configuration['linestyle'])
+                    earthmap.ax.add_artist(circle)
+                elif self._configuration['bpe'] < 0:
+                    radius = np.abs(radius)
+                    circle = plt.Rectangle(
+                        (xsta - radius / 2, ysta - radius / 2),
+                        radius, radius,
+                        color=self._configuration['linecolor'],
+                        fill=False,
+                        linewidth=self._configuration['linewidth'],
+                        linestyle=self._configuration['linestyle'])
                     earthmap.ax.add_artist(circle)
                 # display a dot at station coordinates
                 point = earthmap.scatter(
                     xsta,
                     ysta,
-                    self._config['marker size'],
-                    marker=self._config['marker'],
-                    color=self._config['marker color'])
+                    self._configuration['marker size'],
+                    marker=self._configuration['marker'],
+                    color=self._configuration['marker color'])
                 # add station tag, position is computed from plot size and
                 # desired relative position wrt. station coordinates
                 plot_width = self._parent.get_width()
                 plot_height = self._parent.get_height()
                 x_offset = plot_width / 200
                 y_offset = plot_height / 200
-                position = self._config['tagpos']
+                position = self._configuration['tagpos']
                 if position == 'upleft':
                     x_offset *= -1
                     valign = 'bottom'
@@ -128,12 +139,12 @@ class Station(Element):
                     valign = 'bottom'
                     halign = 'left'
                 tag = earthmap.ax.text(
-                    s=self._config['tag'],
+                    s=self._configuration['tag'],
                     x=xsta + x_offset,
                     y=ysta + y_offset,
                     va=valign,
                     ha=halign,
-                    fontsize=self._config['fontsize'])
+                    fontsize=self._configuration['fontsize'])
                 # store references to plotted elements
                 # (point, tag and BPE circle)
                 self._station = point, tag, circle
@@ -155,16 +166,16 @@ class Station(Element):
         """
         # merge configuration of self with provided dictionary
         if config is not None:
-            self._config.update(config)
+            self._configuration.update(config)
             # check and convert to float
-            self._config['longitude'] = float(self._config['longitude'])
-            self._config['latitude'] = float(self._config['latitude'])
-            self._config['marker size'] = float(self._config['marker size'])
-            self._config['fontsize'] = float(self._config['fontsize'])
-            self._config['bpe'] = float(self._config['bpe'])
-            self._config['linewidth'] = float(self._config['linewidth'])
+            self._configuration['longitude'] = float(self._configuration['longitude'])
+            self._configuration['latitude'] = float(self._configuration['latitude'])
+            self._configuration['marker size'] = float(self._configuration['marker size'])
+            self._configuration['fontsize'] = float(self._configuration['fontsize'])
+            self._configuration['bpe'] = float(self._configuration['bpe'])
+            self._configuration['linewidth'] = float(self._configuration['linewidth'])
         # return merged dictionary
-        return self._config
+        return self._configuration
     # end of method configure
 
 # Other functions and methods
@@ -173,8 +184,8 @@ class Station(Element):
         """States if station is visible in the map frame.
         """
         # get coordinates of station in earth plot frame
-        lon = self._config['longitude']
-        lat = self._config['latitude']
+        lon = self._configuration['longitude']
+        lat = self._configuration['latitude']
         xsta, ysta = earthmap(lon, lat)
         return earthmap.llcrnrx < xsta and \
             xsta < earthmap.urcrnrx and \
@@ -376,7 +387,7 @@ class StationWidget(QDialog):
             self.tag_fld.setText(conf['tag'])
             # retrieve visibility status
             self.visible_chk.setChecked(station.set(
-                key='visible', fallback=True))
+                key='visible', fallback=True, dtype=bool))
             # retrieve tag position value and set
             text = station.set(
                 key='tagpos', fallback='')

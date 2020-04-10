@@ -51,7 +51,7 @@ class MultiGrd(Grd):
         """Initialize a multigrd object
         """
         # set number of radiating elements to the number of files provided
-        filenames = conf['filename']
+        filenames = conf['file']
         excfilename = conf['excfilename']
         self._nb_re = len(filenames)
 

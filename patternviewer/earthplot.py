@@ -344,9 +344,16 @@ class EarthPlot(FigureCanvas):
                     'key',
                 )
             }
-            config['PATTERN{:d}'.format(index_of_pattern)][
-                'linewidths'] = cst.getboldness(
-                item.configure(dialog=False)['linewidths'])
+            try:
+                config['PATTERN{:d}'.format(index_of_pattern)][
+                    'linewidths'] = cst.getboldness(
+                    item.configure(dialog=False)['linewidths'])
+            except KeyError as ke:
+                logging.error((
+                    sys._getframe().f_code.co_filename.split('\\')[-1]
+                    + ':' + sys._getframe().f_code.co_name
+                    + ' KeyError {}'.format(str(ke))
+                ))
             index_of_pattern += 1
 
         # set the elevations section

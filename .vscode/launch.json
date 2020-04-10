@@ -10,7 +10,8 @@
             "type": "python",
             "request": "launch",
             "program": "C:\\Users\\cfrance\\OneDrive - SES\\Dev\\Python\\GrdViewer\\grdviewer.py",
-            "console": "integratedTerminal"
+            "console": "integratedTerminal",
+            "justMyCode": false
         },
         {
             "name": "Python:  Debug LATAM offset generator (Debug Console)",

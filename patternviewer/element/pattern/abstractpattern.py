@@ -1049,7 +1049,7 @@ class AbstractPattern(Element):
         self._plot = None
 
     def export_to_pat(self, filename: str, shrunk: bool = False,
-                      set: int = 0):
+                      set: int = 0, data = None):
         """Export this pattern to .pat file.
         filename is the target filename
         shrunk is a boolean specifying if the output pattern should be shrunk
@@ -1123,13 +1123,16 @@ class AbstractPattern(Element):
         file.write("1\n")
 
         # write pattern data
-        if shrunk:
-            co_to_write = self.shrink_copol(
-                azshrink=self._configuration['azimuth shrink'],
-                elshrink=self._configuration['elevation shrink'],
-                az_co=x, el_co=y, set=set)
+        if data is None:
+            if shrunk:
+                co_to_write = self.shrink_copol(
+                    azshrink=self._configuration['azimuth shrink'],
+                    elshrink=self._configuration['elevation shrink'],
+                    az_co=x, el_co=y, set=set)
+            else:
+                co_to_write, _ = self.interpolate_copol(x, y, set)
         else:
-            co_to_write, _ = self.interpolate_copol(x, y, set)
+            co_to_write = data
 
         for j in range(ny):
             for i in range(nx):

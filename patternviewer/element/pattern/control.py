@@ -229,7 +229,7 @@ class PatternControler():
         # get pattern to export
         if filename:
             self._pattern.export_to_pat(
-                filename, shrunk=self._pattern._shrink)
+                filename, shrunk=self._pattern.configure()['shrink'])
     # end of function export_pattern
 
     def export_to_kml(self):

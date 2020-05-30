@@ -51,7 +51,7 @@ class Grd(AbstractPattern):
             E_mag_co: magnitude of electrical field in copolarisation (dBi)
             E_phs_co: phase of electrical field in copolarisation (degrees)
             E_mag_cr: magnitude of electrical field in crosspolarisation (dBi)
-            E_phs_cr: pahse of electrical field in crosspolarisation (degrees)
+            E_phs_cr: phase of electrical field in crosspolarisation (degrees)
         """
 
         try:

@@ -22,3 +22,6 @@ SES14_shaped_brazil.ini
 test.cnf
 test.ini
 conf/FMS_LATAM_replacement_station.ini
+combine.py
+convert.py
+latamfmstest.py

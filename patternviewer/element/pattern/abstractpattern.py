@@ -1049,7 +1049,7 @@ class AbstractPattern(Element):
         self._plot = None
 
     def export_to_pat(self, filename: str, shrunk: bool = False,
-                      set: int = 0, data = None):
+                      set: int = 0, data=None, x=None, y=None):
         """Export this pattern to .pat file.
         filename is the target filename
         shrunk is a boolean specifying if the output pattern should be shrunk
@@ -1060,12 +1060,29 @@ class AbstractPattern(Element):
             + ':' + sys._getframe().f_code.co_name
             + '(filename={filename},'
             + 'shrunk={shrunk},'
-            + 'set={set})').format(
+            + 'set={set},'
+            + 'data={data},'
+            + 'x={x},'
+            + 'y={y},)').format(
                 filename=filename,
                 shrunk=shrunk,
-                set=set
+                set=set,
+                data=data,
+                x=x,
+                y=y
         ))
 
+        regrid = False
+        if x is not None and y is not None:
+            if len(x) == len(y) == 3:
+                _nx, _xs, _xe = x
+                _ny, _ys, _xe = y
+                regrid = True
+            else:
+                raise TypeError(
+                    ('x an y should be tuple of kind '
+                     + '(nx, xs, xe) and (ny, ys, ye)')
+                )
         # open file and read text data
         file = open(filename, "w")
 
@@ -1075,7 +1092,10 @@ class AbstractPattern(Element):
         file.write("++++0020\n")
 
         # format of file
-        ny, nx = self._x[set].shape
+        if regrid:
+            ny, nx = _ny, _nx
+        else:
+            ny, nx = self._x[set].shape
         file.write(
             "  {nset:d}, 0, 1, 3, {nx:d}, {ny:d}, 0, 1\n".format(
                 nset=self._nb_sets,
@@ -1083,10 +1103,16 @@ class AbstractPattern(Element):
                 ny=ny))
 
         # limits of grid
-        xs = np.min(self.azimuth(set)) * cst.DEG2RAD
-        xe = np.max(self.azimuth(set)) * cst.DEG2RAD
-        ys = np.min(self.elevation(set)) * cst.DEG2RAD
-        ye = np.max(self.elevation(set)) * cst.DEG2RAD
+        if regrid:
+            xs = np.min(self.azimuth(set)) * cst.DEG2RAD
+            xe = np.max(self.azimuth(set)) * cst.DEG2RAD
+            ys = np.min(self.elevation(set)) * cst.DEG2RAD
+            ye = np.max(self.elevation(set)) * cst.DEG2RAD
+        else:
+            xs = _xs
+            xe = _xe
+            ys = _ys
+            ye = _ye
 
         # recompute boresight
         if self._configuration['offset']:

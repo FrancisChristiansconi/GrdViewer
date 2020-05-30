@@ -9,7 +9,7 @@
             "name": "Python:  Debug GrdViewer (Debug Console)",
             "type": "python",
             "request": "launch",
-            "program": "C:\\Users\\cfrance\\OneDrive - SES\\Dev\\Python\\GrdViewer\\grdviewer.py",
+            "program": "C:\\Users\\cfrance\\Dev\\Python\\GrdViewer\\grdviewer.py",
             "console": "integratedTerminal",
             "justMyCode": false
         },
@@ -17,10 +17,10 @@
             "name": "Python:  Debug LATAM offset generator (Debug Console)",
             "type": "python",
             "request": "launch",
-            "program": "C:\\Users\\cfrance\\OneDrive - SES\\Dev\\Python\\GrdViewer\\latamfmstest.py",
+            "program": "C:\\Users\\cfrance\\Dev\\Python\\GrdViewer\\latamfmstest.py",
             "console": "integratedTerminal",
             "args": [
-                "C:\\Users\\cfrance\\OneDrive - SES\\Dev\\Python\\GrdViewer\\data\\FMSLATAM.sta",
+                "C:\\Users\\cfrance\\Dev\\Python\\GrdViewer\\data\\FMSLATAM.sta",
                 "C:\\Temp\\FMSLATAM\\azel.txt",
                 "C:\\Users\\cfrance\\OneDrive - SES\\SES06\\Antenna files IRESLess\\new files\\ses6_Brazil_FIST_101_1168000_V_Inverted_26_06_2019.grd",
                 "C:\\Users\\cfrance\\OneDrive - SES\\SES06\\Antenna files IRESLess\\new files\\F1_TM3_V_SC.grd",
